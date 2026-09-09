@@ -1,0 +1,23 @@
+{
+  "name": "glx-monorepo",
+  "version": "1.0.0",
+  "description": "Root package.json for GLX Industries Unified ERP & Showcase System",
+  "private": true,
+  "scripts": {
+    "install-backend": "npm install --prefix backend",
+    "install-frontend": "npm install --prefix frontend",
+    "install-all": "npm run install-backend && npm run install-frontend",
+    "build-frontend": "npm run build --prefix frontend",
+    "build": "npm run install-backend && npm run install-frontend && npm run build-frontend",
+    "start": "node backend/src/server.js",
+    "dev-backend": "npm run dev --prefix backend",
+    "dev-frontend": "npm run dev --prefix frontend",
+    "dev-showcase": "npm run dev --prefix showcase-web",
+    "dev:system": "concurrently -n \"BACKEND,ERP-SYSTEM\" -c \"blue,green\" \"npm run dev-backend\" \"npm run dev-frontend\"",
+    "dev:all": "concurrently -n \"BACKEND,SHOWCASE-WEB\" -c \"blue,yellow\" \"npm run dev-backend\" \"npm run dev-showcase\"",
+    "dev": "npm run dev-showcase"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,300 @@
+[
+  {
+    "_id": "6a9fa6f8d07e99e1b6684e29",
+    "barcode": "BC871554127036",
+    "name": "MAd",
+    "productType": "finished_good",
+    "canBeManufactured": true,
+    "canBePurchased": true,
+    "canBeSold": true,
+    "shortName": "MAd",
+    "categoryId": {
+      "_id": "6a9fa68dd07e99e1b6684e08",
+      "name": "Aluminium Profiles"
+    },
+    "tags": [],
+    "type": "trading",
+    "unitOfMeasure": "sqm",
+    "basePrice": 1500,
+    "minPrice": 0,
+    "mrp": 1500,
+    "currency": "LKR",
+    "tax": {
+      "taxable": true,
+      "taxRate": 18
+    },
+    "costs": {
+      "lastPurchaseCost": 1000,
+      "averageCost": 1000,
+      "standardCost": 1000
+    },
+    "stockLevels": {
+      "minimumLevel": 0,
+      "reorderLevel": 0,
+      "maximumLevel": 0
+    },
+    "packaging": {
+      "unitsPerCarton": 1,
+      "cartonsPerPallet": 1
+    },
+    "salesConfig": {
+      "sellable": true,
+      "minimumOrderQuantity": 1,
+      "allowBackorder": false
+    },
+    "status": "active",
+    "createdBy": "6a9fa685abcebd26ef20cb1e",
+    "deletedAt": null,
+    "tierPricing": [],
+    "createdAt": "2026-09-08T06:11:04.564Z",
+    "updatedAt": "2026-09-08T17:28:41.308Z",
+    "productCode": "P-ALU-PRD-26251-01",
+    "__v": 0,
+    "updatedBy": "6a9fa685abcebd26ef20cb1e",
+    "categoryName": "Aluminium Profiles",
+    "brandName": "—"
+  },
+  {
+    "_id": "6aa0420ebb11589cf3c147bf",
+    "name": "sdf",
+    "productType": "finished_good",
+    "canBeManufactured": true,
+    "canBePurchased": true,
+    "canBeSold": true,
+    "shortName": "sdf",
+    "categoryId": {
+      "_id": "6a9fa68dd07e99e1b6684e09",
+      "name": "Glass Sheets"
+    },
+    "tags": [],
+    "type": "trading",
+    "unitOfMeasure": "g",
+    "basePrice": 2520,
+    "minPrice": 0,
+    "mrp": 2520,
+    "currency": "LKR",
+    "tax": {
+      "taxable": true,
+      "taxRate": 18
+    },
+    "costs": {
+      "lastPurchaseCost": 2000,
+      "averageCost": 2000,
+      "standardCost": 2000
+    },
+    "stockLevels": {
+      "minimumLevel": 0,
+      "reorderLevel": 0,
+      "maximumLevel": 0
+    },
+    "packaging": {
+      "unitsPerCarton": 1,
+      "cartonsPerPallet": 1
+    },
+    "salesConfig": {
+      "sellable": true,
+      "minimumOrderQuantity": 1,
+      "allowBackorder": false
+    },
+    "status": "active",
+    "createdBy": "6a9fa685abcebd26ef20cb1e",
+    "deletedAt": null,
+    "tierPricing": [],
+    "createdAt": "2026-09-08T17:12:46.366Z",
+    "updatedAt": "2026-09-08T17:28:41.308Z",
+    "productCode": "P-GLS-PRD-26251-02",
+    "__v": 0,
+    "barcode": "BC658136942285",
+    "updatedBy": "6a9fa685abcebd26ef20cb1e",
+    "categoryName": "Glass Sheets",
+    "brandName": "—"
+  },
+  {
+    "_id": "6aa04d072af0f7bbc7a0aca1",
+    "name": "afg",
+    "productType": "raw_material",
+    "canBeManufactured": false,
+    "canBePurchased": true,
+    "canBeSold": false,
+    "categoryId": {
+      "_id": "6a9fa68dd07e99e1b6684e08",
+      "name": "Aluminium Profiles"
+    },
+    "tags": [],
+    "type": "trading",
+    "unitOfMeasure": "Kg",
+    "basePrice": 0,
+    "minPrice": 0,
+    "currency": "LKR",
+    "tax": {
+      "taxable": true,
+      "taxRate": 18
+    },
+    "costs": {
+      "lastPurchaseCost": 0,
+      "averageCost": 0,
+      "standardCost": 0
+    },
+    "stockLevels": {
+      "minimumLevel": 0,
+      "reorderLevel": 0,
+      "maximumLevel": 0
+    },
+    "salesConfig": {
+      "sellable": true,
+      "minimumOrderQuantity": 1,
+      "allowBackorder": false
+    },
+    "status": "inactive",
+    "createdBy": "6a9fa685abcebd26ef20cb1e",
+    "deletedAt": null,
+    "tierPricing": [],
+    "createdAt": "2026-09-08T17:59:35.095Z",
+    "updatedAt": "2026-09-08T17:59:35.095Z",
+    "productCode": "P-ALU-PRD-26251-03",
+    "__v": 0,
+    "categoryName": "Aluminium Profiles",
+    "brandName": "—"
+  },
+  {
+    "_id": "6aa04d2e0d01c3daca1e0dbb",
+    "name": "egh",
+    "productType": "raw_material",
+    "canBeManufactured": false,
+    "canBePurchased": true,
+    "canBeSold": false,
+    "categoryId": {
+      "_id": "6a9fa68dd07e99e1b6684e08",
+      "name": "Aluminium Profiles"
+    },
+    "tags": [],
+    "type": "trading",
+    "unitOfMeasure": "Kg",
+    "basePrice": 0,
+    "minPrice": 0,
+    "currency": "LKR",
+    "tax": {
+      "taxable": true,
+      "taxRate": 18
+    },
+    "costs": {
+      "lastPurchaseCost": 0,
+      "averageCost": 0,
+      "standardCost": 0
+    },
+    "stockLevels": {
+      "minimumLevel": 0,
+      "reorderLevel": 0,
+      "maximumLevel": 0
+    },
+    "salesConfig": {
+      "sellable": true,
+      "minimumOrderQuantity": 1,
+      "allowBackorder": false
+    },
+    "status": "inactive",
+    "createdBy": "6a9fa685abcebd26ef20cb1e",
+    "deletedAt": null,
+    "tierPricing": [],
+    "createdAt": "2026-09-08T18:00:14.732Z",
+    "updatedAt": "2026-09-08T18:00:14.732Z",
+    "productCode": "P-ALU-PRD-26251-04",
+    "__v": 0,
+    "categoryName": "Aluminium Profiles",
+    "brandName": "—"
+  },
+  {
+    "_id": "6aa04d2e0d01c3daca1e0dbc",
+    "name": "egh",
+    "productType": "raw_material",
+    "canBeManufactured": false,
+    "canBePurchased": true,
+    "canBeSold": false,
+    "categoryId": {
+      "_id": "6a9fa68dd07e99e1b6684e08",
+      "name": "Aluminium Profiles"
+    },
+    "tags": [],
+    "type": "trading",
+    "unitOfMeasure": "Kg",
+    "basePrice": 0,
+    "minPrice": 0,
+    "currency": "LKR",
+    "tax": {
+      "taxable": true,
+      "taxRate": 18
+    },
+    "costs": {
+      "lastPurchaseCost": 0,
+      "averageCost": 0,
+      "standardCost": 0
+    },
+    "stockLevels": {
+      "minimumLevel": 0,
+      "reorderLevel": 0,
+      "maximumLevel": 0
+    },
+    "salesConfig": {
+      "sellable": true,
+      "minimumOrderQuantity": 1,
+      "allowBackorder": false
+    },
+    "status": "inactive",
+    "createdBy": "6a9fa685abcebd26ef20cb1e",
+    "deletedAt": null,
+    "tierPricing": [],
+    "createdAt": "2026-09-08T18:00:14.898Z",
+    "updatedAt": "2026-09-08T18:00:14.898Z",
+    "productCode": "P-ALU-PRD-26251-05",
+    "__v": 0,
+    "categoryName": "Aluminium Profiles",
+    "brandName": "—"
+  },
+  {
+    "_id": "6aa04d2e0d01c3daca1e0dbd",
+    "name": "egh",
+    "productType": "raw_material",
+    "canBeManufactured": false,
+    "canBePurchased": true,
+    "canBeSold": false,
+    "categoryId": {
+      "_id": "6a9fa68dd07e99e1b6684e08",
+      "name": "Aluminium Profiles"
+    },
+    "tags": [],
+    "type": "trading",
+    "unitOfMeasure": "Kg",
+    "basePrice": 0,
+    "minPrice": 0,
+    "currency": "LKR",
+    "tax": {
+      "taxable": true,
+      "taxRate": 18
+    },
+    "costs": {
+      "lastPurchaseCost": 0,
+      "averageCost": 0,
+      "standardCost": 0
+    },
+    "stockLevels": {
+      "minimumLevel": 0,
+      "reorderLevel": 0,
+      "maximumLevel": 0
+    },
+    "salesConfig": {
+      "sellable": true,
+      "minimumOrderQuantity": 1,
+      "allowBackorder": false
+    },
+    "status": "inactive",
+    "createdBy": "6a9fa685abcebd26ef20cb1e",
+    "deletedAt": null,
+    "tierPricing": [],
+    "createdAt": "2026-09-08T18:00:14.937Z",
+    "updatedAt": "2026-09-08T18:00:14.937Z",
+    "productCode": "P-ALU-PRD-26251-06",
+    "__v": 0,
+    "categoryName": "Aluminium Profiles",
+    "brandName": "—"
+  }
+]

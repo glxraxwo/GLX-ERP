@@ -1,0 +1,93 @@
+[
+  {
+    "_id": "6a9fb2cfb662762ed708e08f",
+    "customerType": "company",
+    "businessType": "retailer",
+    "displayName": "Achala",
+    "tags": [],
+    "paymentTerms": {
+      "type": "cod",
+      "creditDays": 0,
+      "creditLimit": 0
+    },
+    "defaultDiscountPercent": 0,
+    "creditStatus": {
+      "currentBalance": 0,
+      "overdueAmount": 0,
+      "availableCredit": 0,
+      "isOverdue": false,
+      "daysPastDue": 0,
+      "onCreditHold": false
+    },
+    "analytics": {
+      "totalOrders": 0,
+      "totalOrderValue": 0,
+      "totalPaidAmount": 0
+    },
+    "status": "active",
+    "createdBy": "6a9fa685abcebd26ef20cb1e",
+    "deletedAt": null,
+    "contacts": [],
+    "shippingAddresses": [],
+    "createdAt": "2026-09-08T07:01:35.327Z",
+    "updatedAt": "2026-09-08T15:10:00.695Z",
+    "customerCode": "CUST-1",
+    "__v": 0,
+    "phone": "—"
+  },
+  {
+    "_id": "6aa0438b2bcccb1c6e4ed49b",
+    "customerType": "company",
+    "businessType": "retailer",
+    "displayName": "ARPICO",
+    "tags": [],
+    "primaryContact": {
+      "name": "",
+      "email": "",
+      "phone": "",
+      "mobile": ""
+    },
+    "contacts": [],
+    "billingAddress": {
+      "label": "",
+      "line1": "",
+      "line2": "",
+      "city": "",
+      "state": "",
+      "country": "Sri Lanka",
+      "postalCode": "",
+      "phone": "",
+      "deliveryInstructions": "",
+      "isDefault": true,
+      "_id": "6aa0438b2bcccb1c6e4ed49c"
+    },
+    "shippingAddresses": [],
+    "paymentTerms": {
+      "type": "advance",
+      "creditDays": 0,
+      "creditLimit": 0
+    },
+    "defaultDiscountPercent": 20,
+    "creditStatus": {
+      "currentBalance": 0,
+      "overdueAmount": 0,
+      "availableCredit": 0,
+      "isOverdue": false,
+      "daysPastDue": 0,
+      "onCreditHold": false
+    },
+    "analytics": {
+      "totalOrders": 0,
+      "totalOrderValue": 0,
+      "totalPaidAmount": 0
+    },
+    "status": "active",
+    "createdBy": "6a9fa685abcebd26ef20cb1e",
+    "deletedAt": null,
+    "createdAt": "2026-09-08T17:19:07.753Z",
+    "updatedAt": "2026-09-08T17:19:07.753Z",
+    "customerCode": "CUST-2",
+    "__v": 0,
+    "phone": "—"
+  }
+]
