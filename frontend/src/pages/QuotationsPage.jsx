@@ -705,6 +705,9 @@ const QuotationsPage = () => {
                                     <Button variant="outline" size="sm" onClick={() => exportDocumentToPDF(quote, quote.documentType || 'quotation')} title="Download PDF">
                                         <Download size={14} />
                                     </Button>
+                                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { setPreviewQuote(quote); setShareModalOpen(true); }} title="Share Quotation Link via SMS">
+                                        <Send size={14} />
+                                    </Button>
                                     {quote.status === 'converted' ? (
                                         canEdit && (
                                             <Button variant="outline" size="sm" className="text-amber-700 border-amber-300 bg-amber-50 hover:bg-amber-100 font-bold" onClick={() => { setRevertQuote(quote); setRevertAdminPassword(''); setIsRevertModalOpen(true); }} title="Revert Conversion (Admin Password required)">

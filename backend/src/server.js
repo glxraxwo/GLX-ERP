@@ -319,9 +319,20 @@ app.post('/api/documents/:id/share-sms', protect, asyncHandler(async (req, res) 
         await doc.save();
     }
     
-    const hostOrigin = req.headers.referer || req.headers.origin || 'http://localhost:5173';
+    let hostOrigin = 'http://localhost:5173';
+    if (req.headers.origin) {
+        hostOrigin = req.headers.origin;
+    } else if (req.headers.referer) {
+        try {
+            hostOrigin = new URL(req.headers.referer).origin;
+        } catch {
+            hostOrigin = req.headers.referer;
+        }
+    } else if (process.env.FRONTEND_URL) {
+        hostOrigin = process.env.FRONTEND_URL.split(',')[0].trim();
+    }
     
-    await sendPublicDocumentSms(doc, phone, documentType || 'document', hostOrigin);
+    await sendPublicDocumentSms(doc, phone, documentType || (doc.documentType || 'quotation'), hostOrigin);
     
     res.json({ success: true, message: 'Document shared via SMS successfully' });
 }));
