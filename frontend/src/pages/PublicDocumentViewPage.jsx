@@ -107,8 +107,8 @@ export default function PublicDocumentViewPage() {
                 </div>
             </div>
             
-            <div className="max-w-[850px] mx-auto bg-white p-4 sm:p-8 shadow-sm border border-slate-200 rounded-2xl print:shadow-none print:border-0 print:p-0">
-                <DocumentPrintView ref={printRef} document={printDoc} companyInfo={companyInfo} />
+            <div className="max-w-[850px] mx-auto bg-white p-2 sm:p-6 md:p-8 shadow-sm border border-slate-200 rounded-2xl print:shadow-none print:border-0 print:p-0 overflow-hidden">
+                <DocumentPrintView ref={printRef} document={printDoc} companyInfo={companyInfo} hideToolbar={true} />
             </div>
         </div>
     );

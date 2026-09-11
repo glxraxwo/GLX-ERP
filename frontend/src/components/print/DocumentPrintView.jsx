@@ -84,7 +84,7 @@ const formatDate = (dateStr) => {
 /**
  * Reusable Printable Document Component matching GLS Industries (Pvt) Ltd / GLX TRUCK BODY ENGINEERS layout
  */
-const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
+const DocumentPrintView = forwardRef(({ document: doc, companyInfo, hideToolbar = false }, ref) => {
     if (!doc) return null;
 
     const isEstimate = doc.documentType === 'estimate' || (doc.quoteNumber && doc.quoteNumber.startsWith('EST'));
@@ -119,13 +119,6 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
 
     const isUsingCustom = selectedTemplate === 'custom' && !!customTemplateUrl;
 
-    // Debug logging for template URL
-    React.useEffect(() => {
-        if (isUsingCustom && customTemplateUrl) {
-            console.log('Custom template URL being used:', customTemplateUrl?.substring(0, 50) + '...');
-        }
-    }, [isUsingCustom, customTemplateUrl]);
-
     const qrDataObj = {
         type: docTitle,
         number: docNumber,
@@ -138,71 +131,73 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
     };
     const qrString = JSON.stringify(qrDataObj);
 
-    // Template Switcher Header (hidden during actual paper printing)
-    const TemplateToolbar = () => (
-        <div className="no-print mb-4 p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">Print Template:</span>
-                <button
-                    type="button"
-                    onClick={() => setSelectedTemplate('default')}
-                    className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                        selectedTemplate === 'default'
-                            ? 'bg-emerald-600 text-white shadow-sm'
-                            : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
-                    }`}
-                >
-                    System Default Template
-                </button>
-                <button
-                    type="button"
-                    onClick={() => {
-                        if (!customTemplateUrl) {
-                            alert('No custom template uploaded yet. Please upload one in Settings.');
-                            return;
-                        }
-                        setSelectedTemplate('custom');
-                    }}
-                    className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                        selectedTemplate === 'custom'
-                            ? 'bg-emerald-600 text-white shadow-sm'
-                            : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
-                    }`}
-                >
-                    Custom Uploaded Template {customTemplateUrl ? '' : '(Not Uploaded)'}
-                </button>
+    // Template Switcher Header (hidden during actual paper printing or in public view)
+    const TemplateToolbar = () => {
+        if (hideToolbar) return null;
+        return (
+            <div className="no-print mb-4 p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">Print Template:</span>
+                    <button
+                        type="button"
+                        onClick={() => setSelectedTemplate('default')}
+                        className={`px-3 py-1.5 rounded-lg font-medium transition ${
+                            selectedTemplate === 'default'
+                                ? 'bg-emerald-600 text-white shadow-sm'
+                                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+                        }`}
+                    >
+                        System Default Template
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (!customTemplateUrl) {
+                                alert('No custom template uploaded yet. Please upload one in Settings.');
+                                return;
+                            }
+                            setSelectedTemplate('custom');
+                        }}
+                        className={`px-3 py-1.5 rounded-lg font-medium transition ${
+                            selectedTemplate === 'custom'
+                                ? 'bg-emerald-600 text-white shadow-sm'
+                                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+                        }`}
+                    >
+                        Custom Uploaded Template {customTemplateUrl ? '' : '(Not Uploaded)'}
+                    </button>
+                </div>
+                {isUsingCustom && (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                        ✓ Rendering Custom Template Background
+                    </span>
+                )}
             </div>
-            {isUsingCustom && (
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                    ✓ Rendering Custom Template Background
-                </span>
-            )}
-        </div>
-    );
+        );
+    };
 
     // Standard Header component
     const Header = () => {
         if (isUsingCustom) {
             return (
-                <div className="quotation-header print-header avoid-break flex justify-between items-start pb-4 border-b border-gray-400 mb-4 font-calibri" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
-                    <div className="flex gap-4 items-start w-full">
-                        {/* Custom Logo - Same size and position as original logo */}
-                        <div className="w-16 h-16 flex-shrink-0">
+                <div className="quotation-header print-header avoid-break pb-4 border-b border-gray-400 mb-4 font-calibri" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
+                    <div className="flex flex-col sm:flex-row gap-4 items-start w-full">
+                        {/* Custom Logo */}
+                        <div className="w-16 h-16 flex-shrink-0 mx-auto sm:mx-0">
                             <img 
                                 src={customTemplateUrl} 
                                 alt="Custom Logo" 
                                 className="w-full h-full object-contain"
                                 onError={(e) => {
-                                    console.error('Custom logo failed to load:', customTemplateUrl);
-                                    e.target.src = '/logo.jpg'; // Fallback to default logo
+                                    e.target.src = '/logo.jpg';
                                 }}
                             />
                         </div>
                         
                         {/* Addresses & Info Columns */}
-                        <div className="grid grid-cols-3 gap-6 w-full text-xs text-gray-900">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-3 sm:gap-6 w-full text-xs text-gray-900">
                             {/* Left Column: Head Office */}
-                            <div>
+                            <div className="text-center sm:text-left print:text-left">
                                 <p className="font-bold text-sm uppercase tracking-wide">GLX Industries (Pvt) Ltd</p>
                                 <p className="mt-1 text-[11px] leading-tight text-gray-600 font-calibri">
                                     No.14, Negambo Road,<br />
@@ -213,7 +208,7 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                             </div>
 
                             {/* Middle Column: GLX Truck Body Engineers */}
-                            <div>
+                            <div className="text-center sm:text-left print:text-left">
                                 <p className="font-bold text-sm uppercase tracking-wide">GLX TRUCK BODY ENGINEERS</p>
                                 <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-tighter leading-none mt-0.5">
                                     ALUMINIUM, STEEL & FREEZER BOX MANUFACTURE
@@ -227,8 +222,8 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                             </div>
 
                             {/* Right Column: Contact Details */}
-                            <div className="text-[11px] leading-snug font-mono text-left flex flex-col items-end">
-                                <div className="text-left font-mono">
+                            <div className="text-[11px] leading-snug font-mono text-center sm:text-right print:text-right flex flex-col items-center sm:items-end print:items-end">
+                                <div className="text-left font-mono inline-block">
                                     <p><span className="font-semibold">Mobile :</span> 071 6666 888</p>
                                     <p><span className="font-semibold">Tel &nbsp;&nbsp;&nbsp;&nbsp;:</span> 011 740 4446</p>
                                     <p><span className="font-semibold">Email &nbsp;:</span> glx.engi@gmail.com</p>
@@ -242,17 +237,17 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
         }
 
         return (
-            <div className="quotation-header print-header avoid-break flex justify-between items-start pb-4 border-b border-gray-400 mb-4 font-calibri" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
-                <div className="flex gap-4 items-start w-full">
+            <div className="quotation-header print-header avoid-break pb-4 border-b border-gray-400 mb-4 font-calibri" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
+                <div className="flex flex-col sm:flex-row gap-4 items-start w-full">
                     {/* Black & White Logo */}
-                    <div className="w-16 h-16 flex-shrink-0">
+                    <div className="w-16 h-16 flex-shrink-0 mx-auto sm:mx-0">
                         <img src="/logo.jpg" alt="GLX Logo" className="w-full h-full object-contain filter grayscale" />
                     </div>
                     
                     {/* Addresses & Info Columns */}
-                    <div className="grid grid-cols-3 gap-6 w-full text-xs text-gray-900">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-3 sm:gap-6 w-full text-xs text-gray-900">
                         {/* Left Column: Head Office */}
-                        <div>
+                        <div className="text-center sm:text-left print:text-left">
                             <p className="font-bold text-sm uppercase tracking-wide">GLX Industries (Pvt) Ltd</p>
                             <p className="mt-1 text-[11px] leading-tight text-gray-600 font-calibri">
                                 No.14, Negambo Road,<br />
@@ -263,7 +258,7 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                         </div>
 
                         {/* Middle Column: GLX Truck Body Engineers */}
-                        <div>
+                        <div className="text-center sm:text-left print:text-left">
                             <p className="font-bold text-sm uppercase tracking-wide">GLX TRUCK BODY ENGINEERS</p>
                             <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-tighter leading-none mt-0.5">
                                 ALUMINIUM, STEEL & FREEZER BOX MANUFACTURE
@@ -277,8 +272,8 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                         </div>
 
                         {/* Right Column: Contact Details */}
-                        <div className="text-[11px] leading-snug font-mono text-left flex flex-col items-end">
-                            <div className="text-left font-mono">
+                        <div className="text-[11px] leading-snug font-mono text-center sm:text-right print:text-right flex flex-col items-center sm:items-end print:items-end">
+                            <div className="text-left font-mono inline-block">
                                 <p><span className="font-semibold">Mobile :</span> 071 6666 888</p>
                                 <p><span className="font-semibold">Tel &nbsp;&nbsp;&nbsp;&nbsp;:</span> 011 740 4446</p>
                                 <p><span className="font-semibold">Email &nbsp;:</span> glx.engi@gmail.com</p>
@@ -294,22 +289,22 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
     // Split Quotation into two distinct pages
     if (isQuotation) {
         return (
-            <div ref={ref} className="quotation-print-area print-area print-container document-print-view font-calibri text-gray-900 bg-white max-w-[850px] mx-auto text-sm leading-relaxed p-6" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
+            <div ref={ref} className="quotation-print-area print-area print-container document-print-view font-calibri text-gray-900 bg-white w-full max-w-[850px] mx-auto text-sm leading-relaxed p-2 sm:p-6 print:p-0" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
                 <TemplateToolbar />
 
                 {/* ================= PAGE 1 ================= */}
-                <div className="print-page border border-gray-300 rounded-lg p-6 pb-8 shadow-sm mb-8 bg-white flex flex-col justify-between" style={{ pageBreakAfter: 'always', breakAfter: 'page', minHeight: '252mm' }}>
+                <div className="print-page border border-gray-300 rounded-lg p-3 sm:p-6 pb-6 sm:pb-8 shadow-sm mb-6 sm:mb-8 bg-white flex flex-col justify-between" style={{ pageBreakAfter: 'always', breakAfter: 'page', minHeight: '252mm' }}>
                     <Header />
 
                     {/* Customer Box & Metadata */}
-                    <div className="quotation-card avoid-break print-avoid-break grid grid-cols-2 gap-6 bg-gray-50 p-4 rounded border border-gray-200 mb-6 text-xs">
+                    <div className="quotation-card avoid-break print-avoid-break grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3 sm:gap-6 bg-gray-50 p-3 sm:p-4 rounded border border-gray-200 mb-6 text-xs">
                         <div>
                             <p className="text-[10px] uppercase font-bold text-gray-500 tracking-wider mb-1">Customer</p>
                             <p className="font-bold text-gray-900 text-sm">{customerName}</p>
                             {doc.billingAddress?.line1 && <p className="text-gray-600 mt-1">{doc.billingAddress.line1}</p>}
                             {contactPhone && <p className="text-gray-600">{contactPhone}</p>}
                         </div>
-                        <div className="text-right space-y-1">
+                        <div className="text-left sm:text-right print:text-right space-y-1">
                             <p><span className="font-semibold text-gray-700">Quotation No :</span> <span className="font-bold font-mono text-sm">{docNumber}</span></p>
                             <p><span className="font-semibold text-gray-700">Sales :</span> {doc.salesRep || 'Asanka'}</p>
                             <p><span className="font-semibold text-gray-700">Branch :</span> {doc.branch || 'JA-ELA'}</p>
@@ -318,8 +313,8 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                     </div>
 
                     {/* Table Header & Specifications Description */}
-                    <div className="mb-4 overflow-hidden border border-gray-300 rounded">
-                        <table className="w-full text-xs text-left border-collapse">
+                    <div className="mb-4 overflow-x-auto border border-gray-300 rounded">
+                        <table className="w-full min-w-[480px] sm:min-w-full print:min-w-full text-xs text-left border-collapse">
                             <thead className="bg-gray-800 text-white uppercase text-[10px] tracking-wider">
                                 <tr>
                                     <th className="py-2.5 px-3 border-r border-gray-600">Description</th>
@@ -382,12 +377,25 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                                                     <p className="text-gray-700 font-semibold mt-1">Note: Every 12 Months you should Come to the GLX TRUCK BODY ENGINEERS YARD and Check your Vehicle Body through our Company and Update your Warranty Card...</p>
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-3 text-right font-mono align-top text-sm border-r border-gray-300">{formatCurrency(unitPrice)}</td>
-                                            <td className="py-3 px-3 text-center font-semibold align-top text-sm border-r border-gray-300">{qty}</td>
-                                            <td className="py-3 px-3 text-right font-mono font-bold align-top text-sm text-gray-900">{formatCurrency(lineTotal)}</td>
+                                            <td className="py-3 px-3 text-right font-mono text-xs border-r border-gray-300">{formatCurrency(unitPrice)}</td>
+                                            <td className="py-3 px-3 text-center font-semibold text-xs border-r border-gray-300">{qty}</td>
+                                            <td className="py-3 px-3 text-right font-mono font-bold text-xs">{formatCurrency(lineTotal)}</td>
                                         </tr>
                                     );
                                 })}
+
+                                {/* Labor Cost if available */}
+                                {doc.laborCost > 0 && (
+                                    <tr className="border-b border-gray-200">
+                                        <td className="py-3 px-3 border-r border-gray-300">
+                                            <div className="font-bold text-gray-900 text-sm uppercase">Labor Charge / Workmanship</div>
+                                            <div className="text-xs text-gray-600">Body Engineering Labor Cost</div>
+                                        </td>
+                                        <td className="py-3 px-3 text-right font-mono text-xs border-r border-gray-300">{formatCurrency(doc.laborCost)}</td>
+                                        <td className="py-3 px-3 text-center font-semibold text-xs border-r border-gray-300">1</td>
+                                        <td className="py-3 px-3 text-right font-mono font-bold text-xs">{formatCurrency(doc.laborCost)}</td>
+                                    </tr>
+                                )}
 
                                 {/* Page 1 Discount row at the bottom of table */}
                                 {doc.discount > 0 && (
@@ -410,11 +418,11 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                 </div>
 
                 {/* ================= PAGE 2 ================= */}
-                <div className="print-page border border-gray-300 rounded-lg p-6 pb-8 shadow-sm bg-white flex flex-col justify-between" style={{ minHeight: '252mm' }}>
+                <div className="print-page border border-gray-300 rounded-lg p-3 sm:p-6 pb-6 sm:pb-8 shadow-sm bg-white flex flex-col justify-between" style={{ minHeight: '252mm' }}>
                     <Header />
 
-                    <div className="mb-4 overflow-hidden border border-gray-300 rounded">
-                        <table className="w-full text-xs text-left border-collapse">
+                    <div className="mb-4 overflow-x-auto border border-gray-300 rounded">
+                        <table className="w-full min-w-[480px] sm:min-w-full print:min-w-full text-xs text-left border-collapse">
                             <thead className="bg-gray-800 text-white uppercase text-[10px] tracking-wider">
                                 <tr>
                                     <th className="py-2.5 px-3 border-r border-gray-600">Description</th>
@@ -452,11 +460,11 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                     </div>
 
                     {/* Totals Summary */}
-                    <div className="avoid-break print-avoid-break flex justify-between items-start mb-6">
+                    <div className="avoid-break print-avoid-break flex flex-col sm:flex-row print:flex-row justify-between items-stretch sm:items-start print:items-start gap-4 mb-6">
                         <div className="text-xs text-gray-600 leading-relaxed max-w-sm pt-2">
                             <span className="font-bold text-gray-800">Remarks :</span> {doc.remarks || 'Please process payments directly to the designated Nations Trust Bank account.'}
                         </div>
-                        <div className="w-80 bg-gray-50 border border-gray-300 rounded p-3 text-xs space-y-1.5 font-calibri">
+                        <div className="w-full sm:w-80 print:w-80 bg-gray-50 border border-gray-300 rounded p-3 text-xs space-y-1.5 font-calibri">
                             <div className="flex justify-between text-gray-700">
                                 <span>ITEMS SUB TOTAL:</span>
                                 <span className="font-mono">{formatCurrency(doc.subtotal || doc.totalAmount)}</span>
@@ -493,8 +501,8 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                     </div>
 
                     {/* Payment & Warranty Terms */}
-                    <div className="avoid-break bank-details mb-6 grid grid-cols-2 gap-6 text-xs text-gray-700 font-calibri">
-                        <div className="bg-gray-50 p-4 rounded border border-gray-200">
+                    <div className="avoid-break bank-details mb-6 grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3 sm:gap-6 text-xs text-gray-700 font-calibri">
+                        <div className="bg-gray-50 p-3 sm:p-4 rounded border border-gray-200">
                             <p className="font-bold text-gray-900 uppercase mb-2">Condition of Payments:</p>
                             <ul className="space-y-1 text-gray-700">
                                 <li><span className="font-semibold">a). 70%</span> Advance Payment with the firm Order.</li>
@@ -503,7 +511,7 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                             </ul>
                         </div>
 
-                        <div className="bg-gray-50 p-4 rounded border border-gray-200 space-y-2">
+                        <div className="bg-gray-50 p-3 sm:p-4 rounded border border-gray-200 space-y-2">
                             <p><span className="font-bold text-gray-900 uppercase">Validity (Quotation) :</span> 30 Working Days From the Issued Date.</p>
                             <p><span className="font-bold text-gray-900 uppercase">Warranty :</span></p>
                             <ul className="list-alpha list-inside pl-1 text-gray-700 space-y-0.5">
@@ -515,12 +523,12 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
 
                     {/* Authorized Person Signature & QR Code */}
                     <div className="avoid-break print-footer mt-auto pt-6 border-t border-gray-300">
-                        <div className="flex justify-between items-end text-xs mb-4">
-                            <div className="space-y-3">
-                                <div className="text-left font-mono text-[10px] text-gray-500">
+                        <div className="flex flex-col sm:flex-row print:flex-row justify-between items-center sm:items-end print:items-end gap-4 text-xs mb-4">
+                            <div className="space-y-3 text-center sm:text-left print:text-left w-full sm:w-auto">
+                                <div className="font-mono text-[10px] text-gray-500">
                                     Printed at: {new Date().toLocaleString('en-GB')}
                                 </div>
-                                <div className="text-center w-56">
+                                <div className="text-center w-56 mx-auto sm:mx-0">
                                     <div className="border-b border-gray-800 mb-1.5 h-10"></div>
                                     <p className="font-bold text-gray-900 uppercase">Yours Faithfully,</p>
                                     <p className="font-bold text-gray-900 uppercase text-[10px]">GLX INDUSTRIES - Ja Ela</p>
@@ -536,8 +544,8 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                             </div>
                         </div>
                         <div className="flex items-center justify-between border-t-2 border-gray-300 pt-3 pb-1 text-xs font-calibri">
-                            <span className="font-semibold text-gray-700">GLX INDUSTRIES (PVT) LTD — Kotugoda, Ja-Ela, Sri Lanka</span>
-                            <span className="font-bold text-gray-800 tracking-wider">PAGE 2 / 2</span>
+                            <span className="font-semibold text-gray-700 text-[10px] sm:text-xs">GLX INDUSTRIES (PVT) LTD — Kotugoda, Ja-Ela, Sri Lanka</span>
+                            <span className="font-bold text-gray-800 tracking-wider text-[10px] sm:text-xs">PAGE 2 / 2</span>
                         </div>
                     </div>
 
@@ -548,12 +556,12 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
 
     // Default clean A4 print view for Invoice or Estimate
     return (
-        <div ref={ref} className="quotation-print-area print-area print-container document-print-view font-calibri text-gray-900 bg-white p-8 max-w-[850px] mx-auto text-sm leading-relaxed border border-gray-200 rounded-lg shadow-sm" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
+        <div ref={ref} className="quotation-print-area print-area print-container document-print-view font-calibri text-gray-900 bg-white p-3 sm:p-8 max-w-[850px] mx-auto text-sm leading-relaxed border border-gray-200 rounded-lg shadow-sm" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
             <TemplateToolbar />
             <Header />
 
             {/* Document Metadata Grid */}
-            <div className="quotation-card avoid-break print-avoid-break grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md border border-gray-200 mb-6 text-xs font-calibri">
+            <div className="quotation-card avoid-break print-avoid-break grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3 sm:gap-4 bg-gray-50 p-3 sm:p-4 rounded-md border border-gray-200 mb-6 text-xs font-calibri">
                 <div className="space-y-1">
                     {doc.insuranceCompany && (
                         <p><span className="font-semibold text-gray-700">Insurance Company:</span> {doc.insuranceCompany}</p>
@@ -570,7 +578,7 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                     )}
                 </div>
 
-                <div className="space-y-1 text-right">
+                <div className="space-y-1 text-left sm:text-right print:text-right">
                     <p><span className="font-semibold text-gray-700">{docTitle} No:</span> <span className="font-mono font-bold">{docNumber}</span></p>
                     <p><span className="font-semibold text-gray-700">Sales Rep:</span> <strong className="text-gray-900">{doc.salesRep || 'Asanka'}</strong></p>
                     <p><span className="font-semibold text-gray-700">Branch:</span> {doc.branch || 'JA-ELA'}</p>
@@ -579,8 +587,8 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
             </div>
 
             {/* Line Items Table */}
-            <div className="mb-6 overflow-hidden border border-gray-300 rounded">
-                <table className="w-full text-xs text-left border-collapse">
+            <div className="mb-6 overflow-x-auto border border-gray-300 rounded">
+                <table className="w-full min-w-[480px] sm:min-w-full print:min-w-full text-xs text-left border-collapse">
                     <thead className="bg-gray-800 text-white uppercase text-[10px] tracking-wider">
                         <tr>
                             <th className="py-2.5 px-3 w-8 text-center border-r border-gray-600">#</th>
@@ -622,7 +630,7 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
 
             {/* Totals Summary */}
             <div className="avoid-break print-avoid-break flex justify-end mb-6">
-                <div className="w-72 bg-gray-50 border border-gray-300 rounded p-3 text-xs space-y-1.5 font-calibri">
+                <div className="w-full sm:w-72 print:w-72 bg-gray-50 border border-gray-300 rounded p-3 text-xs space-y-1.5 font-calibri">
                     <div className="flex justify-between text-gray-700">
                         <span>SUB TOTAL:</span>
                         <span className="font-mono">{formatCurrency(doc.subtotal || doc.totalAmount)}</span>
@@ -641,12 +649,12 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
             </div>
 
             {/* Authorized Person Signature & QR Code */}
-            <div className="avoid-break print-footer mt-12 pt-4 border-t border-gray-300 flex justify-between items-end text-xs">
-                <div className="space-y-3">
-                    <div className="text-left font-mono text-[10px] text-gray-500">
+            <div className="avoid-break print-footer mt-8 sm:mt-12 pt-4 border-t border-gray-300 flex flex-col sm:flex-row print:flex-row justify-between items-center sm:items-end print:items-end gap-4 text-xs">
+                <div className="space-y-3 text-center sm:text-left print:text-left w-full sm:w-auto">
+                    <div className="font-mono text-[10px] text-gray-500">
                         Printed at: {new Date().toLocaleString('en-GB')}
                     </div>
-                    <div className="text-center w-56">
+                    <div className="text-center w-56 mx-auto sm:mx-0">
                         <div className="border-b border-gray-800 mb-1.5 h-10"></div>
                         <p className="font-bold text-gray-900 uppercase">GLX INDUSTRIES - Ja Ela</p>
                         <p className="text-gray-600 text-[10px]">Authorized Signature</p>
@@ -662,9 +670,9 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
             </div>
 
             {/* Bottom Footer Bar */}
-            <div className="flex items-center justify-between border-t border-gray-200 pt-3 mt-8">
-                <span className="text-[10px] text-gray-400 font-mono">GLX INDUSTRIES (PVT) LTD — Kotugoda, Ja-Ela, Sri Lanka</span>
-                <span className="text-[10px] text-gray-400 font-mono tracking-wider">PAGE 1 / 1</span>
+            <div className="flex items-center justify-between border-t border-gray-200 pt-3 mt-8 text-[10px] text-gray-400 font-mono">
+                <span>GLX INDUSTRIES (PVT) LTD — Kotugoda, Ja-Ela, Sri Lanka</span>
+                <span className="tracking-wider">PAGE 1 / 1</span>
             </div>
         </div>
     );
