@@ -39,8 +39,7 @@ export const sendGrnConfirmationSms = async (grn, customMessage = null) => {
         }
 
         const formattedDate = grn.receiptDate ? new Date(grn.receiptDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-        
-        // Formulate products details
+    
         const productsList = grn.items.map(item => {
             const qty = item.acceptedQuantity || item.receivedQuantity || 0;
             const uom = item.unitOfMeasure || 'kg';
