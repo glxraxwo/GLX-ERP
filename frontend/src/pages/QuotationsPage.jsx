@@ -277,6 +277,7 @@ const QuotationsPage = () => {
                 discount: quote.discount || 0,
                 tax: quote.tax || 0,
                 grandTotal: quote.grandTotal || quote.totalAmount || 0,
+                sendSms: true,
                 expiryDate: quote.expiryDate ? new Date(quote.expiryDate).toISOString().split('T')[0] : '',
                 notes: quote.notes || ''
             });
@@ -290,6 +291,7 @@ const QuotationsPage = () => {
                 customerName: '',
                 customerEmail: '',
                 customerPhone: '',
+                sendSms: true,
                 customerAddress: '',
                 insuranceCompany: '',
                 vehicleOwner: '',
@@ -352,7 +354,11 @@ const QuotationsPage = () => {
                 toast.success(`${formData.documentType === 'estimate' ? 'Estimate' : 'Quotation'} updated`);
             } else {
                 await api.post('/crm/quotations', payload);
-                toast.success(`${formData.documentType === 'estimate' ? 'Estimate' : 'Quotation'} created`);
+                if (payload.customerPhone && payload.sendSms !== false) {
+                    toast.success(`${formData.documentType === 'estimate' ? 'Estimate' : 'Quotation'} created & SMS sent to ${payload.customerPhone}!`);
+                } else {
+                    toast.success(`${formData.documentType === 'estimate' ? 'Estimate' : 'Quotation'} created`);
+                }
             }
             setIsFormOpen(false);
             fetchQuotations();
@@ -827,12 +833,23 @@ const QuotationsPage = () => {
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contact Phone</label>
                                 <input 
-                                    type="text"
+                                    type="text" 
                                     className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white"
                                     value={formData.customerPhone}
                                     placeholder="e.g. 0714193455"
                                     onChange={(e) => handleFormChange('customerPhone', e.target.value)}
                                 />
+                                {formData.customerPhone && (
+                                    <label className="flex items-center gap-1.5 mt-1.5 cursor-pointer text-[11px] text-blue-700 font-semibold select-none bg-blue-50/70 p-1.5 rounded-lg border border-blue-100">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={formData.sendSms !== false}
+                                            onChange={(e) => handleFormChange('sendSms', e.target.checked)}
+                                            className="rounded text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
+                                        />
+                                        <span>Send SMS link with Quotation PDF to customer</span>
+                                    </label>
+                                )}
                             </div>
                         </div>
 

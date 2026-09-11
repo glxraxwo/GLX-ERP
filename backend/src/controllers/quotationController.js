@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { backupDocumentAsPdf } from '../services/smsService.js';
+import { backupDocumentAsPdf, sendPublicDocumentSms } from '../services/smsService.js';
 import asyncHandler from 'express-async-handler';
 import Quotation from '../models/Quotation.js';
 import { createAuditLog } from '../utils/auditLogger.js';
@@ -67,6 +67,27 @@ export const createQuotation = asyncHandler(async (req, res) => {
         description: `Generated quotation ${quotation.quoteNumber}`,
         req
     });
+
+    // Auto-send SMS with public document link if customer phone is provided and sendSms is not explicitly false
+    const targetPhone = quotation.customerPhone || req.body.customerPhone;
+    if (targetPhone && req.body.sendSms !== false) {
+        let hostOrigin = 'http://localhost:5173';
+        if (req.headers.origin) {
+            hostOrigin = req.headers.origin;
+        } else if (req.headers.referer) {
+            try {
+                hostOrigin = new URL(req.headers.referer).origin;
+            } catch {
+                hostOrigin = req.headers.referer;
+            }
+        } else if (process.env.FRONTEND_URL) {
+            hostOrigin = process.env.FRONTEND_URL.split(',')[0].trim();
+        }
+
+        sendPublicDocumentSms(quotation, targetPhone, quotation.documentType || 'quotation', hostOrigin)
+            .then(() => console.log(`[Quotation Auto SMS] Dispatched successfully to ${targetPhone}`))
+            .catch(err => console.error('[Quotation SMS Auto-dispatch Error]:', err.message));
+    }
 
     res.status(201).json({ success: true, data: quotation });
 });
