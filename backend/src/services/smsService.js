@@ -251,10 +251,11 @@ export const sendPublicDocumentSms = async (doc, clientPhone, documentType, host
     try {
         const token = doc.publicToken;
         const link = `${hostOrigin}/public/documents/${token}`;
-        const docCode = doc.quotationCode || doc.invoiceNumber || doc._id.toString();
+        const docCode = doc.quoteNumber || doc.quotationCode || doc.invoiceNumber || doc._id.toString();
         const clientName = doc.customerName || doc.vehicleOwner || 'Valued Customer';
+        const docTypeTitle = (documentType === 'estimate' ? 'Estimate' : (documentType === 'invoice' ? 'Invoice' : 'Quotation'));
         
-        const message = `Dear ${clientName}, here is the link to view your GLX Industries ${documentType} (${docCode}): ${link}`;
+        const message = `Dear ${clientName}, here is the link to view your GLX Industries ${docTypeTitle} (${docCode}): ${link}`;
         
         // Send SMS to client
         let formattedContact = formatSmsContact(clientPhone);

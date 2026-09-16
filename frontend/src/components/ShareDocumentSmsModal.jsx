@@ -9,6 +9,10 @@ export default function ShareDocumentSmsModal({ isOpen, onClose, documentId, doc
     const [phone, setPhone] = useState(defaultPhone);
     const [sending, setSending] = useState(false);
 
+    React.useEffect(() => {
+        setPhone(defaultPhone || '');
+    }, [defaultPhone, isOpen]);
+
     const handleShare = async (e) => {
         e.preventDefault();
         if (!phone.trim()) {

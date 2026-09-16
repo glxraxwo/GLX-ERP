@@ -210,6 +210,7 @@ const authLimiter = rateLimit({
 });
 
 // Public routes (no authentication required)
+app.use('/api/public', publicRoutes);
 app.get('/api/public/payslip/:id', asyncHandler(async (req, res) => {
     const { getPublicPayslip } = await import('./controllers/hrController.js');
     await getPublicPayslip(req, res);
@@ -265,38 +266,6 @@ app.use('/api/production/machines', machineRoutes);
 
 
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Server is running',
-        timestamp: new Date().toISOString(),
-    });
-});
-
-// Serve static files in production (React build)
-const frontendDistPath = path.join(__dirname, '../../frontend/dist');
-if (fs.existsSync(frontendDistPath)) {
-    app.use(express.static(frontendDistPath));
-    app.get('/*splat', (req, res, next) => {
-        // Skip for API routes so they can reach notFound/errorHandler
-        if (req.originalUrl.startsWith('/api')) {
-            return next();
-        }
-        res.sendFile(path.join(frontendDistPath, 'index.html'));
-    });
-} else {
-    app.get('/', (req, res) => {
-        res.json({
-            success: true,
-            message: 'GLX Factory ERP API is running',
-            timestamp: new Date().toISOString(),
-        });
-    });
-}
-
-// Error handling (must be LAST)
-
 // Unified sharing endpoint
 app.post('/api/documents/:id/share-sms', protect, asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -319,13 +288,23 @@ app.post('/api/documents/:id/share-sms', protect, asyncHandler(async (req, res) 
         await doc.save();
     }
     
-    const hostOrigin = req.headers.referer || req.headers.origin || 'http://localhost:5173';
+    let hostOrigin = 'http://localhost:5173';
+    if (req.headers.origin) {
+        hostOrigin = req.headers.origin;
+    } else if (req.headers.referer) {
+        try {
+            hostOrigin = new URL(req.headers.referer).origin;
+        } catch {
+            hostOrigin = req.headers.referer;
+        }
+    } else if (process.env.FRONTEND_URL) {
+        hostOrigin = process.env.FRONTEND_URL.split(',')[0].trim();
+    }
     
-    await sendPublicDocumentSms(doc, phone, documentType || 'document', hostOrigin);
+    await sendPublicDocumentSms(doc, phone, documentType || (doc.documentType || 'quotation'), hostOrigin);
     
     res.json({ success: true, message: 'Document shared via SMS successfully' });
 }));
-
 
 // Authenticated PDF document download endpoint
 app.get('/api/documents/:id/download-pdf', protect, asyncHandler(async (req, res) => {
@@ -357,6 +336,37 @@ app.get('/api/documents/:id/download-pdf', protect, asyncHandler(async (req, res
     res.download(filePath, filename);
 }));
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Server is running',
+        timestamp: new Date().toISOString(),
+    });
+});
+
+// Serve static files in production (React build)
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+if (fs.existsSync(frontendDistPath)) {
+    app.use(express.static(frontendDistPath));
+    app.get('/*splat', (req, res, next) => {
+        // Skip for API routes so they can reach notFound/errorHandler
+        if (req.originalUrl.startsWith('/api')) {
+            return next();
+        }
+        res.sendFile(path.join(frontendDistPath, 'index.html'));
+    });
+} else {
+    app.get('/', (req, res) => {
+        res.json({
+            success: true,
+            message: 'GLX Factory ERP API is running',
+            timestamp: new Date().toISOString(),
+        });
+    });
+}
+
+// Error handling (must be LAST)
 app.use(notFound);
 app.use(errorHandler);
 
