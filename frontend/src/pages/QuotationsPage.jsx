@@ -55,6 +55,7 @@ const QuotationsPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [documentTypeFilter, setDocumentTypeFilter] = useState('');
+    const [useSinhalaLanguage, setUseSinhalaLanguage] = useState(false);
 
     const printRef = useRef();
 
@@ -1129,8 +1130,21 @@ const QuotationsPage = () => {
             <Modal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} title={`${previewQuote?.documentType === 'estimate' ? 'Estimate' : 'Quotation'} Printable View & QR Code`} size="xl">
                 {previewQuote && (
                     <div className="p-3 sm:p-6 space-y-6">
+                        {/* Language Toggle */}
+                        <div className="flex items-center justify-end bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={useSinhalaLanguage}
+                                    onChange={(e) => setUseSinhalaLanguage(e.target.checked)}
+                                    className="rounded text-primary-600 border-gray-300 w-4 h-4"
+                                />
+                                <span className="text-sm font-semibold text-gray-700">Show in Sinhala / සිංහලෙන් පෙන්වන්න</span>
+                            </label>
+                        </div>
+
                         <div className="max-h-[75vh] overflow-y-auto p-2 bg-gray-100 rounded-xl">
-                            <DocumentPrintView ref={printRef} document={previewQuote} companyInfo={settings} />
+                            <DocumentPrintView ref={printRef} document={previewQuote} companyInfo={settings} useSinhalaLanguage={useSinhalaLanguage} />
                         </div>
 
                         {/* Professional Action Toolbar */}

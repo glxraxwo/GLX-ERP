@@ -84,7 +84,7 @@ const formatDate = (dateStr) => {
 /**
  * Reusable Printable Document Component matching GLS Industries (Pvt) Ltd / GLX TRUCK BODY ENGINEERS layout
  */
-const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
+const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLanguage = false }, ref) => {
     if (!doc) return null;
 
     const isEstimate = doc.documentType === 'estimate' || (doc.quoteNumber && doc.quoteNumber.startsWith('EST'));
@@ -94,6 +94,13 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
     let docTitle = 'QUOTATION';
     if (isEstimate) docTitle = 'ESTIMATE';
     if (isInvoice) docTitle = 'INVOICE';
+
+    // Sinhala translations for document titles
+    if (useSinhalaLanguage) {
+        if (isEstimate) docTitle = 'ඇස්තමේන්තුව';
+        if (isInvoice) docTitle = 'ගෙවීම් ලේඛනය';
+        if (isQuotation) docTitle = 'උපස්ථ ලේඛනය';
+    }
 
     const docNumber = doc.invoiceNumber || doc.quoteNumber || doc.quotationCode || 'N/A';
     const customerName = doc.customerName || doc.vehicleOwner || doc.customerSnapshot?.name || 'Valued Client';
@@ -304,16 +311,16 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                     {/* Customer Box & Metadata */}
                     <div className="quotation-card avoid-break print-avoid-break grid grid-cols-2 gap-6 bg-gray-50 p-4 rounded border border-gray-200 mb-6 text-xs">
                         <div>
-                            <p className="text-[10px] uppercase font-bold text-gray-500 tracking-wider mb-1">Customer</p>
+                            <p className="text-[10px] uppercase font-bold text-gray-500 tracking-wider mb-1">{useSinhalaLanguage ? 'පාරිභෝගික' : 'Customer'}</p>
                             <p className="font-bold text-gray-900 text-sm">{customerName}</p>
                             {doc.billingAddress?.line1 && <p className="text-gray-600 mt-1">{doc.billingAddress.line1}</p>}
                             {contactPhone && <p className="text-gray-600">{contactPhone}</p>}
                         </div>
                         <div className="text-right space-y-1">
-                            <p><span className="font-semibold text-gray-700">Quotation No :</span> <span className="font-bold font-mono text-sm">{docNumber}</span></p>
-                            <p><span className="font-semibold text-gray-700">Sales :</span> {doc.salesRep || 'Asanka'}</p>
-                            <p><span className="font-semibold text-gray-700">Branch :</span> {doc.branch || 'JA-ELA'}</p>
-                            <p><span className="font-semibold text-gray-700">Date :</span> {dateDisplay}</p>
+                            <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'ලේඛන අංකය :' : 'Quotation No :'}</span> <span className="font-bold font-mono text-sm">{docNumber}</span></p>
+                            <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'විකිණුම් නියෝජිත :' : 'Sales :'}</span> {doc.salesRep || 'Asanka'}</p>
+                            <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'ශාඛා :' : 'Branch :'}</span> {doc.branch || 'JA-ELA'}</p>
+                            <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'දිනය :' : 'Date :'}</span> {dateDisplay}</p>
                         </div>
                     </div>
 
@@ -322,15 +329,15 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                         <table className="w-full text-xs text-left border-collapse">
                             <thead className="bg-gray-800 text-white uppercase text-[10px] tracking-wider">
                                 <tr>
-                                    <th className="py-2.5 px-3 border-r border-gray-600">Description</th>
-                                    <th className="py-2.5 px-3 text-right w-28 border-r border-gray-600">Rate</th>
-                                    <th className="py-2.5 px-3 text-center w-16 border-r border-gray-600">Qty</th>
-                                    <th className="py-2.5 px-3 text-right w-32">Amount</th>
+                                    <th className="py-2.5 px-3 border-r border-gray-600">{useSinhalaLanguage ? 'විස්තරය' : 'Description'}</th>
+                                    <th className="py-2.5 px-3 text-right w-28 border-r border-gray-600">{useSinhalaLanguage ? 'අනුපාතය' : 'Rate'}</th>
+                                    <th className="py-2.5 px-3 text-center w-16 border-r border-gray-600">{useSinhalaLanguage ? 'ප්‍රමාණය' : 'Qty'}</th>
+                                    <th className="py-2.5 px-3 text-right w-32">{useSinhalaLanguage ? 'මුදල' : 'Amount'}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 bg-white font-calibri">
                                 {(doc.items || []).map((item, idx) => {
-                                    const desc = item.productName || item.description || 'Lorry Body';
+                                    const desc = useSinhalaLanguage ? (item.productTranslation || item.productName || item.description || 'ලොරි බොඩි') : (item.productName || item.description || 'Lorry Body');
                                     const qty = item.quantity || 1;
                                     const unitPrice = item.unitPrice || item.rate || 0;
                                     const lineTotal = item.lineTotal || (qty * unitPrice);
@@ -339,8 +346,8 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                                         <tr key={idx} className="border-b border-gray-200">
                                             <td className="py-3 px-3 border-r border-gray-300">
                                                 <div className="font-bold text-gray-900 text-sm uppercase">{desc}</div>
-                                                {item.bodyModel && <div className="text-xs text-gray-700 font-semibold mt-1">Body Model : {item.bodyModel}</div>}
-                                                {item.vehicleModel && <div className="text-xs text-gray-700 font-semibold">Vehicle Model : {item.vehicleModel}</div>}
+                                                {item.bodyModel && <div className="text-xs text-gray-700 font-semibold mt-1">{useSinhalaLanguage ? 'බොඩි මොඩල්' : 'Body Model'} : {item.bodyModel}</div>}
+                                                {item.vehicleModel && <div className="text-xs text-gray-700 font-semibold">{useSinhalaLanguage ? 'වාහන මොඩල්' : 'Vehicle Model'} : {item.vehicleModel}</div>}
                                                 
                                                 {/* Render specifications multiline or bullets */}
                                                 {item.specificationsText ? (
@@ -357,29 +364,29 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                                                     )
                                                 )}
 
-                                                <p className="font-bold text-xs uppercase tracking-wider text-gray-900 mt-3">100% MADE IN GLX SRI LANKA</p>
+                                                <p className="font-bold text-xs uppercase tracking-wider text-gray-900 mt-3">{useSinhalaLanguage ? 'GLX ශ්‍රී ලංකාවේ සිදු කරන ලද 100%' : '100% MADE IN GLX SRI LANKA'}</p>
                                                 
                                                 {/* Outside Body Dimensions */}
                                                 {doc.bodyDimensions && (
                                                     <div className="mt-4 border-t border-dashed pt-2">
-                                                        <p className="font-bold text-gray-800 text-[11px] uppercase">Outside Body Dimensions</p>
+                                                        <p className="font-bold text-gray-800 text-[11px] uppercase">{useSinhalaLanguage ? 'පිටත බොඩි මාන' : 'Outside Body Dimensions'}</p>
                                                         <p className="text-gray-700 text-[11px]">
-                                                            Length - {doc.bodyDimensions.length || '9 Feet 2 Inch'} | Width - {doc.bodyDimensions.width || '66 Inch'} | Height - {doc.bodyDimensions.height || '6 Feet'}
+                                                            {useSinhalaLanguage ? 'දිග' : 'Length'} - {doc.bodyDimensions.length || '9 Feet 2 Inch'} | {useSinhalaLanguage ? 'පළල' : 'Width'} - {doc.bodyDimensions.width || '66 Inch'} | {useSinhalaLanguage ? 'උස' : 'Height'} - {doc.bodyDimensions.height || '6 Feet'}
                                                         </p>
                                                     </div>
                                                 )}
 
                                                 {/* Special Notes & Warranty */}
                                                 <div className="mt-4 border-t border-dashed pt-2 space-y-1 text-[11px]">
-                                                    <p className="font-bold text-gray-800 uppercase">Special Note :</p>
-                                                    <p className="font-bold text-gray-900">WARRANTY JAPAN MODEL 10/0255/22</p>
+                                                    <p className="font-bold text-gray-800 uppercase">{useSinhalaLanguage ? 'විශේෂ සටහන :' : 'Special Note :'}</p>
+                                                    <p className="font-bold text-gray-900">{useSinhalaLanguage ? 'වගකීම ජපන් මොඩල් 10/0255/22' : 'WARRANTY JAPAN MODEL 10/0255/22'}</p>
                                                     <ul className="list-disc list-inside text-gray-700 space-y-0.5">
-                                                        <li>10 Years For Body Structure (Condition Apply)</li>
-                                                        <li>10 Years Full Body Waterproofing (Condition Apply)</li>
-                                                        <li>03 Years For All Doors (Condition Apply)</li>
+                                                        <li>{useSinhalaLanguage ? 'බොඩි ව්‍යුහය සඳහා වසර 10 (කොන්දේසි අදාළ)' : '10 Years For Body Structure (Condition Apply)'}</li>
+                                                        <li>{useSinhalaLanguage ? 'සම්පූර්ණ බොඩි ජල රැකවරණය සඳහා වසර 10 (කොන්දේසි අදාළ)' : '10 Years Full Body Waterproofing (Condition Apply)'}</li>
+                                                        <li>{useSinhalaLanguage ? 'සියලු දොරවල් සඳහා වසර 03 (කොන්දේසි අදාළ)' : '03 Years For All Doors (Condition Apply)'}</li>
                                                     </ul>
-                                                    <p className="text-gray-500 mt-1 italic">No Warranty: Rubber Beading / Plywood Sheets / Aluminium Sheet or Cladding Sheets</p>
-                                                    <p className="text-gray-700 font-semibold mt-1">Note: Every 12 Months you should Come to the GLX TRUCK BODY ENGINEERS YARD and Check your Vehicle Body through our Company and Update your Warranty Card...</p>
+                                                    <p className="text-gray-500 mt-1 italic">{useSinhalaLanguage ? 'වගකීම නැත: රබර් බීඩිං / ප්ලයිවුඩ් තහඩු / ඇලුමිනියම් තහඩු හෝ ක්ලැඩිං තහඩු' : 'No Warranty: Rubber Beading / Plywood Sheets / Aluminium Sheet or Cladding Sheets'}</p>
+                                                    <p className="text-gray-700 font-semibold mt-1">{useSinhalaLanguage ? 'සටහන: සෑම මාස 12 කට වරක් ඔබ GLX TRUCK BODY ENGINEERS යාඩයට පැමිණ ඔබේ වාහන බොඩිය අපගේ සමාගම හරහා පරීක්ෂා කළ යුතුය සහ ඔබේ වගකීම් කාඩ්පත යාවත්කාලීන කළ යුතුය...' : 'Note: Every 12 Months you should Come to the GLX TRUCK BODY ENGINEERS YARD and Check your Vehicle Body through our Company and Update your Warranty Card...'}</p>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-3 text-right font-mono align-top text-sm border-r border-gray-300">{formatCurrency(unitPrice)}</td>
@@ -392,7 +399,7 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                                 {/* Page 1 Discount row at the bottom of table */}
                                 {doc.discount > 0 && (
                                     <tr className="text-red-600 font-bold border-t-2 border-gray-300">
-                                        <td className="py-2.5 px-3 uppercase text-sm border-r border-gray-300">Discount</td>
+                                        <td className="py-2.5 px-3 uppercase text-sm border-r border-gray-300">{useSinhalaLanguage ? 'වට්ටම්' : 'Discount'}</td>
                                         <td className="py-2.5 px-3 text-right font-mono text-sm border-r border-gray-300">-{formatCurrency(doc.discount)}</td>
                                         <td className="py-2.5 px-3 text-center text-sm border-r border-gray-300">1</td>
                                         <td className="py-2.5 px-3 text-right font-mono text-sm">-{formatCurrency(doc.discount)}</td>
@@ -405,7 +412,7 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                     {/* Page 1 Footer */}
                     <div className="mt-6 pt-3 border-t-2 border-gray-300 flex items-center justify-between text-xs font-calibri">
                         <span className="font-semibold text-gray-700">GLX INDUSTRIES (PVT) LTD — Kotugoda, Ja-Ela, Sri Lanka</span>
-                        <span className="font-bold text-gray-800 tracking-wider">PAGE 1 / 2</span>
+                        <span className="font-bold text-gray-800 tracking-wider">{useSinhalaLanguage ? 'පිටුව 1 / 2' : 'PAGE 1 / 2'}</span>
                     </div>
                 </div>
 
@@ -417,19 +424,19 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                         <table className="w-full text-xs text-left border-collapse">
                             <thead className="bg-gray-800 text-white uppercase text-[10px] tracking-wider">
                                 <tr>
-                                    <th className="py-2.5 px-3 border-r border-gray-600">Description</th>
-                                    <th className="py-2.5 px-3 text-right w-28 border-r border-gray-600">Rate</th>
-                                    <th className="py-2.5 px-3 text-center w-16 border-r border-gray-600">Qty</th>
-                                    <th className="py-2.5 px-3 text-right w-32">Amount</th>
+                                    <th className="py-2.5 px-3 border-r border-gray-600">{useSinhalaLanguage ? 'විස්තරය' : 'Description'}</th>
+                                    <th className="py-2.5 px-3 text-right w-28 border-r border-gray-600">{useSinhalaLanguage ? 'අනුපාතය' : 'Rate'}</th>
+                                    <th className="py-2.5 px-3 text-center w-16 border-r border-gray-600">{useSinhalaLanguage ? 'ප්‍රමාණය' : 'Qty'}</th>
+                                    <th className="py-2.5 px-3 text-right w-32">{useSinhalaLanguage ? 'මුදල' : 'Amount'}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 bg-white font-calibri">
                                 {/* Bank Details Row */}
                                 <tr className="bank-details avoid-break border-b border-gray-200">
                                     <td className="py-4 px-3 text-gray-800 font-semibold leading-relaxed border-r border-gray-300">
-                                        <div className="font-bold text-gray-900 text-sm mb-1 uppercase">Bank Details for Payments:</div>
-                                        Account Name : GLX Truck Body Engineers<br />
-                                        Number : 100600002717<br />
+                                        <div className="font-bold text-gray-900 text-sm mb-1 uppercase">{useSinhalaLanguage ? 'ගෙවීම් සඳහා බැංකු විස්තර:' : 'Bank Details for Payments:'}</div>
+                                        {useSinhalaLanguage ? 'ගිණුම් නම : GLX Truck Body Engineers' : 'Account Name : GLX Truck Body Engineers'}<br />
+                                        {useSinhalaLanguage ? 'අංකය : 100600002717' : 'Number : 100600002717'}<br />
                                         Nations Trust Bank<br />
                                         Ja-Ela Branch
                                     </td>
@@ -441,7 +448,7 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                                 {/* Special Discount Row in Red */}
                                 {doc.specialDiscount > 0 && (
                                     <tr className="text-red-600 font-bold avoid-break border-b border-gray-200">
-                                        <td className="py-3 px-3 uppercase text-sm border-r border-gray-300">Special Discount</td>
+                                        <td className="py-3 px-3 uppercase text-sm border-r border-gray-300">{useSinhalaLanguage ? 'විශේෂ වට්ටම්' : 'Special Discount'}</td>
                                         <td className="py-3 px-3 text-right font-mono text-sm border-r border-gray-300">-{formatCurrency(doc.specialDiscount)}</td>
                                         <td className="py-3 px-3 text-center text-sm border-r border-gray-300">1</td>
                                         <td className="py-3 px-3 text-right font-mono text-sm">-{formatCurrency(doc.specialDiscount)}</td>
@@ -454,38 +461,38 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                     {/* Totals Summary */}
                     <div className="avoid-break print-avoid-break flex justify-between items-start mb-6">
                         <div className="text-xs text-gray-600 leading-relaxed max-w-sm pt-2">
-                            <span className="font-bold text-gray-800">Remarks :</span> {doc.remarks || 'Please process payments directly to the designated Nations Trust Bank account.'}
+                            <span className="font-bold text-gray-800">{useSinhalaLanguage ? 'විශේෂ සටහන :' : 'Remarks :'}</span> {doc.remarks || (useSinhalaLanguage ? 'කරුණාකර ගෙවීම් සෘජුවම නියමිත Nations Trust Bank ගිණුමට සිදු කරන්න.' : 'Please process payments directly to the designated Nations Trust Bank account.')}
                         </div>
                         <div className="w-80 bg-gray-50 border border-gray-300 rounded p-3 text-xs space-y-1.5 font-calibri">
                             <div className="flex justify-between text-gray-700">
-                                <span>ITEMS SUB TOTAL:</span>
+                                <span>{useSinhalaLanguage ? 'භාණ්ඩ උප එකතුව:' : 'ITEMS SUB TOTAL:'}</span>
                                 <span className="font-mono">{formatCurrency(doc.subtotal || doc.totalAmount)}</span>
                             </div>
                             {doc.laborCost > 0 && (
                                 <div className="flex justify-between text-emerald-800 font-semibold">
-                                    <span>LABOR COST:</span>
+                                    <span>{useSinhalaLanguage ? 'ශ්‍රම වියදම:' : 'LABOR COST:'}</span>
                                     <span className="font-mono">+{formatCurrency(doc.laborCost)}</span>
                                 </div>
                             )}
                             {(doc.discount > 0 || doc.specialDiscount > 0) && (
                                 <div className="flex justify-between text-red-600 font-bold">
-                                    <span>DISCOUNT:</span>
+                                    <span>{useSinhalaLanguage ? 'වට්ටම්:' : 'DISCOUNT:'}</span>
                                     <span className="font-mono">-{formatCurrency((doc.discount || 0) + (doc.specialDiscount || 0))}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-400">
-                                <span>GRAND TOTAL:</span>
+                                <span>{useSinhalaLanguage ? 'මුළු එකතුව:' : 'GRAND TOTAL:'}</span>
                                 <span className="font-mono text-blue-900 border-b-4 border-double border-gray-900 pb-0.5">{formatCurrency(doc.grandTotal || doc.finalSellingPrice)}</span>
                             </div>
                             {(doc.advanceAmount > 0 || doc.amountPaid > 0) && (
                                 <div className="flex justify-between text-emerald-700 font-bold pt-1 border-t border-dashed">
-                                    <span>ADVANCE PAID:</span>
+                                    <span>{useSinhalaLanguage ? 'ඉදිරි ගෙවීම:' : 'ADVANCE PAID:'}</span>
                                     <span className="font-mono">-{formatCurrency(doc.advanceAmount || doc.amountPaid)}</span>
                                 </div>
                             )}
                             {(doc.balanceAmount !== undefined || doc.balanceDue !== undefined) && (
                                 <div className="flex justify-between text-amber-900 font-black pt-1 bg-amber-50 p-1 rounded border border-amber-200">
-                                    <span>BALANCE DUE:</span>
+                                    <span>{useSinhalaLanguage ? 'ඉතිරි මුදල:' : 'BALANCE DUE:'}</span>
                                     <span className="font-mono text-sm">{formatCurrency(doc.balanceAmount ?? doc.balanceDue ?? ((doc.grandTotal || 0) - (doc.advanceAmount || doc.amountPaid || 0)))}</span>
                                 </div>
                             )}
@@ -495,20 +502,20 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                     {/* Payment & Warranty Terms */}
                     <div className="avoid-break bank-details mb-6 grid grid-cols-2 gap-6 text-xs text-gray-700 font-calibri">
                         <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                            <p className="font-bold text-gray-900 uppercase mb-2">Condition of Payments:</p>
+                            <p className="font-bold text-gray-900 uppercase mb-2">{useSinhalaLanguage ? 'ගෙවීම් කොන්දේසි:' : 'Condition of Payments:'}</p>
                             <ul className="space-y-1 text-gray-700">
-                                <li><span className="font-semibold">a). 70%</span> Advance Payment with the firm Order.</li>
-                                <li><span className="font-semibold">b). Balance Payment</span> on Completion of Work.</li>
-                                <li className="pt-2"><span className="font-semibold">Completion of Work :</span> 18 to 26 working Days after the Order Confirmation.</li>
+                                <li><span className="font-semibold">a). 70%</span> {useSinhalaLanguage ? 'අනුපාතය සමඟ ඉදිරි ගෙවීම' : 'Advance Payment with the firm Order'}.</li>
+                                <li><span className="font-semibold">b). {useSinhalaLanguage ? 'ඉතිරි ගෙවීම' : 'Balance Payment'}</span> {useSinhalaLanguage ? 'කටයුතු අවසන් වූ පසු' : 'on Completion of Work'}.</li>
+                                <li className="pt-2"><span className="font-semibold">{useSinhalaLanguage ? 'කටයුතු අවසන් වීම :' : 'Completion of Work :'}</span> 18 to 26 {useSinhalaLanguage ? 'වැඩ දින' : 'working Days'} {useSinhalaLanguage ? 'අනුපාතය තහවුරු වූ පසු' : 'after the Order Confirmation'}.</li>
                             </ul>
                         </div>
 
                         <div className="bg-gray-50 p-4 rounded border border-gray-200 space-y-2">
-                            <p><span className="font-bold text-gray-900 uppercase">Validity (Quotation) :</span> 30 Working Days From the Issued Date.</p>
-                            <p><span className="font-bold text-gray-900 uppercase">Warranty :</span></p>
+                            <p><span className="font-bold text-gray-900 uppercase">{useSinhalaLanguage ? 'වලංගුභාවය (උපස්ථ ලේඛනය) :' : 'Validity (Quotation) :'}</span> 30 {useSinhalaLanguage ? 'වැඩ දින' : 'Working Days'} {useSinhalaLanguage ? 'නිකුත් කළ දිනයේ සිට' : 'From the Issued Date'}.</p>
+                            <p><span className="font-bold text-gray-900 uppercase">{useSinhalaLanguage ? 'වගකීම :' : 'Warranty :'}</span></p>
                             <ul className="list-alpha list-inside pl-1 text-gray-700 space-y-0.5">
-                                <li>a). Please See the Description.</li>
-                                <li>b). Warranty Will be Issued with the Invoice.</li>
+                                <li>a). {useSinhalaLanguage ? 'විස්තරය බලන්න' : 'Please See the Description'}.</li>
+                                <li>b). {useSinhalaLanguage ? 'වගකීම ගෙවීම් ලේඛනය සමඟ නිකුත් කරනු ඇත' : 'Warranty Will be Issued with the Invoice'}.</li>
                             </ul>
                         </div>
                     </div>
@@ -518,26 +525,26 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                         <div className="flex justify-between items-end text-xs mb-4">
                             <div className="space-y-3">
                                 <div className="text-left font-mono text-[10px] text-gray-500">
-                                    Printed at: {new Date().toLocaleString('en-GB')}
+                                    {useSinhalaLanguage ? 'මුද්‍රණය කළ:' : 'Printed at:'} {new Date().toLocaleString('en-GB')}
                                 </div>
                                 <div className="text-center w-56">
                                     <div className="border-b border-gray-800 mb-1.5 h-10"></div>
-                                    <p className="font-bold text-gray-900 uppercase">Yours Faithfully,</p>
+                                    <p className="font-bold text-gray-900 uppercase">{useSinhalaLanguage ? 'ඔබේ විශ්වාසවන්තයා,' : 'Yours Faithfully,'}</p>
                                     <p className="font-bold text-gray-900 uppercase text-[10px]">GLX INDUSTRIES - Ja Ela</p>
-                                    <p className="text-gray-600 text-[10px]">Authorized Person</p>
+                                    <p className="text-gray-600 text-[10px]">{useSinhalaLanguage ? 'අධිකාරී පුද්ගලයා' : 'Authorized Person'}</p>
                                 </div>
                             </div>
 
                             {/* QR Code */}
                             <div className="flex flex-col items-center justify-center p-2 bg-white border border-gray-200 rounded shadow-sm">
                                 <QRCodeSVG value={qrString} size={90} level="M" />
-                                <p className="text-[9px] font-bold text-gray-700 mt-2 uppercase tracking-wide">Scan to Verify</p>
+                                <p className="text-[9px] font-bold text-gray-700 mt-2 uppercase tracking-wide">{useSinhalaLanguage ? 'සත්‍යාපනය සඳහා ස්කෑන් කරන්න' : 'Scan to Verify'}</p>
                                 <p className="text-[8px] text-gray-400 font-mono mt-0.5">{docNumber}</p>
                             </div>
                         </div>
                         <div className="flex items-center justify-between border-t-2 border-gray-300 pt-3 pb-1 text-xs font-calibri">
                             <span className="font-semibold text-gray-700">GLX INDUSTRIES (PVT) LTD — Kotugoda, Ja-Ela, Sri Lanka</span>
-                            <span className="font-bold text-gray-800 tracking-wider">PAGE 2 / 2</span>
+                            <span className="font-bold text-gray-800 tracking-wider">{useSinhalaLanguage ? 'පිටුව 2 / 2' : 'PAGE 2 / 2'}</span>
                         </div>
                     </div>
 
@@ -556,25 +563,25 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
             <div className="quotation-card avoid-break print-avoid-break grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md border border-gray-200 mb-6 text-xs font-calibri">
                 <div className="space-y-1">
                     {doc.insuranceCompany && (
-                        <p><span className="font-semibold text-gray-700">Insurance Company:</span> {doc.insuranceCompany}</p>
+                        <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'රක්ෂක සමාගම:' : 'Insurance Company:'}</span> {doc.insuranceCompany}</p>
                     )}
-                    <p><span className="font-semibold text-gray-700">Customer Name:</span> <strong className="text-gray-900">{customerName}</strong></p>
+                    <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'පාරිභෝගික නම:' : 'Customer Name:'}</span> <strong className="text-gray-900">{customerName}</strong></p>
                     {contactPhone && (
-                        <p><span className="font-semibold text-gray-700">Contact Number:</span> {contactPhone}</p>
+                        <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'සබඳතා අංකය:' : 'Contact Number:'}</span> {contactPhone}</p>
                     )}
                     {doc.vehicleNo && (
-                        <p><span className="font-semibold text-gray-700">Vehicle No:</span> <strong className="text-blue-700 font-mono text-sm">{doc.vehicleNo}</strong></p>
+                        <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'වාහන අංකය:' : 'Vehicle No:'}</span> <strong className="text-blue-700 font-mono text-sm">{doc.vehicleNo}</strong></p>
                     )}
                     {doc.vehicleModel && (
-                        <p><span className="font-semibold text-gray-700">Vehicle Model:</span> {doc.vehicleModel}</p>
+                        <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'වාහන මොඩල්:' : 'Vehicle Model:'}</span> {doc.vehicleModel}</p>
                     )}
                 </div>
 
                 <div className="space-y-1 text-right">
-                    <p><span className="font-semibold text-gray-700">{docTitle} No:</span> <span className="font-mono font-bold">{docNumber}</span></p>
-                    <p><span className="font-semibold text-gray-700">Sales Rep:</span> <strong className="text-gray-900">{doc.salesRep || 'Asanka'}</strong></p>
-                    <p><span className="font-semibold text-gray-700">Branch:</span> {doc.branch || 'JA-ELA'}</p>
-                    <p><span className="font-semibold text-gray-700">Date:</span> {dateDisplay}</p>
+                    <p><span className="font-semibold text-gray-700">{docTitle} {useSinhalaLanguage ? 'අංකය:' : 'No:'}</span> <span className="font-mono font-bold">{docNumber}</span></p>
+                    <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'විකිණුම් නියෝජිත:' : 'Sales Rep:'}</span> <strong className="text-gray-900">{doc.salesRep || 'Asanka'}</strong></p>
+                    <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'ශාඛා:' : 'Branch:'}</span> {doc.branch || 'JA-ELA'}</p>
+                    <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'දිනය:' : 'Date:'}</span> {dateDisplay}</p>
                 </div>
             </div>
 
@@ -584,15 +591,15 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                     <thead className="bg-gray-800 text-white uppercase text-[10px] tracking-wider">
                         <tr>
                             <th className="py-2.5 px-3 w-8 text-center border-r border-gray-600">#</th>
-                            <th className="py-2.5 px-3 border-r border-gray-600">Description</th>
-                            <th className="py-2.5 px-3 text-right w-28 border-r border-gray-600">Rate</th>
-                            <th className="py-2.5 px-3 text-center w-16 border-r border-gray-600">Qty</th>
-                            <th className="py-2.5 px-3 text-right w-32">Amount</th>
+                            <th className="py-2.5 px-3 border-r border-gray-600">{useSinhalaLanguage ? 'විස්තරය' : 'Description'}</th>
+                            <th className="py-2.5 px-3 text-right w-28 border-r border-gray-600">{useSinhalaLanguage ? 'අනුපාතය' : 'Rate'}</th>
+                            <th className="py-2.5 px-3 text-center w-16 border-r border-gray-600">{useSinhalaLanguage ? 'ප්‍රමාණය' : 'Qty'}</th>
+                            <th className="py-2.5 px-3 text-right w-32">{useSinhalaLanguage ? 'මුදල' : 'Amount'}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white font-calibri">
                         {(doc.items || []).map((item, idx) => {
-                            const desc = item.productName || item.description || 'Line item';
+                            const desc = useSinhalaLanguage ? (item.productTranslation || item.productName || item.description || 'Line item') : (item.productName || item.description || 'Line item');
                             const qty = item.quantity || 1;
                             const unitPrice = item.unitPrice || item.rate || 0;
                             const lineTotal = item.lineTotal || (qty * unitPrice);
@@ -602,10 +609,10 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo }, ref) => {
                                     <td className="py-2.5 px-3 text-center font-medium text-gray-500 border-r border-gray-300">{idx + 1}</td>
                                     <td className="py-2.5 px-3 font-semibold text-gray-800 border-r border-gray-300">
                                         <div>{desc}</div>
-                                        {item.description && item.description !== desc && (
+                                        {!useSinhalaLanguage && item.description && item.description !== desc && (
                                             <div className="text-[11px] text-gray-600 font-normal mt-0.5 whitespace-pre-wrap">{item.description}</div>
                                         )}
-                                        {item.productTranslation && (
+                                        {!useSinhalaLanguage && item.productTranslation && (
                                             <div className="text-[11px] text-gray-500 font-normal italic mt-0.5">{item.productTranslation}</div>
                                         )}
                                         {item.notes && <div className="text-[10px] text-gray-400 italic mt-0.5">{item.notes}</div>}
