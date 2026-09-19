@@ -4,11 +4,9 @@ const importHistorySchema = new mongoose.Schema({
     fileName: { type: String, required: false },
     importType: { 
         type: String, 
-        type: String, 
         required: false 
     },
     status: { 
-        type: String, 
         type: String, 
         default: 'pending' 
     },
@@ -23,6 +21,6 @@ const importHistorySchema = new mongoose.Schema({
     filePath: String,
     performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     completedAt: Date,
-}, { timestamps: true });
+}, { timestamps: true, suppressReservedKeysWarning: true });
 
 export default mongoose.model('ImportHistory', importHistorySchema);

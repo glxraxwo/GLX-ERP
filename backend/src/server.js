@@ -98,6 +98,9 @@ connectDB().then(async () => {
 
 const app = express();
 
+// Trust reverse proxy (needed for hosting environments behind Nginx / Cloudflare / cPanel / Netlify / Render)
+app.set('trust proxy', 1);
+
 // Security & parsing middleware
 app.use(helmet());
 app.use(cors({
