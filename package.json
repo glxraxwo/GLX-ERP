@@ -12,10 +12,8 @@
     "start": "node backend/src/server.js",
     "dev-backend": "npm run dev --prefix backend",
     "dev-frontend": "npm run dev --prefix frontend",
-    "dev-showcase": "npm run dev --prefix showcase-web",
-    "dev:system": "concurrently -n \"BACKEND,ERP-SYSTEM\" -c \"blue,green\" \"npm run dev-backend\" \"npm run dev-frontend\"",
-    "dev:all": "concurrently -n \"BACKEND,SHOWCASE-WEB\" -c \"blue,yellow\" \"npm run dev-backend\" \"npm run dev-showcase\"",
-    "dev": "npm run dev-showcase"
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"blue,green\" \"npm run dev-backend\" \"npm run dev-frontend\"",
+    "dev:system": "concurrently -n \"BACKEND,FRONTEND\" -c \"blue,green\" \"npm run dev-backend\" \"npm run dev-frontend\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
