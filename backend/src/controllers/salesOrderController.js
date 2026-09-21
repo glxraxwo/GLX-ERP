@@ -182,22 +182,22 @@ export const createSalesOrder = asyncHandler(async (req, res) => {
             const allowNegative = targetWarehouse.settings?.allowNegativeStock || false;
 
             for (const item of order.items) {
-                const stockItem = await StockItem.findOne({
+                const stockItems = await StockItem.find({
                     productId: item.productId,
                     warehouseId,
-                    batchNumber: null,
                 });
+                const totalOpenStock = stockItems.reduce((sum, s) => sum + (s.quantities?.openStock || 0), 0);
 
                 if (!allowNegative) {
-                    if (!stockItem) {
+                    if (stockItems.length === 0) {
                         throw new Error(
                             `No stock record found for "${item.productName}" in the selected warehouse. Please enter opening stock first.`
                         );
                     }
 
-                    if (stockItem.quantities.openStock < item.orderedQuantity) {
+                    if (totalOpenStock < item.orderedQuantity) {
                         throw new Error(
-                            `Insufficient stock for "${item.productName}". Open stock: ${stockItem.quantities.openStock}, ordered: ${item.orderedQuantity}`
+                            `Insufficient stock for "${item.productName}". Open stock: ${totalOpenStock}, ordered: ${item.orderedQuantity}`
                         );
                     }
                 }
@@ -628,22 +628,22 @@ export const changeSalesOrderStatus = asyncHandler(async (req, res) => {
             if (status === 'approved' && order.status !== 'approved') {
                 for (const item of order.items) {
                     // Check that stock exists and is sufficient
-                    const stockItem = await StockItem.findOne({
+                    const stockItems = await StockItem.find({
                         productId: item.productId,
                         warehouseId,
-                        batchNumber: null,
                     });
+                    const totalOpenStock = stockItems.reduce((sum, s) => sum + (s.quantities?.openStock || 0), 0);
 
                     if (!allowNegative) {
-                        if (!stockItem) {
+                        if (stockItems.length === 0) {
                             throw new Error(
                                 `No stock record found for "${item.productName}" in the selected warehouse. Please enter opening stock first.`
                             );
                         }
 
-                        if (stockItem.quantities.openStock < item.orderedQuantity) {
+                        if (totalOpenStock < item.orderedQuantity) {
                             throw new Error(
-                                `Insufficient stock for "${item.productName}". Open stock: ${stockItem.quantities.openStock}, ordered: ${item.orderedQuantity}`
+                                `Insufficient stock for "${item.productName}". Open stock: ${totalOpenStock}, ordered: ${item.orderedQuantity}`
                             );
                         }
                     }

@@ -370,9 +370,12 @@ export const reserveStock = async ({
     productId, warehouseId, quantity,
     sourceDocument, userId,
 }) => {
-    const stockItem = await StockItem.findOne({
-        productId, warehouseId, batchNumber: null,
+    let stockItem = await StockItem.findOne({
+        productId, warehouseId, batchNumber: { $in: [null, ''] },
     });
+    if (!stockItem) {
+        stockItem = await StockItem.findOne({ productId, warehouseId });
+    }
 
     if (!stockItem) throw new Error(`No stock found for product in selected warehouse`);
 
@@ -481,11 +484,12 @@ export const fulfillReservations = async ({
  * Get available stock for a product at a warehouse.
  */
 export const getAvailableStock = async (productId, warehouseId) => {
-    const item = await StockItem.findOne({ productId, warehouseId, batchNumber: null });
-    if (!item) return { onHand: 0, reserved: 0, available: 0 };
+    const items = await StockItem.find({ productId, warehouseId });
+    const onHand = items.reduce((s, i) => s + (i.quantities?.onHand || 0), 0);
+    const reserved = items.reduce((s, i) => s + (i.quantities?.reserved || 0), 0);
     return {
-        onHand: item.quantities.onHand,
-        reserved: item.quantities.reserved,
-        available: item.quantities.onHand - item.quantities.reserved,
+        onHand,
+        reserved,
+        available: Math.max(0, onHand - reserved),
     };
 };

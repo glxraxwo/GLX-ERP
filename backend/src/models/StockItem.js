@@ -52,6 +52,10 @@ stockItemSchema.index({ expiryDate: 1 });
 
 // Keep available in sync before save
 stockItemSchema.pre('save', function () {
+    if (this.batchNumber !== undefined && (this.batchNumber === '' || (typeof this.batchNumber === 'string' && !this.batchNumber.trim()))) {
+        this.batchNumber = null;
+    }
+
     // If openStock and balanceStock are both 0 but onHand is positive (legacy items),
     // default openStock to onHand to prevent zero stock on legacy products.
     if (!this.quantities.openStock && !this.quantities.balanceStock && this.quantities.onHand > 0) {

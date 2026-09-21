@@ -822,7 +822,7 @@ export const updateStockItem = asyncHandler(async (req, res) => {
         throw new Error('Stock item not found');
     }
 
-    if (batchNumber !== undefined) stockItem.batchNumber = batchNumber;
+    if (batchNumber !== undefined) stockItem.batchNumber = batchNumber ? batchNumber.trim() : null;
     if (manufactureDate !== undefined) stockItem.manufactureDate = manufactureDate;
     if (expiryDate !== undefined) stockItem.expiryDate = expiryDate;
     
