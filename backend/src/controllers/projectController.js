@@ -20,8 +20,13 @@ export const recalculateProjectFinancials = async (projectId) => {
     }
     project.materialCost = +materialCost.toFixed(2);
 
-    // 2. Calculate other expenses linked to this project
-    const expenses = await Expense.find({ projectId: project._id, paymentStatus: 'Paid', deletedAt: null });
+    // 2. Calculate other expenses linked to this project (excluding materials already tracked in materialCost)
+    const expenses = await Expense.find({
+        projectId: project._id,
+        paymentStatus: 'Paid',
+        deletedAt: null,
+        category: { $ne: 'Raw Materials' },
+    });
     const otherExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
     project.otherExpenses = +otherExpenses.toFixed(2);
 

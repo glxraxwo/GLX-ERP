@@ -329,9 +329,14 @@ export const createSalesOrder = asyncHandler(async (req, res) => {
                     });
                     await expense.save();
 
-                    // 3. Recalculate project otherExpenses
-                    const allProjectExpenses = await Expense.find({ projectId: project._id, paymentStatus: 'Paid' });
+                    // 3. Recalculate project otherExpenses (excluding raw materials already counted in materialCost)
+                    const allProjectExpenses = await Expense.find({
+                        projectId: project._id,
+                        paymentStatus: 'Paid',
+                        category: { $ne: 'Raw Materials' }
+                    });
                     project.otherExpenses = allProjectExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+                    project.netProfit = +(project.quotedPrice - project.materialCost - (project.laborCost || 0) - project.otherExpenses).toFixed(2);
                     await project.save();
                 }
             }
