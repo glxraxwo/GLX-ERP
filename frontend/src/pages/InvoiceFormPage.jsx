@@ -63,9 +63,8 @@ export default function InvoiceFormPage() {
     const customerOptions = (customersData?.data || []).map((c) => ({
         value: c._id, label: `${c.displayName} (${c.customerCode})`,
     }));
-    const NON_SELLABLE_TYPES = ['raw_material', 'packaging', 'consumable', 'service'];
     const productOptions = (productsData?.data || [])
-        .filter((p) => p.canBeSold !== false && !NON_SELLABLE_TYPES.includes(p.productType))
+        .filter((p) => p.canBeSold !== false)
         .map((p) => ({
             value: p._id, label: `${p.name} — ${p.productCode}`,
         }));

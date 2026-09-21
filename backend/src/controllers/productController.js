@@ -13,10 +13,10 @@ export const createProduct = asyncHandler(async (req, res) => {
     });
 
     // Handle initial stock quantity if passed
-    if (req.body.initialQuantity !== undefined && Number(req.body.initialQuantity) >= 0) {
+    if (req.body.initialQuantity !== undefined && Number(req.body.initialQuantity) > 0) {
         try {
-            const StockItem = (await import('../models/StockItem.js')).default;
             const Warehouse = (await import('../models/Warehouse.js')).default;
+            const { increaseStock } = await import('../services/stockService.js');
             
             let warehouseId = req.body.warehouseId;
             if (!warehouseId) {
@@ -27,20 +27,15 @@ export const createProduct = asyncHandler(async (req, res) => {
             }
             
             if (warehouseId) {
-                await StockItem.create({
+                await increaseStock({
                     productId: product._id,
-                    productCode: product.productCode,
-                    productName: product.name,
                     warehouseId,
-                    quantities: {
-                        onHand: Number(req.body.initialQuantity),
-                        openStock: Number(req.body.initialQuantity),
-                        available: Number(req.body.initialQuantity)
-                    },
-                    unitOfMeasure: product.unitOfMeasure || 'pcs',
-                    costPerUnit: req.body.costs?.standardCost || 0,
-                    totalValue: Number(req.body.initialQuantity) * (req.body.costs?.standardCost || 0),
-                    lastMovementDate: new Date()
+                    quantity: Number(req.body.initialQuantity),
+                    costPerUnit: req.body.costs?.standardCost || product.basePrice || 0,
+                    movementType: 'opening_stock',
+                    sourceDocument: { type: 'opening_stock', number: 'INITIAL' },
+                    reason: 'Initial stock on product creation',
+                    userId: req.user._id,
                 });
             }
         } catch (err) {
@@ -129,13 +124,39 @@ export const getProducts = asyncHandler(async (req, res) => {
         Product.countDocuments(filter),
     ]);
 
+    // Aggregate stock items for returned products
+    const StockItem = (await import('../models/StockItem.js')).default;
+    const productIds = products.map((p) => p._id);
+    const stockAgg = await StockItem.aggregate([
+        { $match: { productId: { $in: productIds } } },
+        {
+            $group: {
+                _id: '$productId',
+                onHand: { $sum: '$quantities.onHand' },
+                openStock: { $sum: '$quantities.openStock' },
+                reserved: { $sum: '$quantities.reserved' },
+                available: { $sum: '$quantities.available' },
+            },
+        },
+    ]);
+    const stockMap = {};
+    stockAgg.forEach((s) => {
+        stockMap[s._id.toString()] = s;
+    });
+
+    const data = products.map((p) => {
+        const obj = p.toObject();
+        obj.stock = stockMap[p._id.toString()] || { onHand: 0, openStock: 0, reserved: 0, available: 0 };
+        return obj;
+    });
+
     res.json({
         success: true,
-        count: products.length,
+        count: data.length,
         total,
         page: Number(page),
         totalPages: Math.ceil(total / Number(limit)),
-        data: products,
+        data,
     });
 });
 

@@ -56,6 +56,8 @@ export default function ProductsPage() {
         { header: 'SKU', dataKey: 'sku' },
         { header: 'Category', dataKey: 'categoryName' },
         { header: 'Brand', dataKey: 'brandName' },
+        { header: 'On Hand Stock', dataKey: 'onHandStock' },
+        { header: 'Open (POS) Stock', dataKey: 'openStock' },
         { header: 'Price', dataKey: 'basePrice' },
         { header: 'Status', dataKey: 'status' },
     ];
@@ -72,6 +74,8 @@ export default function ProductsPage() {
         ...p,
         categoryName: p.categoryId?.name || '—',
         brandName: p.brandId?.name || '—',
+        onHandStock: p.stock?.onHand ?? 0,
+        openStock: p.stock?.openStock ?? 0,
     }));
 
     const categoryOptions = (categoriesData?.data || []).map((c) => ({
@@ -116,6 +120,31 @@ export default function ProductsPage() {
             key: 'brandId',
             label: 'Brand',
             render: (row) => row.brandId?.name || '—',
+        },
+        {
+            key: 'stock',
+            label: 'Stock',
+            render: (row) => {
+                const onHand = row.stock?.onHand ?? 0;
+                const open = row.stock?.openStock ?? 0;
+                return (
+                    <div>
+                        <span className={`font-semibold text-sm ${onHand > 0 ? 'text-gray-900' : 'text-gray-400'}`}>
+                            {onHand} {row.unitOfMeasure || ''}
+                        </span>
+                        {open > 0 && (
+                            <span className="block text-[11px] text-emerald-600 font-medium">
+                                {open} in POS
+                            </span>
+                        )}
+                        {onHand === 0 && (
+                            <span className="block text-[11px] text-red-500 font-medium">
+                                Out of stock
+                            </span>
+                        )}
+                    </div>
+                );
+            },
         },
         {
             key: 'basePrice',

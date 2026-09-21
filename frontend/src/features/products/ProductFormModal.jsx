@@ -174,7 +174,7 @@ export default function ProductFormModal({ isOpen, onClose, product = null, forc
             sku: data.sku || undefined,
             barcode: data.barcode || undefined,
             productType: forceProductType || data.productType,
-            canBeSold: forceProductType === 'raw_material' ? false : data.canBeSold,
+            canBeSold: data.canBeSold !== undefined ? Boolean(data.canBeSold) : (forceProductType === 'raw_material' ? false : true),
             canBePurchased: data.canBePurchased,
             canBeManufactured: data.canBeManufactured,
             description: data.description || undefined,

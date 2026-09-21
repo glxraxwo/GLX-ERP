@@ -118,10 +118,9 @@ export default function PosPage() {
     const activeWarehouse = warehouses.find((w) => w._id === sourceWarehouseId);
     const allowNegative = activeWarehouse?.settings?.allowNegativeStock || false;
 
-    // Only show sellable, non-raw-material products in POS
-    const NON_SELLABLE_TYPES = ['raw_material', 'packaging', 'consumable', 'service'];
+    // Show all sellable products in POS (exclude only services which are non-tangible/non-inventory)
     const products = (productsData?.data || [])
-        .filter((p) => p.canBeSold !== false && !NON_SELLABLE_TYPES.includes(p.productType))
+        .filter((p) => p.canBeSold !== false && p.productType !== 'service')
         .filter((product, index, self) =>
             index === self.findIndex((p) => p._id === product._id)
         );
