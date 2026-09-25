@@ -1,0 +1,1388 @@
+﻿[
+    {
+        "ref":  41,
+        "itcode":  1040,
+        "itname":  "Designed Works \n",
+        "uom":  "Pcs",
+        "cat":  "Labour",
+        "cost":  "1500.00",
+        "sale":  "1500.00"
+    },
+    {
+        "ref":  42,
+        "itcode":  1041,
+        "itname":  "REPAIR Works\n",
+        "uom":  "Pcs",
+        "cat":  "Labour",
+        "cost":  "1500.00",
+        "sale":  "1500.00"
+    },
+    {
+        "ref":  43,
+        "itcode":  1042,
+        "itname":  "Paint Works\n",
+        "uom":  "Pcs",
+        "cat":  "Labour",
+        "cost":  "1500.00",
+        "sale":  "1500.00"
+    },
+    {
+        "ref":  4,
+        "itcode":  1003,
+        "itname":  "Discount\n",
+        "uom":  "",
+        "cat":  "Discount",
+        "cost":  "-30000.00",
+        "sale":  "-30000.00"
+    },
+    {
+        "ref":  44,
+        "itcode":  1043,
+        "itname":  "Sticker Branding \n",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "1500.00",
+        "sale":  "1500.00"
+    },
+    {
+        "ref":  46,
+        "itcode":  1045,
+        "itname":  "Labour Charges\n",
+        "uom":  "",
+        "cat":  "Labour",
+        "cost":  "1500.00",
+        "sale":  "1500.00"
+    },
+    {
+        "ref":  47,
+        "itcode":  1046,
+        "itname":  "Extension Lorry Body 7 to 10 Feet",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "49000.00",
+        "sale":  "49000.00"
+    },
+    {
+        "ref":  49,
+        "itcode":  1048,
+        "itname":  "Extension Chassis ",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "9500.00",
+        "sale":  "9500.00"
+    },
+    {
+        "ref":  50,
+        "itcode":  1049,
+        "itname":  "Door Lock Set (Taiwan)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "5000.00",
+        "sale":  "15000.00"
+    },
+    {
+        "ref":  52,
+        "itcode":  1051,
+        "itname":  "Door Lock Set (Lanka)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "5000.00",
+        "sale":  "16500.00"
+    },
+    {
+        "ref":  55,
+        "itcode":  1054,
+        "itname":  "Door Beading (18mm)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "115.00",
+        "sale":  "350.00"
+    },
+    {
+        "ref":  56,
+        "itcode":  1055,
+        "itname":  "Door Beading (24mm)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "135.00",
+        "sale":  "375.00"
+    },
+    {
+        "ref":  58,
+        "itcode":  1057,
+        "itname":  "Freezer Unit ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "65000.00",
+        "sale":  "95000.00"
+    },
+    {
+        "ref":  59,
+        "itcode":  1058,
+        "itname":  "Silicone Glue",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "560.00",
+        "sale":  "750.00"
+    },
+    {
+        "ref":  60,
+        "itcode":  1059,
+        "itname":  "Body Sealant (wurth)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "1950.00",
+        "sale":  "2950.00"
+    },
+    {
+        "ref":  63,
+        "itcode":  1062,
+        "itname":  "Japan Rivet ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "10.00",
+        "sale":  "50.00"
+    },
+    {
+        "ref":  64,
+        "itcode":  1063,
+        "itname":  "A/B GLUE",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "1950.00",
+        "sale":  "4950.00"
+    },
+    {
+        "ref":  70,
+        "itcode":  1069,
+        "itname":  "+ Lorry Body Installation  ",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "10000.00",
+        "sale":  "35000.00"
+    },
+    {
+        "ref":  71,
+        "itcode":  1070,
+        "itname":  "+ Corner Cap (Lanka)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "1000.00",
+        "sale":  "3500.00"
+    },
+    {
+        "ref":  74,
+        "itcode":  1073,
+        "itname":  "+ McFoil Heat Resistant",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "3000.00",
+        "sale":  "6000.00"
+    },
+    {
+        "ref":  75,
+        "itcode":  1074,
+        "itname":  "+ VHB Tape",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "6500.00",
+        "sale":  "13500.00"
+    },
+    {
+        "ref":  83,
+        "itcode":  1082,
+        "itname":  "Set Bar Boarder",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "1000.00",
+        "sale":  "3500.00"
+    },
+    {
+        "ref":  84,
+        "itcode":  1083,
+        "itname":  "Door Frame Rear",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "10000.00",
+        "sale":  "20000.00"
+    },
+    {
+        "ref":  88,
+        "itcode":  1087,
+        "itname":  "Side Gutter",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "500.00",
+        "sale":  "2000.00"
+    },
+    {
+        "ref":  89,
+        "itcode":  1088,
+        "itname":  "Mud Guard Set (Small)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "2500.00",
+        "sale":  "5500.00"
+    },
+    {
+        "ref":  90,
+        "itcode":  1089,
+        "itname":  "Mud Guard Set (Large)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "5000.00",
+        "sale":  "10000.00"
+    },
+    {
+        "ref":  34,
+        "itcode":  1033,
+        "itname":  "Electric Gate Lock with Remote",
+        "uom":  "Pcs",
+        "cat":  "Roller Gate",
+        "cost":  "7500.00",
+        "sale":  "12500.00"
+    },
+    {
+        "ref":  93,
+        "itcode":  1092,
+        "itname":  "Foot Board (Large)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "3500.00",
+        "sale":  "7500.00"
+    },
+    {
+        "ref":  94,
+        "itcode":  1093,
+        "itname":  "Foot Board (Extra Large)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "4500.00",
+        "sale":  "10000.00"
+    },
+    {
+        "ref":  95,
+        "itcode":  1094,
+        "itname":  "Light Guard  (Small)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "4500.00",
+        "sale":  "8500.00"
+    },
+    {
+        "ref":  97,
+        "itcode":  1096,
+        "itname":  "Side Guard (Small)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "2500.00",
+        "sale":  "5000.00"
+    },
+    {
+        "ref":  98,
+        "itcode":  1097,
+        "itname":  "Side Guard (Large)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "4500.00",
+        "sale":  "9500.00"
+    },
+    {
+        "ref":  40,
+        "itcode":  1039,
+        "itname":  "Door Eye\n(180 Degree)",
+        "uom":  "Pcs",
+        "cat":  "Roller Gate",
+        "cost":  "1000.00",
+        "sale":  "1500.00"
+    },
+    {
+        "ref":  99,
+        "itcode":  1098,
+        "itname":  "Side Guard (Extra Large)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "8500.00",
+        "sale":  "15000.00"
+    },
+    {
+        "ref":  102,
+        "itcode":  1101,
+        "itname":  "Plywood Works 12mm ",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "3250.00",
+        "sale":  "4850.00"
+    },
+    {
+        "ref":  103,
+        "itcode":  1102,
+        "itname":  "Aluminium Works 1.2mm (18G)",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "6000.00",
+        "sale":  "12000.00"
+    },
+    {
+        "ref":  105,
+        "itcode":  1104,
+        "itname":  "Aluminium Works Corrugated (Japan Ralli)",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "7000.00",
+        "sale":  "14500.00"
+    },
+    {
+        "ref":  113,
+        "itcode":  1112,
+        "itname":  "LORRY BODY 3 Wheel Japan Model White Box\n(With Bed Price/Taiwan Lock Set/4mm Composite White/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "80000.00",
+        "sale":  "120000.00"
+    },
+    {
+        "ref":  114,
+        "itcode":  1113,
+        "itname":  "LORRY BODY 6.25 feet Budget Box\n(With Bed Price/Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "65000.00",
+        "sale":  "95000.00"
+    },
+    {
+        "ref":  115,
+        "itcode":  1114,
+        "itname":  "LORRY BODY 6.25 feet Japan Model Aluminium Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/1.1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "80000.00",
+        "sale":  "120000.00"
+    },
+    {
+        "ref":  116,
+        "itcode":  1115,
+        "itname":  "LORRY BODY 6.25 feet Japan Model White Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "90000.00",
+        "sale":  "130000.00"
+    },
+    {
+        "ref":  118,
+        "itcode":  1117,
+        "itname":  "LORRY BODY 7.25 feet Budget Box\n(With Bed Price/Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "70000.00",
+        "sale":  "115000.00"
+    },
+    {
+        "ref":  120,
+        "itcode":  1119,
+        "itname":  "LORRY BODY 7.25 feet Japan Model White Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite White/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "105000.00",
+        "sale":  "145000.00"
+    },
+    {
+        "ref":  126,
+        "itcode":  1125,
+        "itname":  "LORRY BODY 9.25 feet Budget Box\n(With Bed Price/Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "115000.00",
+        "sale":  "155000.00"
+    },
+    {
+        "ref":  130,
+        "itcode":  1129,
+        "itname":  "LORRY BODY 10.5 feet Budget Box\n(Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "195000.00",
+        "sale":  "270000.00"
+    },
+    {
+        "ref":  135,
+        "itcode":  1134,
+        "itname":  "LORRY BODY 12.5 feet Japan Model White Box\n(Non Rivet/Taiwan Lock Set/4mm Composite White/9mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/3X1.5 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "240000.00",
+        "sale":  "340000.00"
+    },
+    {
+        "ref":  138,
+        "itcode":  1137,
+        "itname":  "LORRY BODY 14.5 feet Japan Model White Box\n(Non Rivet/Taiwan Lock Set/4mm Composite White/9mm Plywood/2.5mm Metal Plate/1.5X1.5 1.6mmBox Bar/4X2 2.5mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "325000.00",
+        "sale":  "425000.00"
+    },
+    {
+        "ref":  48,
+        "itcode":  1047,
+        "itname":  "Extension Lorry Body 12 to 16 Feet\n",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "85000.00",
+        "sale":  "85000.00"
+    },
+    {
+        "ref":  78,
+        "itcode":  1077,
+        "itname":  "Body Light (Taiwan)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "360.00",
+        "sale":  "1000.00"
+    },
+    {
+        "ref":  106,
+        "itcode":  1105,
+        "itname":  "Aluminium Works 2mm (14G)",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "12000.00",
+        "sale":  "17000.00"
+    },
+    {
+        "ref":  33,
+        "itcode":  1032,
+        "itname":  "Door Outer 2 Side Frame",
+        "uom":  "Sq Feet",
+        "cat":  "Tempered Glass",
+        "cost":  "7000.00",
+        "sale":  "11000.00"
+    },
+    {
+        "ref":  107,
+        "itcode":  1106,
+        "itname":  "Aluminium Checker  Plate Works 1.2mm (18G)",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "8000.00",
+        "sale":  "12000.00"
+    },
+    {
+        "ref":  119,
+        "itcode":  1118,
+        "itname":  "LORRY BODY 7.25 feet Japan Model Aluminium Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/1.1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "95000.00",
+        "sale":  "130000.00"
+    },
+    {
+        "ref":  123,
+        "itcode":  1122,
+        "itname":  "LORRY BODY 8.25 feet Japan Model Aluminium Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/1.1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "100000.00",
+        "sale":  "145000.00"
+    },
+    {
+        "ref":  124,
+        "itcode":  1123,
+        "itname":  "LORRY BODY 8.25 feet Japan Model White Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite White/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "110000.00",
+        "sale":  "160000.00"
+    },
+    {
+        "ref":  125,
+        "itcode":  1124,
+        "itname":  "LORRY BODY 8.25 feet Freezer Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite/1.5mm Aluminium/ 1.5mm Aluminium Checker  Plate /Rigifoam High Density/1.6mm Z Panel/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "210000.00",
+        "sale":  "310000.00"
+    },
+    {
+        "ref":  129,
+        "itcode":  1128,
+        "itname":  "LORRY BODY 9.25 feet   Freezer Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite/1.5mm Aluminium/ 1.5mm Aluminium Checker  Plate /Rigifoam High Density/1.6mm Z Panel/2X2 2mm Box Bar)\n",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "260000.00",
+        "sale":  "360000.00"
+    },
+    {
+        "ref":  139,
+        "itcode":  1138,
+        "itname":  "LORRY BODY 16.5 feet Japan Model Aluminium Box\n(Non Rivet/Taiwan Lock Set/1.5mm Aluminium/9mm Plywood/3mm Metal Plate/1.5x1.5 1.6mmBox Bar/4X2 2.5mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "335000.00",
+        "sale":  "445000.00"
+    },
+    {
+        "ref":  140,
+        "itcode":  1139,
+        "itname":  "LORRY BODY 18.5 feet Japan Model Aluminium Box\n(Non Rivet/Taiwan Lock Set/1.5mm Aluminium/9mm Plywood/9mm Metal Plate/1.5x1.5 1.6mmBox Bar/4X2 2.5mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "375000.00",
+        "sale":  "495000.00"
+    },
+    {
+        "ref":  141,
+        "itcode":  1140,
+        "itname":  "LORRY BODY 20 feet Japan Model Aluminium Box\n(Non Rivet/Taiwan Lock Set/1.5mm Aluminium/9mm Plywood/4mm Metal Plate/2x2 1.6mm Box Bar/4X2 3mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "435000.00",
+        "sale":  "545000.00"
+    },
+    {
+        "ref":  142,
+        "itcode":  1141,
+        "itname":  "LORRY BODY 22 feet Japan Model Aluminium Box\n(Non Rivet/Taiwan Lock Set/1.5mm Aluminium/12mm Plywood/4mm Metal Plate/2x2 1.6mm Box Bar/4X2 3mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "475000.00",
+        "sale":  "595000.00"
+    },
+    {
+        "ref":  144,
+        "itcode":  1143,
+        "itname":  "LANKA BED 6 feet Lorry ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "35000.00",
+        "sale":  "60000.00"
+    },
+    {
+        "ref":  148,
+        "itcode":  1147,
+        "itname":  "LANKA BED Mahindra Bolero 8 feet (1.6mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "48000.00",
+        "sale":  "78000.00"
+    },
+    {
+        "ref":  151,
+        "itcode":  1150,
+        "itname":  "LANKA BED Mahindra Bolero 7 feet (1.5mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "45000.00",
+        "sale":  "78000.00"
+    },
+    {
+        "ref":  156,
+        "itcode":  1155,
+        "itname":  "LANKA BED 9.5 feet (1.5mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "55000.00",
+        "sale":  "88000.00"
+    },
+    {
+        "ref":  158,
+        "itcode":  1157,
+        "itname":  "LANKA BED 12.5 feet (2mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "90000.00",
+        "sale":  "150000.00"
+    },
+    {
+        "ref":  160,
+        "itcode":  1159,
+        "itname":  "LANKA BED 16.5 feet (3mm MS \u0026 2mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "275000.00",
+        "sale":  "375000.00"
+    },
+    {
+        "ref":  161,
+        "itcode":  1160,
+        "itname":  "LANKA BED 18.5 feet (4mm MS \u0026 3mm MS)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "300000.00",
+        "sale":  "425000.00"
+    },
+    {
+        "ref":  162,
+        "itcode":  1161,
+        "itname":  "LANKA BED 20.5 feet (6mm MS \u0026 3mm MS)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "375000.00",
+        "sale":  "495000.00"
+    },
+    {
+        "ref":  168,
+        "itcode":  1167,
+        "itname":  "ORIGINAL BED TATA Batta  ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "50000.00",
+        "sale":  "75000.00"
+    },
+    {
+        "ref":  169,
+        "itcode":  1168,
+        "itname":  "ORIGINAL BED Mahindra Maxximo  ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "50000.00",
+        "sale":  "75000.00"
+    },
+    {
+        "ref":  170,
+        "itcode":  1169,
+        "itname":  "ORIGINAL BED Mahindra Bolero 7 feet ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "60000.00",
+        "sale":  "85000.00"
+    },
+    {
+        "ref":  172,
+        "itcode":  1171,
+        "itname":  "ORIGINAL BED 8.5 feet ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "60000.00",
+        "sale":  "85000.00"
+    },
+    {
+        "ref":  173,
+        "itcode":  1172,
+        "itname":  "ORIGINAL BED 9.5 feet ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "60000.00",
+        "sale":  "85000.00"
+    },
+    {
+        "ref":  174,
+        "itcode":  1173,
+        "itname":  "ORIGINAL BED 10.5 feet",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "65000.00",
+        "sale":  "95000.00"
+    },
+    {
+        "ref":  175,
+        "itcode":  1174,
+        "itname":  "ORIGINAL BED 12.5 feet",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "65000.00",
+        "sale":  "95000.00"
+    },
+    {
+        "ref":  177,
+        "itcode":  1176,
+        "itname":  "ORIGINAL BED 16.5 feet",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "85000.00",
+        "sale":  "145000.00"
+    },
+    {
+        "ref":  178,
+        "itcode":  1177,
+        "itname":  "ORIGINAL BED 18.5 feet",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "85000.00",
+        "sale":  "145000.00"
+    },
+    {
+        "ref":  179,
+        "itcode":  1178,
+        "itname":  "ORIGINAL BED 20.5 feet",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "125000.00",
+        "sale":  "295000.00"
+    },
+    {
+        "ref":  180,
+        "itcode":  1179,
+        "itname":  "DOOR Reconstruction (Small)\n(PVC Beading/ROBIN MDF Sheet/Zinc Alloy 0.35mm Sheet)\n",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "9000.00",
+        "sale":  "16000.00"
+    },
+    {
+        "ref":  181,
+        "itcode":  1180,
+        "itname":  "DOOR Reconstruction (Large)\n(PVC Beading/ROBIN MDF Sheet/Zinc Alloy 0.35mm  Sheet)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "12500.00",
+        "sale":  "19500.00"
+    },
+    {
+        "ref":  182,
+        "itcode":  1181,
+        "itname":  "DOOR Reconstruction (Extra Large)\n(PVC Beading/ROBIN MDF Sheet/Zinc Alloy 0.35mm  Sheet)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "14000.00",
+        "sale":  "22500.00"
+    },
+    {
+        "ref":  183,
+        "itcode":  1182,
+        "itname":  "DOOR Reconstruction (Shutter Board)\n(PVC Beading/MACBOOK Shutter Board/Zinc Alloy 0.35mm  Sheet)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "18000.00",
+        "sale":  "30000.00"
+    },
+    {
+        "ref":  45,
+        "itcode":  1044,
+        "itname":  "Labour Charges\n",
+        "uom":  "Pcs",
+        "cat":  "Labour",
+        "cost":  "1500.00",
+        "sale":  "1500.00"
+    },
+    {
+        "ref":  136,
+        "itcode":  1135,
+        "itname":  "LORRY BODY 14.5 feet Budget Box\n(Lanka Lock Set/1.1mm Aluminium/9mm Plywood/2.5mm Metal Plate/1.5X1.5 1.4mmBox Bar/4X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "275000.00",
+        "sale":  "375000.00"
+    },
+    {
+        "ref":  147,
+        "itcode":  1146,
+        "itname":  "LANKA BED Mahindra Bolero 7 feet (1.2mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "38000.00",
+        "sale":  "68000.00"
+    },
+    {
+        "ref":  157,
+        "itcode":  1156,
+        "itname":  "LANKA BED 10.5 feet (2mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "75000.00",
+        "sale":  "135000.00"
+    },
+    {
+        "ref":  163,
+        "itcode":  1162,
+        "itname":  "Canopy Lorry Body 6 feet (Box Bar / Jeep Canvas) ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "35000.00",
+        "sale":  "52000.00"
+    },
+    {
+        "ref":  176,
+        "itcode":  1175,
+        "itname":  "ORIGINAL BED 14.5 feet",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "80000.00",
+        "sale":  "125000.00"
+    },
+    {
+        "ref":  186,
+        "itcode":  1185,
+        "itname":  "Battery Bracket",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "2000.00",
+        "sale":  "5500.00"
+    },
+    {
+        "ref":  187,
+        "itcode":  1186,
+        "itname":  "When the Use Flat Bed is used to Production",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "65000.00",
+        "sale":  "65000.00"
+    },
+    {
+        "ref":  188,
+        "itcode":  1187,
+        "itname":  "WARRANTY \n[ 1 year For 3 Doors / 5 Years For Body Structure / 3 Years For Waterproofing  (Condition Apply) ]",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "0.00",
+        "sale":  "0.00"
+    },
+    {
+        "ref":  189,
+        "itcode":  1188,
+        "itname":  "CONSTRUCTION of 20.0 Feet Container Box\n(Floorboad Coverd 2mm (14g) M/S Sheet /2 Side Guard Set / 2 Mud Guard Set / Inside and Outside Light / Chassis Bar and U Bolt /Full Paint / Good Cundition Container Box )\n \n\n",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "500000.00",
+        "sale":  "650000.00"
+    },
+    {
+        "ref":  190,
+        "itcode":  1189,
+        "itname":  "Tinker Works",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "0.00",
+        "sale":  "0.00"
+    },
+    {
+        "ref":  51,
+        "itcode":  1050,
+        "itname":  "Door Lock Set Stainless Steel (Taiwan)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "35000.00",
+        "sale":  "48000.00"
+    },
+    {
+        "ref":  100,
+        "itcode":  1099,
+        "itname":  "Plywood Works 5mm ",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "1850.00",
+        "sale":  "2850.00"
+    },
+    {
+        "ref":  127,
+        "itcode":  1126,
+        "itname":  "LORRY BODY 9.25 feet Japan Model Aluminium Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/1.1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "125000.00",
+        "sale":  "175000.00"
+    },
+    {
+        "ref":  128,
+        "itcode":  1127,
+        "itname":  "LORRY BODY 9.25 feet Japan Model White Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite White/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "135000.00",
+        "sale":  "190000.00"
+    },
+    {
+        "ref":  133,
+        "itcode":  1132,
+        "itname":  "LORRY BODY 12.5 feet Budget Box\n(Lanka Lock Set/1mm Aluminium/9mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/3X1.5 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "210000.00",
+        "sale":  "300000.00"
+    },
+    {
+        "ref":  134,
+        "itcode":  1133,
+        "itname":  "LORRY BODY 12.5 feet Japan Model Aluminium Box\n(Non Rivet/Taiwan Lock Set/1.2mm Aluminium/9mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/3X1.5 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "225000.00",
+        "sale":  "325000.00"
+    },
+    {
+        "ref":  53,
+        "itcode":  1052,
+        "itname":  "New Latching Bar Reconstruction \n",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "1500.00",
+        "sale":  "4500.00"
+    },
+    {
+        "ref":  54,
+        "itcode":  1053,
+        "itname":  "Door Beading (15mm)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "105.00",
+        "sale":  "310.00"
+    },
+    {
+        "ref":  62,
+        "itcode":  1061,
+        "itname":  "Rivet\n",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "2.00",
+        "sale":  "5.00"
+    },
+    {
+        "ref":  65,
+        "itcode":  1064,
+        "itname":  "A/B Foam",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "2000.00",
+        "sale":  "6000.00"
+    },
+    {
+        "ref":  66,
+        "itcode":  1065,
+        "itname":  "+ Side Door\n",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "5000.00",
+        "sale":  "10000.00"
+    },
+    {
+        "ref":  67,
+        "itcode":  1066,
+        "itname":  "+ Corrugated \n",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "15000.00",
+        "sale":  "15000.00"
+    },
+    {
+        "ref":  68,
+        "itcode":  1067,
+        "itname":  "+ Square Corrugated Panels (Anodized Aluminium)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "25000.00",
+        "sale":  "45000.00"
+    },
+    {
+        "ref":  69,
+        "itcode":  1068,
+        "itname":  "+ Lorry Bed Installation",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "1000.00",
+        "sale":  "2000.00"
+    },
+    {
+        "ref":  73,
+        "itcode":  1072,
+        "itname":  "+ Rigifoam High Density",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "2000.00",
+        "sale":  "9500.00"
+    },
+    {
+        "ref":  76,
+        "itcode":  1075,
+        "itname":  "+ VHB Remover Alcohol   ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "1000.00",
+        "sale":  "3950.00"
+    },
+    {
+        "ref":  77,
+        "itcode":  1076,
+        "itname":  "U Bolt",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "650.00",
+        "sale":  "2000.00"
+    },
+    {
+        "ref":  80,
+        "itcode":  1079,
+        "itname":  "Front Corner",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "3500.00",
+        "sale":  "9000.00"
+    },
+    {
+        "ref":  81,
+        "itcode":  1080,
+        "itname":  "Set Bar Corner (1 feet)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "150.00",
+        "sale":  "2000.00"
+    },
+    {
+        "ref":  82,
+        "itcode":  1081,
+        "itname":  "Set Bar Bottom",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "150.00",
+        "sale":  "2000.00"
+    },
+    {
+        "ref":  87,
+        "itcode":  1086,
+        "itname":  "Rear Gutter ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "1000.00",
+        "sale":  "4500.00"
+    },
+    {
+        "ref":  91,
+        "itcode":  1090,
+        "itname":  "Mud Guard (Extra Large)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "6500.00",
+        "sale":  "15000.00"
+    },
+    {
+        "ref":  92,
+        "itcode":  1091,
+        "itname":  "Foot Board (Small)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "2500.00",
+        "sale":  "5500.00"
+    },
+    {
+        "ref":  101,
+        "itcode":  1100,
+        "itname":  "Plywood Works 9mm ",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "2650.00",
+        "sale":  "3850.00"
+    },
+    {
+        "ref":  104,
+        "itcode":  1103,
+        "itname":  "Aluminium Works 1.5mm (16G)",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "7000.00",
+        "sale":  "14000.00"
+    },
+    {
+        "ref":  109,
+        "itcode":  1108,
+        "itname":  "Aluminium Checker  Plate Works 2mm (14G)",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "12500.00",
+        "sale":  "18500.00"
+    },
+    {
+        "ref":  110,
+        "itcode":  1109,
+        "itname":  "Silicone Works for 1 feet (Roof)",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "200.00",
+        "sale":  "1200.00"
+    },
+    {
+        "ref":  111,
+        "itcode":  1110,
+        "itname":  "LORRY BODY 3 Wheel Budget Box\n(With Bed Price/Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mmBox Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "50000.00",
+        "sale":  "95000.00"
+    },
+    {
+        "ref":  112,
+        "itcode":  1111,
+        "itname":  "LORRY BODY 3 Wheel Japan Model Aluminium Box\n(With Bed Price/Taiwan Lock Set/1.1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)\n",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "70000.00",
+        "sale":  "105000.00"
+    },
+    {
+        "ref":  57,
+        "itcode":  1056,
+        "itname":  "Door Hinges",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "500.00",
+        "sale":  "1950.00"
+    },
+    {
+        "ref":  61,
+        "itcode":  1060,
+        "itname":  "Rivet Box",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "1250.00",
+        "sale":  "1490.00"
+    },
+    {
+        "ref":  72,
+        "itcode":  1071,
+        "itname":  "+ Corner Cap (Japan)\n",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "2000.00",
+        "sale":  "5000.00"
+    },
+    {
+        "ref":  79,
+        "itcode":  1078,
+        "itname":  "Body Light (Normal)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "250.00",
+        "sale":  "600.00"
+    },
+    {
+        "ref":  85,
+        "itcode":  1084,
+        "itname":  "Door Frame Side",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "5000.00",
+        "sale":  "12000.00"
+    },
+    {
+        "ref":  86,
+        "itcode":  1085,
+        "itname":  "Side Frame Structure Panel ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "500.00",
+        "sale":  "1500.00"
+    },
+    {
+        "ref":  96,
+        "itcode":  1095,
+        "itname":  "Light Guard  (Large)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "4500.00",
+        "sale":  "9500.00"
+    },
+    {
+        "ref":  108,
+        "itcode":  1107,
+        "itname":  "Aluminium Checker  Plate Works 1.5mm (16G)",
+        "uom":  "Pcs",
+        "cat":  "Service",
+        "cost":  "9000.00",
+        "sale":  "14000.00"
+    },
+    {
+        "ref":  117,
+        "itcode":  1116,
+        "itname":  "LORRY BODY 6.25 feet Freezer Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite/1.5mm Aluminium/ 1.5mm Aluminium Checker  Plate /Rigifoam High Density/1.6mm Z Panel/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "160000.00",
+        "sale":  "260000.00"
+    },
+    {
+        "ref":  122,
+        "itcode":  1121,
+        "itname":  "LORRY BODY 8.25 feet Budget Box\n(With Bed Price/Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "90000.00",
+        "sale":  "130000.00"
+    },
+    {
+        "ref":  131,
+        "itcode":  1130,
+        "itname":  "LORRY BODY 10.5 feet Japan Model Aluminium Box\n(Non Rivet/Taiwan Lock Set/1.2mm Aluminium/9mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "195000.00",
+        "sale":  "295000.00"
+    },
+    {
+        "ref":  132,
+        "itcode":  1131,
+        "itname":  "LORRY BODY 10.5 feet Japan Model White Box\n(Non Rivet/Taiwan Lock Set/4mm Composite White/9mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "215000.00",
+        "sale":  "315000.00"
+    },
+    {
+        "ref":  137,
+        "itcode":  1136,
+        "itname":  "LORRY BODY 14.5 feet Japan Model Aluminium Box\n(Non Rivet/Taiwan Lock Set/1.5mm Aluminium/9mm Plywood/2.5mm Metal Plate/1.5X1.5 1.6mmBox Bar/4X2 2.5mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "310000.00",
+        "sale":  "410000.00"
+    },
+    {
+        "ref":  152,
+        "itcode":  1151,
+        "itname":  "LANKA BED Mahindra Bolero 8 feet  (2mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "48000.00",
+        "sale":  "85000.00"
+    },
+    {
+        "ref":  159,
+        "itcode":  1158,
+        "itname":  "LANKA BED 14.5 feet (3mm MS \u0026 2mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "225000.00",
+        "sale":  "325000.00"
+    },
+    {
+        "ref":  121,
+        "itcode":  1120,
+        "itname":  "LORRY BODY 7.25 feet Freezer Box\n(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite/1.5mm Aluminium/ 1.5mm Aluminium Checker  Plate /Rigifoam High Density/1.6mm Z Panel/2X2 2mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "185000.00",
+        "sale":  "285000.00"
+    },
+    {
+        "ref":  143,
+        "itcode":  1142,
+        "itname":  "LORRY BODY 24 feet Japan Model Aluminium Box\n(Non Rivet/Taiwan Lock Set/2mm Aluminium/12mm Plywood/4mm Metal Plate/2x2 2mmBox Bar/4X2 3mm Box Bar)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "525000.00",
+        "sale":  "675000.00"
+    },
+    {
+        "ref":  145,
+        "itcode":  1144,
+        "itname":  "LANKA BED TATA Batta   (1.2mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "35000.00",
+        "sale":  "63000.00"
+    },
+    {
+        "ref":  146,
+        "itcode":  1145,
+        "itname":  "LANKA BED Mahindra Maxximo  (1.2mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "35000.00",
+        "sale":  "63000.00"
+    },
+    {
+        "ref":  149,
+        "itcode":  1148,
+        "itname":  "LANKA BED TATA Batta   (1.5mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "42000.00",
+        "sale":  "73000.00"
+    },
+    {
+        "ref":  150,
+        "itcode":  1149,
+        "itname":  "LANKA BED Mahindra Maxximo   (1.5mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "42000.00",
+        "sale":  "73000.00"
+    },
+    {
+        "ref":  153,
+        "itcode":  1152,
+        "itname":  "LANKA BED TATA 207  (2mm MS Plate)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "50000.00",
+        "sale":  "85000.00"
+    },
+    {
+        "ref":  154,
+        "itcode":  1153,
+        "itname":  "LANKA BED TATA Lokka 8.5 feet (1.5mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "45000.00",
+        "sale":  "70000.00"
+    },
+    {
+        "ref":  155,
+        "itcode":  1154,
+        "itname":  "LANKA BED 8.5 feet (1.5mm Zincoted)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "45000.00",
+        "sale":  "78000.00"
+    },
+    {
+        "ref":  165,
+        "itcode":  1164,
+        "itname":  "Canopy Lorry Body 8 feet (Box Bar / Jeep Canvas)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "40000.00",
+        "sale":  "65000.00"
+    },
+    {
+        "ref":  166,
+        "itcode":  1165,
+        "itname":  "Canopy Lorry Body 10 feet (Box Bar / Jeep Canvas)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "65000.00",
+        "sale":  "95000.00"
+    },
+    {
+        "ref":  167,
+        "itcode":  1166,
+        "itname":  "ORIGINAL BED 6 feet Lorry ",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "45000.00",
+        "sale":  "65000.00"
+    },
+    {
+        "ref":  171,
+        "itcode":  1170,
+        "itname":  "ORIGINAL BED Mahindra Bolero 8 feet",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "60000.00",
+        "sale":  "85000.00"
+    },
+    {
+        "ref":  185,
+        "itcode":  1184,
+        "itname":  "DOOR Reconstruction (Freezer)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "20000.00",
+        "sale":  "40000.00"
+    },
+    {
+        "ref":  164,
+        "itcode":  1163,
+        "itname":  "Canopy Lorry Body 7 feet (Box Bar / Jeep Canvas)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "38000.00",
+        "sale":  "58000.00"
+    },
+    {
+        "ref":  184,
+        "itcode":  1183,
+        "itname":  "DOOR Reconstruction (Box Bar Metal /Zincoted )\n(PVC Beading/1” x 2” inch 1.6mm high tensile galvanize hollow sections/Zinc Coted 1.5mm Sheet)",
+        "uom":  "Pcs",
+        "cat":  "ITEM",
+        "cost":  "18000.00",
+        "sale":  "35000.00"
+    }
+]

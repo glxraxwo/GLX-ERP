@@ -80,8 +80,13 @@ const QuotationsPage = () => {
         bodyDimensions: { length: '8 Feet 5 Inch', width: '67 Inch', height: '5 Feet 6 Inch' },
         specifications: ['Non Rivet White Color Body', 'Japan Model Original Corner Set Bar', 'Rear 2 Doors (Waterproof Board)', 'Rear Gutter & Footboard'],
         warrantyInfo: '10 Years For Body Structure, 10 Years Full Body Waterproofing, 03 Years For All Doors.',
+        conditionOfPayments: 'a). 0% Advance Payment with the firm Order.\nb). Balance Payment on Completion of Work',
+        completionOfWork: '4 to 6 working Days after the Order Confirmation.',
+        validityQuotation: '30 Working Days From the Issued Date..',
+        warrantyCondition: 'a). Please See the Description..\nb). Warranty Will be Issued with the Invoice.',
+        remarks: '',
         status: 'draft',
-        items: [{ product: '', productName: '', productTranslation: '', quantity: 1, unitPrice: 0, subtotal: 0 }],
+        items: [{ product: '', productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, discount: 0, subtotal: 0 }],
         totalAmount: 0, 
         laborCost: 0,
         advanceAmount: 0,
@@ -169,27 +174,32 @@ const QuotationsPage = () => {
         fetchData();
     }, []);
 
-    const calculateTotals = (items, discount = 0, tax = 0, laborCost = 0, advanceAmount = 0) => {
+    const calculateTotals = (items, extraDiscount = 0, tax = 0, laborCost = 0, advanceAmount = 0) => {
         const subtotal = items.reduce((acc, item) => acc + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0);
-        const grandTotal = subtotal + Number(laborCost || 0) + Number(tax || 0) - Number(discount || 0);
+        const itemDiscounts = items.reduce((acc, item) => acc + (Number(item.discount || 0) * Number(item.quantity || 1)), 0);
+        const totalDiscount = itemDiscounts + Number(extraDiscount || 0);
+        const grandTotal = subtotal + Number(laborCost || 0) + Number(tax || 0) - Number(totalDiscount || 0);
         const balanceAmount = Math.max(0, grandTotal - Number(advanceAmount || 0));
-        return { subtotal, grandTotal, balanceAmount };
+        return { subtotal, totalDiscount, grandTotal, balanceAmount };
     };
 
     const handleItemChange = (index, field, value) => {
         const newItems = [...formData.items];
         newItems[index][field] = value;
-        if (field === 'quantity' || field === 'unitPrice') {
-            newItems[index].subtotal = Number(newItems[index].quantity || 0) * Number(newItems[index].unitPrice || 0);
+        if (field === 'quantity' || field === 'unitPrice' || field === 'discount') {
+            const qty = Number(newItems[index].quantity || 0);
+            const price = Number(newItems[index].unitPrice || 0);
+            const disc = Number(newItems[index].discount || 0);
+            newItems[index].subtotal = (qty * price) - (qty * disc);
         }
-        const { subtotal, grandTotal, balanceAmount } = calculateTotals(newItems, formData.discount, formData.tax, formData.laborCost, formData.advanceAmount);
-        setFormData({ ...formData, items: newItems, totalAmount: subtotal, grandTotal, balanceAmount });
+        const { subtotal, totalDiscount, grandTotal, balanceAmount } = calculateTotals(newItems, formData.extraDiscount || 0, formData.tax, formData.laborCost, formData.advanceAmount);
+        setFormData({ ...formData, items: newItems, totalAmount: subtotal, discount: totalDiscount, grandTotal, balanceAmount });
     };
 
     const handleFormChange = (name, value) => {
         const updated = { ...formData, [name]: value };
-        const { subtotal, grandTotal, balanceAmount } = calculateTotals(updated.items, updated.discount, updated.tax, updated.laborCost, updated.advanceAmount);
-        setFormData({ ...updated, totalAmount: subtotal, grandTotal, balanceAmount });
+        const { subtotal, totalDiscount, grandTotal, balanceAmount } = calculateTotals(updated.items, name === 'discount' ? value : (updated.extraDiscount || 0), updated.tax, updated.laborCost, updated.advanceAmount);
+        setFormData({ ...updated, totalAmount: subtotal, discount: totalDiscount, grandTotal, balanceAmount });
     };
 
     const handleImageUpload = (field, file) => {
@@ -202,13 +212,13 @@ const QuotationsPage = () => {
     };
 
     const addItem = () => {
-        setFormData({ ...formData, items: [...formData.items, { product: '', productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, subtotal: 0 }] });
+        setFormData({ ...formData, items: [...formData.items, { product: '', productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, discount: 0, subtotal: 0 }] });
     };
 
     const removeItem = (index) => {
         const newItems = formData.items.filter((_, i) => i !== index);
-        const { subtotal, grandTotal, balanceAmount } = calculateTotals(newItems, formData.discount, formData.tax, formData.laborCost, formData.advanceAmount);
-        setFormData({ ...formData, items: newItems, totalAmount: subtotal, grandTotal, balanceAmount });
+        const { subtotal, totalDiscount, grandTotal, balanceAmount } = calculateTotals(newItems, formData.extraDiscount || 0, formData.tax, formData.laborCost, formData.advanceAmount);
+        setFormData({ ...formData, items: newItems, totalAmount: subtotal, discount: totalDiscount, grandTotal, balanceAmount });
     };
 
     
@@ -261,6 +271,11 @@ const QuotationsPage = () => {
                 bodyDimensions: quote.bodyDimensions || { length: '8 Feet 5 Inch', width: '67 Inch', height: '5 Feet 6 Inch' },
                 specifications: quote.specifications?.length > 0 ? quote.specifications : ['Non Rivet White Color Body', 'Japan Model Original Corner Set Bar', 'Rear 2 Doors (Waterproof Board)', 'Rear Gutter & Footboard'],
                 warrantyInfo: quote.warrantyInfo || '10 Years For Body Structure, 10 Years Full Body Waterproofing, 03 Years For All Doors.',
+                conditionOfPayments: quote.conditionOfPayments || 'a). 0% Advance Payment with the firm Order.\nb). Balance Payment on Completion of Work',
+                completionOfWork: quote.completionOfWork || '4 to 6 working Days after the Order Confirmation.',
+                validityQuotation: quote.validityQuotation || '30 Working Days From the Issued Date..',
+                warrantyCondition: quote.warrantyCondition || quote.warrantyInfo || 'a). Please See the Description..\nb). Warranty Will be Issued with the Invoice.',
+                remarks: quote.remarks || quote.notes || '',
                 status: quote.status || 'draft',
                 items: quote.items?.length > 0 ? quote.items.map(item => ({
                     product: item.product?._id || item.product || '',
@@ -269,8 +284,9 @@ const QuotationsPage = () => {
                     description: item.description || '',
                     quantity: item.quantity || 1,
                     unitPrice: item.unitPrice || 0,
-                    subtotal: item.subtotal || (item.quantity * item.unitPrice) || 0
-                })) : [{ product: '', productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, subtotal: 0 }],
+                    discount: item.discount || 0,
+                    subtotal: item.subtotal || ((item.quantity || 1) * (item.unitPrice || 0))
+                })) : [{ product: '', productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, discount: 0, subtotal: 0 }],
                 totalAmount: quote.totalAmount || 0,
                 laborCost: quote.laborCost || 0,
                 advanceAmount: quote.advanceAmount || 0,
@@ -310,8 +326,13 @@ const QuotationsPage = () => {
                 bodyDimensions: { length: '8 Feet 5 Inch', width: '67 Inch', height: '5 Feet 6 Inch' },
                 specifications: ['Non Rivet White Color Body', 'Japan Model Original Corner Set Bar', 'Rear 2 Doors (Waterproof Board)', 'Rear Gutter & Footboard'],
                 warrantyInfo: '10 Years For Body Structure, 10 Years Full Body Waterproofing, 03 Years For All Doors.',
+                conditionOfPayments: 'a). 0% Advance Payment with the firm Order.\nb). Balance Payment on Completion of Work',
+                completionOfWork: '4 to 6 working Days after the Order Confirmation.',
+                validityQuotation: '30 Working Days From the Issued Date..',
+                warrantyCondition: 'a). Please See the Description..\nb). Warranty Will be Issued with the Invoice.',
+                remarks: '',
                 status: 'draft',
-                items: [{ product: '', productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, subtotal: 0 }],
+                items: [{ product: '', productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, discount: 0, subtotal: 0 }],
                 totalAmount: 0, 
                 laborCost: 0,
                 advanceAmount: 0,
@@ -762,9 +783,17 @@ const QuotationsPage = () => {
                                 Estimate (EST-...)
                             </button>
                         </div>
-                        <div className="text-right">
-                            <span className="text-[10px] font-bold text-gray-500 uppercase block">Ref Code</span>
-                            <span className="font-mono font-bold text-sm text-gray-800">{formData.quoteNumber || '(Auto Generated)'}</span>
+                        <div className="flex items-center gap-2">
+                            <div className="text-right">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase block">Ref / Quote No.</label>
+                                <input 
+                                    type="text" 
+                                    className="px-2.5 py-1 border border-gray-300 rounded-lg font-mono font-bold text-sm text-gray-800 bg-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    placeholder="e.g. JA/QT/915 (or auto)"
+                                    value={formData.quoteNumber}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, quoteNumber: e.target.value }))}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -967,12 +996,12 @@ const QuotationsPage = () => {
                             <span className="text-xs font-black uppercase">Parts & Labour Charges</span>
                             <Button type="button" variant="outline" size="sm" onClick={addItem}><Plus size={14} className="mr-1" /> Add Charge Item</Button>
                         </div>
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto space-y-2">
                         {formData.items.map((item, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-3 items-end bg-gray-50/80 p-2.5 rounded-xl relative border border-gray-200 mb-2">
-                                <div className="col-span-12 md:col-span-6 space-y-1">
+                            <div key={index} className="grid grid-cols-12 gap-3 items-start bg-gray-50/80 p-3 rounded-xl relative border border-gray-200 mb-2">
+                                <div className="col-span-12 md:col-span-5 space-y-1">
                                     <div className="flex justify-between items-center">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase">Item Description</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase">Item Name / Title *</label>
                                         <button 
                                             type="button" 
                                             onClick={() => handleTranslate(index)} 
@@ -986,7 +1015,7 @@ const QuotationsPage = () => {
                                             type="text" 
                                             required
                                             className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white font-calibri"
-                                            placeholder="e.g. Set Bar Corner (21 feet) / Labour Charges / Paint Works"
+                                            placeholder="e.g. Repair Works / Cargo Lorry Body DOOR Reconstruction (Large)"
                                             value={item.productName}
                                             onChange={(e) => {
                                                 handleItemChange(index, 'productName', e.target.value);
@@ -1017,14 +1046,15 @@ const QuotationsPage = () => {
                                                                 onMouseDown={() => {
                                                                     const newItems = [...formData.items];
                                                                     const qty = Number(newItems[index].quantity || 1);
+                                                                    const disc = Number(newItems[index].discount || 0);
                                                                     newItems[index].product = p._id;
                                                                     newItems[index].productName = pName;
                                                                     newItems[index].unitPrice = pPrice;
                                                                     newItems[index].quantity = qty;
-                                                                    newItems[index].subtotal = qty * pPrice;
+                                                                    newItems[index].subtotal = (qty * pPrice) - (qty * disc);
                                                                     
-                                                                    const { subtotal, grandTotal } = calculateTotals(newItems, formData.discount, formData.tax);
-                                                                    setFormData({ ...formData, items: newItems, totalAmount: subtotal, grandTotal });
+                                                                    const { subtotal, totalDiscount, grandTotal } = calculateTotals(newItems, formData.extraDiscount, formData.tax);
+                                                                    setFormData({ ...formData, items: newItems, totalAmount: subtotal, discount: totalDiscount, grandTotal });
                                                                     setShowProductSuggestions(null);
                                                                 }}
                                                                 className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 transition cursor-pointer"
@@ -1047,10 +1077,10 @@ const QuotationsPage = () => {
                                         value={item.productTranslation || ''}
                                         onChange={(e) => handleItemChange(index, 'productTranslation', e.target.value)}
                                     />
-                                    <input 
-                                        type="text" 
-                                        className="w-full px-3 py-1 border border-gray-300 rounded-lg text-xs bg-white text-gray-800 mt-1 font-calibri"
-                                        placeholder="Detailed Item Description / Work Specifications"
+                                    <textarea 
+                                        rows={3} 
+                                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white text-gray-800 mt-1 font-calibri leading-relaxed"
+                                        placeholder="Detailed Specifications (multiline e.g. *** Roof 3 x 3 Aluminium Pach*** or bullet points 01. Waterproof Shutter Board...)"
                                         value={item.description || ''}
                                         onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                                     />
@@ -1058,30 +1088,119 @@ const QuotationsPage = () => {
 
                                 <div className="col-span-4 md:col-span-2 space-y-1">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase">Qty</label>
-                                    <input type="number" min="1" className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white text-center font-semibold" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', Number(e.target.value))} />
+                                    <input 
+                                        type="number" 
+                                        step="any" 
+                                        min="0.01" 
+                                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white text-center font-semibold" 
+                                        value={item.quantity} 
+                                        onChange={e => handleItemChange(index, 'quantity', e.target.value)} 
+                                    />
                                 </div>
 
-                                <div className="col-span-4 md:col-span-3 space-y-1">
+                                <div className="col-span-4 md:col-span-2 space-y-1">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase">Rate (LKR)</label>
-                                    <input type="number" step="0.01" className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white font-mono" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', Number(e.target.value))} />
+                                    <input 
+                                        type="number" 
+                                        step="any" 
+                                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white font-mono" 
+                                        value={item.unitPrice} 
+                                        onChange={e => handleItemChange(index, 'unitPrice', e.target.value)} 
+                                    />
                                 </div>
 
-                                <div className="col-span-3 md:col-span-1 flex justify-center pb-2">
-                                    <button type="button" onClick={() => removeItem(index)} className="text-gray-400 hover:text-red-600 transition" disabled={formData.items.length <= 1}><X size={18} /></button>
+                                <div className="col-span-4 md:col-span-2 space-y-1">
+                                    <label className="text-[10px] font-bold text-red-600 uppercase">Discount Rate</label>
+                                    <input 
+                                        type="number" 
+                                        step="any" 
+                                        placeholder="0.00"
+                                        className="w-full px-3 py-1.5 border border-red-200 rounded-lg text-sm bg-white font-mono text-red-600 placeholder-red-300" 
+                                        value={item.discount || ''} 
+                                        onChange={e => handleItemChange(index, 'discount', e.target.value)} 
+                                    />
+                                </div>
+
+                                <div className="col-span-12 md:col-span-1 flex justify-center items-center md:pt-6">
+                                    <button type="button" onClick={() => removeItem(index)} className="text-gray-400 hover:text-red-600 transition p-1 rounded-lg hover:bg-red-50" disabled={formData.items.length <= 1} title="Remove line item">
+                                        <X size={18} />
+                                    </button>
                                 </div>
                             </div>
                         ))}
                         </div>
                     </div>
 
+                    {/* Quotation / Invoice Terms & Conditions Settings */}
+                    <div className="bg-slate-50 p-4 rounded-xl border border-gray-200 space-y-4">
+                        <span className="text-xs font-black text-slate-700 uppercase tracking-wide">Document Terms & Conditions</span>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Remarks</label>
+                                <textarea 
+                                    rows={2}
+                                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white"
+                                    placeholder="Remarks to appear under line items..."
+                                    value={formData.remarks || ''}
+                                    onChange={(e) => handleFormChange('remarks', e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Condition of Payments</label>
+                                <textarea 
+                                    rows={2}
+                                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white"
+                                    placeholder="e.g. a). 0% Advance Payment with the firm Order.&#10;b). Balance Payment on Completion of Work"
+                                    value={formData.conditionOfPayments}
+                                    onChange={(e) => handleFormChange('conditionOfPayments', e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Completion of Work</label>
+                                <input 
+                                    type="text"
+                                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white"
+                                    placeholder="e.g. 4 to 6 working Days after the Order Confirmation."
+                                    value={formData.completionOfWork}
+                                    onChange={(e) => handleFormChange('completionOfWork', e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Validity (Quotation / Invoice)</label>
+                                <input 
+                                    type="text"
+                                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white"
+                                    placeholder="e.g. 30 Working Days From the Issued Date.."
+                                    value={formData.validityQuotation}
+                                    onChange={(e) => handleFormChange('validityQuotation', e.target.value)}
+                                />
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Warranty</label>
+                                <textarea 
+                                    rows={2}
+                                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white"
+                                    placeholder="e.g. a). Please See the Description..&#10;b). Warranty Will be Issued with the Invoice."
+                                    value={formData.warrantyCondition}
+                                    onChange={(e) => handleFormChange('warrantyCondition', e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Summary & Totals */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Notes / Terms</label>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Notes / Internal Notes</label>
                             <textarea 
                                 rows={4}
                                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white"
-                                placeholder="Special notes, cash deposit requirements, validity details..."
+                                placeholder="Special notes, internal references..."
                                 value={formData.notes}
                                 onChange={(e) => handleFormChange('notes', e.target.value)}
                             />
@@ -1101,14 +1220,9 @@ const QuotationsPage = () => {
                                     onChange={(e) => handleFormChange('laborCost', Number(e.target.value))}
                                 />
                             </div>
-                            <div className="flex justify-between items-center font-semibold text-gray-700">
-                                <span>Discount</span>
-                                <input 
-                                    type="number" 
-                                    className="w-28 px-2 py-1 border rounded text-right font-mono text-xs bg-white"
-                                    value={formData.discount} 
-                                    onChange={(e) => handleFormChange('discount', Number(e.target.value))}
-                                />
+                            <div className="flex justify-between items-center font-semibold text-red-600">
+                                <span>Total Discounts</span>
+                                <span className="font-mono font-bold">-LKR {formData.discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center pt-2 border-t font-black text-gray-900 text-sm">
                                 <span>Grand Total</span>

@@ -1,0 +1,47 @@
+﻿[
+    {
+        "ref":  1,
+        "uname":  "admin",
+        "des":  "System Administrator",
+        "utype":  "ADMIN",
+        "pass":  "1",
+        "branch":  "JA-ELA",
+        "sp":  null
+    },
+    {
+        "ref":  2,
+        "uname":  "asanka",
+        "des":  "Asanka Thilakarathna",
+        "utype":  "ADMIN",
+        "pass":  "1",
+        "branch":  "JA-ELA",
+        "sp":  null
+    },
+    {
+        "ref":  3,
+        "uname":  "ALL",
+        "des":  "ALL",
+        "utype":  "ADMIN",
+        "pass":  "123",
+        "branch":  "JA-ELA",
+        "sp":  null
+    },
+    {
+        "ref":  6,
+        "uname":  "1",
+        "des":  "Worker",
+        "utype":  "WORK",
+        "pass":  "1",
+        "branch":  "JA-ELA",
+        "sp":  null
+    },
+    {
+        "ref":  4,
+        "uname":  "Nadeesha",
+        "des":  "cashier",
+        "utype":  "CASHIER",
+        "pass":  "123",
+        "branch":  "JA-ELA",
+        "sp":  null
+    }
+]

@@ -34,3 +34,9 @@ yarn-error.log*
 # OS Metadata
 .DS_Store
 Thumbs.db
+
+# Local SQL Server & DB files
+gg/
+*.mdf
+*.ldf
+*.dll

@@ -39,6 +39,13 @@ const quotationSchema = new mongoose.Schema({
     warrantyInfo: { type: String, default: '' },
     paymentConditions: [{ type: String }],
 
+    // Terms & Conditions matching quotation/invoice print layout
+    conditionOfPayments: { type: String, default: 'a). 0% Advance Payment with the firm Order.\nb). Balance Payment on Completion of Work' },
+    completionOfWork: { type: String, default: '4 to 6 working Days after the Order Confirmation.' },
+    validityQuotation: { type: String, default: '30 Working Days From the Issued Date..' },
+    warrantyCondition: { type: String, default: 'a). Please See the Description..\nb). Warranty Will be Issued with the Invoice.' },
+    remarks: { type: String, default: '' },
+
     version: { type: Number, default: 1 },
     items: [{
         product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', set: v => v === '' || !v ? undefined : v },
@@ -47,6 +54,7 @@ const quotationSchema = new mongoose.Schema({
         description: { type: String },
         quantity: { type: Number, default: 1 },
         unitPrice: { type: Number, default: 0 },
+        discount: { type: Number, default: 0 },
         subtotal: { type: Number, default: 0 }
     }],
     totalAmount: { type: Number, default: 0 },
@@ -90,7 +98,10 @@ quotationSchema.pre('validate', async function () {
         this.quoteNumber = this.quotationCode;
     }
     // Auto-calculate grand total & balance
-    this.totalAmount = (this.items || []).reduce((sum, i) => sum + (i.subtotal || (i.quantity * i.unitPrice) || 0), 0);
+    this.totalAmount = (this.items || []).reduce((sum, i) => sum + (Number(i.quantity || 0) * Number(i.unitPrice || 0)), 0);
+    const itemDiscounts = (this.items || []).reduce((sum, i) => sum + (Number(i.discount || 0) * Number(i.quantity || 1)), 0);
+    const totalDiscount = Math.max(Number(this.discount || 0), itemDiscounts);
+    this.discount = totalDiscount;
     this.grandTotal = (this.totalAmount || 0) + (this.laborCost || 0) + (this.tax || 0) - (this.discount || 0);
     this.balanceAmount = Math.max(0, (this.grandTotal || 0) - (this.advanceAmount || 0));
 });

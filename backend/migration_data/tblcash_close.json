@@ -1,0 +1,22 @@
+﻿[
+    {
+        "ref":  1,
+        "date":  "2020-08-10T00:00:00",
+        "cash_in":  "59500.00",
+        "cash_out":  "59500.00",
+        "balance":  "0.00",
+        "close_by":  "asanka",
+        "close_date":  "11/Aug/2020",
+        "close_time":  "17:11:57"
+    },
+    {
+        "ref":  2,
+        "date":  "2020-08-11T00:00:00",
+        "cash_in":  "67400.00",
+        "cash_out":  "67400.00",
+        "balance":  "0.00",
+        "close_by":  "asanka",
+        "close_date":  "11/Aug/2020",
+        "close_time":  "17:56:25"
+    }
+]

@@ -86,6 +86,13 @@ const invoiceSchema = new mongoose.Schema({
     warrantyInfo: { type: String, default: '' },
     paymentConditions: [{ type: String }],
 
+    // Terms & Conditions matching quotation/invoice print layout
+    conditionOfPayments: { type: String, default: 'a). 0% Advance Payment with the firm Order.\nb). Balance Payment on Completion of Work' },
+    completionOfWork: { type: String, default: '4 to 6 working Days after the Order Confirmation.' },
+    validityQuotation: { type: String, default: '30 Working Days From the Issued Date..' },
+    warrantyCondition: { type: String, default: 'a). Please See the Description..\nb). Warranty Will be Issued with the Invoice.' },
+    remarks: { type: String, default: '' },
+
     // Parties
     customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: false },
     customerSnapshot: {

@@ -1,88 +1,62 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
-const CODE128_PATTERNS = [
-  "212222", "222122", "222221", "121223", "121322", "131222", "122213", "122312", "132212", "221213", // 0-9
-  "221312", "231212", "112232", "122132", "122231", "113222", "123122", "123221", "223211", "221132", // 10-19
-  "221231", "213212", "223112", "312131", "311222", "321122", "321221", "312212", "322112", "322211", // 20-29
-  "212123", "212321", "232121", "111323", "131123", "131321", "112313", "132113", "132311", "211313", // 30-39
-  "231113", "231311", "112133", "112331", "132131", "113123", "113321", "133121", "313121", "211331", // 40-49
-  "231131", "213113", "213311", "213131", "311123", "311321", "331121", "312113", "312311", "332111", // 50-59
-  "314111", "221411", "431111", "111224", "111422", "121124", "121421", "141122", "141221", "112214", // 60-69
-  "112412", "122114", "122411", "142112", "142211", "241211", "221114", "413111", "241112", "134111", // 70-79
-  "111242", "121142", "121241", "114212", "124112", "124211", "411212", "421112", "421211", "212141", // 80-89
-  "214121", "412121", "111143", "111341", "131141", "114113", "114311", "411113", "411311", "113141", // 90-99
-  "114131", "311141", "411131", "211412", "211214", "211232", "2331112" // 100-106 (106 is Stop)
-];
-
-const Barcode128 = ({ value, width = 1.2, height = 45 }) => {
-    if (!value) return null;
-    const text = String(value).toUpperCase();
-    let sum = 104;
-    const codes = [104];
-    for (let i = 0; i < text.length; i++) {
-        const code = text.charCodeAt(i) - 32;
-        codes.push(code);
-        sum += code * (i + 1);
-    }
-    const checksum = sum % 103;
-    codes.push(checksum);
-    codes.push(106);
-    let patternString = "";
-    for (const code of codes) {
-        if (code >= 0 && code <= 106) {
-            patternString += CODE128_PATTERNS[code];
-        }
-    }
-    const rects = [];
-    let currentX = 0;
-    for (let i = 0; i < patternString.length; i++) {
-        const w = parseInt(patternString[i], 10);
-        if (i % 2 === 0) {
-            rects.push(
-                <rect 
-                    key={i} 
-                    x={currentX * width} 
-                    y={0} 
-                    width={w * width} 
-                    height={height} 
-                    fill="black" 
-                />
-            );
-        }
-        currentX += w;
-    }
-    const totalWidth = currentX * width;
-    return (
-        <svg width={totalWidth} height={height} viewBox={`0 0 ${totalWidth} ${height}`}>
-            <g>{rects}</g>
-        </svg>
-    );
+const formatNumber = (num, minDecimals = 2, maxDecimals = 2) => {
+    if (num === null || num === undefined || isNaN(num)) return '0.00';
+    return Number(num).toLocaleString('en-US', {
+        minimumFractionDigits: minDecimals,
+        maximumFractionDigits: maxDecimals,
+    });
 };
 
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-LK', {
-        style: 'currency',
-        currency: 'LKR',
-        minimumFractionDigits: 2,
-    }).format(amount || 0);
-};
-
-const formatDate = (dateStr) => {
+const formatDateOnly = (dateStr) => {
     if (!dateStr) return '—';
     try {
-        return new Date(dateStr).toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        });
-    } catch (e) {
-        return dateStr;
+        const d = new Date(dateStr);
+        const day = String(d.getDate()).padStart(2, '0');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[d.getMonth()];
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+    } catch {
+        return String(dateStr);
+    }
+};
+
+const formatTimeOnly = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+        const d = new Date(dateStr);
+        const hrs = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        const secs = String(d.getSeconds()).padStart(2, '0');
+        return `${hrs}:${mins}:${secs}`;
+    } catch {
+        return '';
+    }
+};
+
+const formatPrintTimestamp = (d = new Date()) => {
+    try {
+        const day = String(d.getDate()).padStart(2, '0');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[d.getMonth()];
+        const year = d.getFullYear();
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${day}/${month}/${year}   ${hours}:${minutes}:${seconds}${ampm}`;
+    } catch {
+        return new Date().toLocaleString();
     }
 };
 
 /**
- * Reusable Printable Document Component matching GLS Industries (Pvt) Ltd / GLX TRUCK BODY ENGINEERS layout
+ * Standard Printable Document Component matching exact GLX layout
+ * (Supports both Quotation, Estimate, and Invoice)
  */
 const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLanguage = false, hideToolbar = false }, ref) => {
     if (!doc) return null;
@@ -91,595 +65,340 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
     const isInvoice = !!doc.invoiceNumber || doc.documentType === 'invoice';
     const isQuotation = !isEstimate && !isInvoice;
 
-    let docTitle = 'QUOTATION';
-    if (isEstimate) docTitle = 'ESTIMATE';
-    if (isInvoice) docTitle = 'INVOICE';
+    let docLabel = 'Quotation';
+    if (isEstimate) docLabel = 'Estimate';
+    if (isInvoice) docLabel = 'Invoice';
 
-    // Sinhala translations for document titles
     if (useSinhalaLanguage) {
-        if (isEstimate) docTitle = 'ඇස්තමේන්තුව';
-        if (isInvoice) docTitle = 'ගෙවීම් ලේඛනය';
-        if (isQuotation) docTitle = 'උපස්ථ ලේඛනය';
+        if (isEstimate) docLabel = 'ඇස්තමේන්තු';
+        if (isInvoice) docLabel = 'ඉන්වොයිස්';
+        if (isQuotation) docLabel = 'මිල ගණන්';
     }
 
     const docNumber = doc.invoiceNumber || doc.quoteNumber || doc.quotationCode || 'N/A';
-    const customerName = doc.customerName || doc.vehicleOwner || doc.customerSnapshot?.name || 'Valued Client';
-    const contactPhone = doc.customerPhone || doc.customerSnapshot?.contactName || '';
-    const dateDisplay = formatDate(doc.date || doc.invoiceDate || doc.createdAt);
+    const customerName = doc.customerName || doc.vehicleOwner || doc.customerSnapshot?.name || 'Customer';
+    const customerAddress = doc.customerAddress || doc.billingAddress?.line1 || '';
+    const customerPhone = doc.customerPhone || doc.customerSnapshot?.contactName || '';
+    const vehicleNo = doc.vehicleNo || '';
+    const salesRep = doc.salesRep || 'Asanka';
+    const branch = doc.branch || 'JA-ELA';
 
-    // Custom Template settings
-    const customTemplateUrl = isInvoice
-        ? companyInfo?.invoiceCustomTemplateUrl
-        : companyInfo?.quotationCustomTemplateUrl;
+    const docDate = doc.date || doc.invoiceDate || doc.createdAt || new Date();
+    const formattedDate = formatDateOnly(docDate);
+    const formattedTime = formatTimeOnly(docDate);
+    const printTimestamp = formatPrintTimestamp(new Date());
 
-    const defaultActiveTemplate = isInvoice
-        ? (companyInfo?.activeInvoiceTemplate || 'default')
-        : (companyInfo?.activeQuotationTemplate || 'default');
+    // Letterhead toggle: Show by default on screen/PDF, can be hidden for pre-printed letterhead paper
+    const [showLetterheadHeader, setShowLetterheadHeader] = useState(true);
 
-    const [selectedTemplate, setSelectedTemplate] = React.useState(defaultActiveTemplate);
+    const items = doc.items || [];
 
-    React.useEffect(() => {
-        if (defaultActiveTemplate) {
-            setSelectedTemplate(defaultActiveTemplate);
-        }
-    }, [defaultActiveTemplate]);
+    // Calculate line item totals & discounts
+    let subtotal = 0;
+    let totalLineDiscount = 0;
 
-    const isUsingCustom = selectedTemplate === 'custom' && !!customTemplateUrl;
+    items.forEach(item => {
+        const qty = Number(item.quantity) || 1;
+        const rate = Number(item.unitPrice || item.rate || 0);
+        const lineGross = qty * rate;
+        const discRate = Number(item.discount || 0);
+        const discAmount = discRate > 0 ? (discRate * qty) : Number(item.discountAmount || item.lineDiscount || 0);
 
+        subtotal += lineGross;
+        totalLineDiscount += discAmount;
+    });
+
+    // If doc has extra doc-level discount or specified total
+    const extraDiscount = Number(doc.discount || doc.totalDiscount || 0);
+    const totalDiscount = Math.max(totalLineDiscount, extraDiscount);
+    const laborCost = Number(doc.laborCost || 0);
+    const tax = Number(doc.tax || doc.totalTax || 0);
+    const grandTotal = doc.grandTotal !== undefined 
+        ? Number(doc.grandTotal) 
+        : (subtotal + laborCost + tax - totalDiscount);
+
+    const advancePaid = Number(doc.advanceAmount || doc.amountPaid || 0);
+    const balanceDue = doc.balanceAmount !== undefined 
+        ? Number(doc.balanceAmount) 
+        : (doc.balanceDue !== undefined ? Number(doc.balanceDue) : Math.max(0, grandTotal - advancePaid));
+
+    // Terms & conditions
+    const conditionOfPayments = doc.conditionOfPayments || 'a). 0% Advance Payment with the firm Order.\nb). Balance Payment on Completion of Work';
+    const completionOfWork = doc.completionOfWork || '4 to 6 working Days after the Order Confirmation.';
+    const validityQuotation = doc.validityQuotation || (doc.terms?.paymentTerms ? `${doc.terms.paymentTerms}` : '30 Working Days From the Issued Date..');
+    const warrantyCondition = doc.warrantyCondition || doc.warrantyInfo || 'a). Please See the Description..\nb). Warranty Will be Issued with the Invoice.';
+    const remarksText = doc.remarks || doc.notes || '';
+
+    // QR Verification Data
     const qrDataObj = {
-        type: docTitle,
+        type: docLabel,
         number: docNumber,
-        date: dateDisplay,
+        date: formattedDate,
         customer: customerName,
-        vehicleNo: doc.vehicleNo || 'N/A',
-        vehicleModel: doc.vehicleModel || 'N/A',
-        grandTotal: doc.grandTotal || doc.finalSellingPrice || doc.totalAmount || 0,
-        status: doc.status || 'Active',
+        vehicleNo: vehicleNo || 'N/A',
+        grandTotal: grandTotal,
+        branch: branch,
+        sales: salesRep
     };
     const qrString = JSON.stringify(qrDataObj);
 
-    // Template Switcher Header (hidden during actual paper printing or in public view)
-    const TemplateToolbar = () => {
-        if (hideToolbar) return null;
-        return (
-            <div className="no-print mb-4 p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">Print Template:</span>
-                    <button
-                        type="button"
-                        onClick={() => setSelectedTemplate('default')}
-                        className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                            selectedTemplate === 'default'
-                                ? 'bg-emerald-600 text-white shadow-sm'
-                                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
-                        }`}
-                    >
-                        System Default Template
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            if (!customTemplateUrl) {
-                                alert('No custom template uploaded yet. Please upload one in Settings.');
-                                return;
-                            }
-                            setSelectedTemplate('custom');
-                        }}
-                        className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                            selectedTemplate === 'custom'
-                                ? 'bg-emerald-600 text-white shadow-sm'
-                                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
-                        }`}
-                    >
-                        Custom Uploaded Template {customTemplateUrl ? '' : '(Not Uploaded)'}
-                    </button>
-                </div>
-                {isUsingCustom && (
-                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                        ✓ Rendering Custom Template Background
+    return (
+        <div className="font-calibri text-gray-900 bg-white w-full max-w-[850px] mx-auto text-sm leading-relaxed p-4 sm:p-8" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
+            
+            {/* Toolbar for Print options */}
+            {!hideToolbar && (
+                <div className="no-print mb-4 p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Letterhead Paper Mode:</span>
+                        <button
+                            type="button"
+                            onClick={() => setShowLetterheadHeader(prev => !prev)}
+                            className={`px-3 py-1.5 rounded-lg font-medium transition ${
+                                !showLetterheadHeader 
+                                    ? 'bg-amber-600 text-white shadow-sm' 
+                                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+                            }`}
+                        >
+                            {!showLetterheadHeader ? '✓ Pre-printed Paper (Header Hidden)' : 'Digital View (Header Shown)'}
+                        </button>
+                    </div>
+                    <span className="text-gray-500 text-[11px]">
+                        {!showLetterheadHeader ? 'Top header hidden for feeding pre-printed letterhead paper' : 'Standard company letterhead header included'}
                     </span>
-                )}
-            </div>
-        );
-    };
+                </div>
+            )}
 
-    // Standard Header component
-    const Header = () => {
-        if (isUsingCustom) {
-            return (
-                <div className="quotation-header print-header avoid-break pb-4 border-b border-gray-400 mb-4 font-calibri" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
-                    <div className="flex flex-col sm:flex-row gap-4 items-start w-full">
-                        {/* Custom Logo */}
-                        <div className="w-16 h-16 flex-shrink-0 mx-auto sm:mx-0">
-                            <img 
-                                src={customTemplateUrl} 
-                                alt="Custom Logo" 
-                                className="w-full h-full object-contain"
-                                onError={(e) => {
-                                    e.target.src = '/logo.jpg';
-                                }}
-                            />
-                        </div>
-                        
-                        {/* Addresses & Info Columns */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-3 sm:gap-6 w-full text-xs text-gray-900">
-                            {/* Left Column: Head Office */}
-                            <div className="text-center sm:text-left print:text-left">
-                                <p className="font-bold text-sm uppercase tracking-wide">GLX Industries (Pvt) Ltd</p>
-                                <p className="mt-1 text-[11px] leading-tight text-gray-600 font-calibri">
-                                    No.14, Negambo Road,<br />
-                                    Thudella, Ja-Ela,<br />
-                                    Sri Lanka.<br />
-                                    (11350)
-                                </p>
+            {/* Document Printable Container */}
+            <div ref={ref} className="print-area print-container bg-white p-2 sm:p-6" style={{ minHeight: '270mm' }}>
+                
+                {/* Optional Company Header for Digital / PDF / Plain Paper */}
+                {showLetterheadHeader && (
+                    <div className="print-header pb-4 border-b border-gray-300 mb-6 font-calibri">
+                        <div className="flex flex-col sm:flex-row gap-4 items-start w-full">
+                            {/* Logo */}
+                            <div className="w-16 h-16 flex-shrink-0 mx-auto sm:mx-0">
+                                <img src="/logo.jpg" alt="GLX Logo" className="w-full h-full object-contain filter grayscale" />
                             </div>
-
-                            {/* Middle Column: GLX Truck Body Engineers */}
-                            <div className="text-center sm:text-left print:text-left">
-                                <p className="font-bold text-sm uppercase tracking-wide">GLX TRUCK BODY ENGINEERS</p>
-                                <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-tighter leading-none mt-0.5">
-                                    ALUMINIUM, STEEL & FREEZER BOX MANUFACTURE
-                                </p>
-                                <p className="mt-1.5 text-[11px] leading-tight text-gray-600 font-calibri">
-                                    No.2020/3L, 2, Seeduwa Road,<br />
-                                    Kotugoda, Ja-Ela.<br />
-                                    Sri Lanka.<br />
-                                    (11390)
-                                </p>
-                            </div>
-
-                            {/* Right Column: Contact Details */}
-                            <div className="text-[11px] leading-snug font-mono text-center sm:text-right print:text-right flex flex-col items-center sm:items-end print:items-end">
-                                <div className="text-left font-mono inline-block">
-                                    <p><span className="font-semibold">Mobile :</span> 071 6666 888</p>
-                                    <p><span className="font-semibold">Tel &nbsp;&nbsp;&nbsp;&nbsp;:</span> 011 740 4446</p>
-                                    <p><span className="font-semibold">Email &nbsp;:</span> glx.engi@gmail.com</p>
-                                    <p><span className="font-semibold">Web &nbsp;&nbsp;&nbsp;:</span> www.glx.lk</p>
+                            
+                            {/* Addresses & Contact */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full text-xs text-gray-900">
+                                <div className="text-center sm:text-left">
+                                    <p className="font-bold text-sm uppercase tracking-wide">GLX Industries (Pvt) Ltd</p>
+                                    <p className="mt-1 text-[11px] leading-tight text-gray-600">
+                                        No.14, Negambo Road,<br />
+                                        Thudella, Ja-Ela,<br />
+                                        Sri Lanka. (11350)
+                                    </p>
+                                </div>
+                                <div className="text-center sm:text-left">
+                                    <p className="font-bold text-sm uppercase tracking-wide">GLX TRUCK BODY ENGINEERS</p>
+                                    <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-tighter leading-none mt-0.5">
+                                        ALUMINIUM, STEEL & FREEZER BOX MANUFACTURE
+                                    </p>
+                                    <p className="mt-1.5 text-[11px] leading-tight text-gray-600">
+                                        No.2020/3L, 2, Seeduwa Road,<br />
+                                        Kotugoda, Ja-Ela. (11390)
+                                    </p>
+                                </div>
+                                <div className="text-[11px] leading-snug font-mono text-center sm:text-right flex flex-col items-center sm:items-end">
+                                    <div className="text-left font-mono inline-block">
+                                        <p><span className="font-semibold">Mobile :</span> 071 6666 888</p>
+                                        <p><span className="font-semibold">Tel &nbsp;&nbsp;&nbsp;&nbsp;:</span> 011 740 4446</p>
+                                        <p><span className="font-semibold">Email &nbsp;:</span> glx.engi@gmail.com</p>
+                                        <p><span className="font-semibold">Web &nbsp;&nbsp;&nbsp;:</span> www.glx.lk</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            );
-        }
+                )}
 
-        return (
-            <div className="quotation-header print-header avoid-break pb-4 border-b border-gray-400 mb-4 font-calibri" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
-                <div className="flex flex-col sm:flex-row gap-4 items-start w-full">
-                    {/* Black & White Logo */}
-                    <div className="w-16 h-16 flex-shrink-0 mx-auto sm:mx-0">
-                        <img src="/logo.jpg" alt="GLX Logo" className="w-full h-full object-contain filter grayscale" />
+                {/* Top Section: Customer Info on Left, Quotation/Invoice Meta on Right */}
+                <div className="flex justify-between items-start mb-6 text-[13px] leading-snug">
+                    {/* Left: Customer Block */}
+                    <div className="space-y-0.5 max-w-[55%]">
+                        <p className="font-bold text-gray-900">{useSinhalaLanguage ? 'පාරිභෝගික' : 'Customer'}</p>
+                        <p className="font-medium text-gray-900">{customerName}</p>
+                        {customerAddress && <p className="text-gray-800">{customerAddress}</p>}
+                        {customerPhone && <p className="text-gray-800">{customerPhone}</p>}
+                        
+                        {vehicleNo && (
+                            <p className="font-bold text-gray-900 pt-3 text-sm tracking-wide font-mono">
+                                {vehicleNo}
+                            </p>
+                        )}
                     </div>
-                    
-                    {/* Addresses & Info Columns */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-3 sm:gap-6 w-full text-xs text-gray-900">
-                        {/* Left Column: Head Office */}
-                        <div className="text-center sm:text-left print:text-left">
-                            <p className="font-bold text-sm uppercase tracking-wide">GLX Industries (Pvt) Ltd</p>
-                            <p className="mt-1 text-[11px] leading-tight text-gray-600 font-calibri">
-                                No.14, Negambo Road,<br />
-                                Thudella, Ja-Ela,<br />
-                                Sri Lanka.<br />
-                                (11350)
-                            </p>
-                        </div>
 
-                        {/* Middle Column: GLX Truck Body Engineers */}
-                        <div className="text-center sm:text-left print:text-left">
-                            <p className="font-bold text-sm uppercase tracking-wide">GLX TRUCK BODY ENGINEERS</p>
-                            <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-tighter leading-none mt-0.5">
-                                ALUMINIUM, STEEL & FREEZER BOX MANUFACTURE
-                            </p>
-                            <p className="mt-1.5 text-[11px] leading-tight text-gray-600 font-calibri">
-                                No.2020/3L, 2, Seeduwa Road,<br />
-                                Kotugoda, Ja-Ela.<br />
-                                Sri Lanka.<br />
-                                (11390)
-                            </p>
-                        </div>
+                    {/* Right: Meta Details (Aligned exactly as sample) */}
+                    <div className="text-left w-64">
+                        <div className="grid grid-cols-[110px_1fr] gap-y-1 text-[13px]">
+                            <span className="font-bold text-gray-900">{docLabel} No.</span>
+                            <span className="font-bold text-gray-900 font-mono">{docNumber}</span>
 
-                        {/* Right Column: Contact Details */}
-                        <div className="text-[11px] leading-snug font-mono text-center sm:text-right print:text-right flex flex-col items-center sm:items-end print:items-end">
-                            <div className="text-left font-mono inline-block">
-                                <p><span className="font-semibold">Mobile :</span> 071 6666 888</p>
-                                <p><span className="font-semibold">Tel &nbsp;&nbsp;&nbsp;&nbsp;:</span> 011 740 4446</p>
-                                <p><span className="font-semibold">Email &nbsp;:</span> glx.engi@gmail.com</p>
-                                <p><span className="font-semibold">Web &nbsp;&nbsp;&nbsp;:</span> www.glx.lk</p>
+                            <span className="font-bold text-gray-900">{useSinhalaLanguage ? 'විකිණුම්' : 'Sales'}</span>
+                            <span className="text-gray-900">{salesRep}</span>
+
+                            <span className="font-bold text-gray-900">{useSinhalaLanguage ? 'ශාඛාව' : 'Branch'}</span>
+                            <span className="text-gray-900">{branch}</span>
+
+                            <span className="font-bold text-gray-900">{useSinhalaLanguage ? 'දිනය' : 'Date'}</span>
+                            <div className="text-gray-900 font-mono text-xs">
+                                <div>{formattedDate}</div>
+                                {formattedTime && <div>{formattedTime}</div>}
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        );
-    };
 
-    // Split Quotation into two distinct pages
-    if (isQuotation) {
-        return (
-            <div ref={ref} className="quotation-print-area print-area print-container document-print-view font-calibri text-gray-900 bg-white w-full max-w-[850px] mx-auto text-sm leading-relaxed p-2 sm:p-6 print:p-0" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
-                <TemplateToolbar />
+                {/* Table of Items */}
+                <div className="mb-6">
+                    <table className="w-full text-[13px] border-collapse">
+                        <thead>
+                            <tr className="border-b border-t border-gray-400">
+                                <th className="py-2 text-left font-bold text-gray-900 uppercase tracking-wide">{useSinhalaLanguage ? 'විස්තරය' : 'DESCRIPTION'}</th>
+                                <th className="py-2 text-right font-bold text-gray-900 uppercase tracking-wide w-28">{useSinhalaLanguage ? 'අනුපාතය' : 'RATE'}</th>
+                                <th className="py-2 text-center font-bold text-gray-900 uppercase tracking-wide w-16">{useSinhalaLanguage ? 'ප්‍රමාණය' : 'QTY'}</th>
+                                <th className="py-2 text-right font-bold text-gray-900 uppercase tracking-wide w-32">{useSinhalaLanguage ? 'මුදල' : 'AMOUNT'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {items.map((item, idx) => {
+                                const qty = Number(item.quantity) || 1;
+                                const rate = Number(item.unitPrice || item.rate || 0);
+                                const grossAmount = qty * rate;
+                                const discRate = Number(item.discount || 0);
+                                const discAmount = discRate > 0 ? (discRate * qty) : Number(item.discountAmount || item.lineDiscount || 0);
 
-                {/* ================= PAGE 1 ================= */}
-                <div className="print-page border border-gray-300 rounded-lg p-3 sm:p-6 pb-6 sm:pb-8 shadow-sm mb-6 sm:mb-8 bg-white flex flex-col justify-between" style={{ pageBreakAfter: 'always', breakAfter: 'page', minHeight: '252mm' }}>
-                    <Header />
+                                const title = useSinhalaLanguage 
+                                    ? (item.productTranslation || item.productName || item.description || 'Line Item') 
+                                    : (item.productName || item.description || 'Line Item');
+                                const descText = item.description && item.description !== title ? item.description : '';
 
-                    {/* Customer Box & Metadata */}
-                    <div className="quotation-card avoid-break print-avoid-break grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3 sm:gap-6 bg-gray-50 p-3 sm:p-4 rounded border border-gray-200 mb-6 text-xs">
-                        <div>
-                            <p className="text-[10px] uppercase font-bold text-gray-500 tracking-wider mb-1">{useSinhalaLanguage ? 'පාරිභෝගික' : 'Customer'}</p>
-                            <p className="font-bold text-gray-900 text-sm">{customerName}</p>
-                            {doc.billingAddress?.line1 && <p className="text-gray-600 mt-1">{doc.billingAddress.line1}</p>}
-                            {contactPhone && <p className="text-gray-600">{contactPhone}</p>}
-                        </div>
-                        <div className="text-left sm:text-right print:text-right space-y-1">
-                            <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'ලේඛන අංකය :' : 'Quotation No :'}</span> <span className="font-bold font-mono text-sm">{docNumber}</span></p>
-                            <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'විකිණුම් නියෝජිත :' : 'Sales :'}</span> {doc.salesRep || 'Asanka'}</p>
-                            <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'ශාඛා :' : 'Branch :'}</span> {doc.branch || 'JA-ELA'}</p>
-                            <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'දිනය :' : 'Date :'}</span> {dateDisplay}</p>
-                        </div>
-                    </div>
-
-                    {/* Table Header & Specifications Description */}
-                    <div className="mb-4 overflow-x-auto border border-gray-300 rounded">
-                        <table className="w-full min-w-[480px] sm:min-w-full print:min-w-full text-xs text-left border-collapse">
-                            <thead className="bg-gray-800 text-white uppercase text-[10px] tracking-wider">
-                                <tr>
-                                    <th className="py-2.5 px-3 border-r border-gray-600">{useSinhalaLanguage ? 'විස්තරය' : 'Description'}</th>
-                                    <th className="py-2.5 px-3 text-right w-28 border-r border-gray-600">{useSinhalaLanguage ? 'අනුපාතය' : 'Rate'}</th>
-                                    <th className="py-2.5 px-3 text-center w-16 border-r border-gray-600">{useSinhalaLanguage ? 'ප්‍රමාණය' : 'Qty'}</th>
-                                    <th className="py-2.5 px-3 text-right w-32">{useSinhalaLanguage ? 'මුදල' : 'Amount'}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 bg-white font-calibri">
-                                {(doc.items || []).map((item, idx) => {
-                                    const desc = useSinhalaLanguage ? (item.productTranslation || item.productName || item.description || 'ලොරි බොඩි') : (item.productName || item.description || 'Lorry Body');
-                                    const qty = item.quantity || 1;
-                                    const unitPrice = item.unitPrice || item.rate || 0;
-                                    const lineTotal = item.lineTotal || (qty * unitPrice);
-
-                                    return (
-                                        <tr key={idx} className="border-b border-gray-200">
-                                            <td className="py-3 px-3 border-r border-gray-300">
-                                                <div className="font-bold text-gray-900 text-sm uppercase">{desc}</div>
-                                                {item.bodyModel && <div className="text-xs text-gray-700 font-semibold mt-1">{useSinhalaLanguage ? 'බොඩි මොඩල්' : 'Body Model'} : {item.bodyModel}</div>}
-                                                {item.vehicleModel && <div className="text-xs text-gray-700 font-semibold">{useSinhalaLanguage ? 'වාහන මොඩල්' : 'Vehicle Model'} : {item.vehicleModel}</div>}
-                                                
-                                                {/* Render specifications multiline or bullets */}
-                                                {item.specificationsText ? (
-                                                    <pre className="whitespace-pre-wrap font-calibri text-[11px] text-gray-700 mt-2 leading-relaxed">
-                                                        {item.specificationsText}
-                                                    </pre>
-                                                ) : (
-                                                    doc.specifications?.length > 0 && (
-                                                        <ul className="list-decimal list-inside text-[11px] text-gray-700 mt-2 space-y-0.5 leading-relaxed">
-                                                            {doc.specifications.map((spec, specIdx) => (
-                                                                <li key={specIdx}>{spec}</li>
-                                                            ))}
-                                                        </ul>
-                                                    )
-                                                )}
-
-                                                <p className="font-bold text-xs uppercase tracking-wider text-gray-900 mt-3">{useSinhalaLanguage ? 'GLX ශ්‍රී ලංකාවේ සිදු කරන ලද 100%' : '100% MADE IN GLX SRI LANKA'}</p>
-                                                
-                                                {/* Outside Body Dimensions */}
-                                                {doc.bodyDimensions && (
-                                                    <div className="mt-4 border-t border-dashed pt-2">
-                                                        <p className="font-bold text-gray-800 text-[11px] uppercase">{useSinhalaLanguage ? 'පිටත බොඩි මාන' : 'Outside Body Dimensions'}</p>
-                                                        <p className="text-gray-700 text-[11px]">
-                                                            {useSinhalaLanguage ? 'දිග' : 'Length'} - {doc.bodyDimensions.length || '9 Feet 2 Inch'} | {useSinhalaLanguage ? 'පළල' : 'Width'} - {doc.bodyDimensions.width || '66 Inch'} | {useSinhalaLanguage ? 'උස' : 'Height'} - {doc.bodyDimensions.height || '6 Feet'}
-                                                        </p>
+                                return (
+                                    <React.Fragment key={idx}>
+                                        <tr className="align-top">
+                                            <td className="pt-3 pb-1 pr-3">
+                                                <div className="font-semibold text-gray-900">{title}</div>
+                                                {descText && (
+                                                    <div className="whitespace-pre-wrap text-gray-800 text-[12px] leading-relaxed mt-0.5">
+                                                        {descText}
                                                     </div>
                                                 )}
-
-                                                {/* Special Notes & Warranty */}
-                                                <div className="mt-4 border-t border-dashed pt-2 space-y-1 text-[11px]">
-                                                    <p className="font-bold text-gray-800 uppercase">{useSinhalaLanguage ? 'විශේෂ සටහන :' : 'Special Note :'}</p>
-                                                    <p className="font-bold text-gray-900">{useSinhalaLanguage ? 'වගකීම ජපන් මොඩල් 10/0255/22' : 'WARRANTY JAPAN MODEL 10/0255/22'}</p>
-                                                    <ul className="list-disc list-inside text-gray-700 space-y-0.5">
-                                                        <li>{useSinhalaLanguage ? 'බොඩි ව්‍යුහය සඳහා වසර 10 (කොන්දේසි අදාළ)' : '10 Years For Body Structure (Condition Apply)'}</li>
-                                                        <li>{useSinhalaLanguage ? 'සම්පූර්ණ බොඩි ජල රැකවරණය සඳහා වසර 10 (කොන්දේසි අදාළ)' : '10 Years Full Body Waterproofing (Condition Apply)'}</li>
-                                                        <li>{useSinhalaLanguage ? 'සියලු දොරවල් සඳහා වසර 03 (කොන්දේසි අදාළ)' : '03 Years For All Doors (Condition Apply)'}</li>
-                                                    </ul>
-                                                    <p className="text-gray-500 mt-1 italic">{useSinhalaLanguage ? 'වගකීම නැත: රබර් බීඩිං / ප්ලයිවුඩ් තහඩු / ඇලුමිනියම් තහඩු හෝ ක්ලැඩිං තහඩු' : 'No Warranty: Rubber Beading / Plywood Sheets / Aluminium Sheet or Cladding Sheets'}</p>
-                                                    <p className="text-gray-700 font-semibold mt-1">{useSinhalaLanguage ? 'සටහන: සෑම මාස 12 කට වරක් ඔබ GLX TRUCK BODY ENGINEERS යාඩයට පැමිණ ඔබේ වාහන බොඩිය අපගේ සමාගම හරහා පරීක්ෂා කළ යුතුය සහ ඔබේ වගකීම් කාඩ්පත යාවත්කාලීන කළ යුතුය...' : 'Note: Every 12 Months you should Come to the GLX TRUCK BODY ENGINEERS YARD and Check your Vehicle Body through our Company and Update your Warranty Card...'}</p>
-                                                </div>
                                             </td>
-                                            <td className="py-3 px-3 text-right font-mono text-xs border-r border-gray-300">{formatCurrency(unitPrice)}</td>
-                                            <td className="py-3 px-3 text-center font-semibold text-xs border-r border-gray-300">{qty}</td>
-                                            <td className="py-3 px-3 text-right font-mono font-bold text-xs">{formatCurrency(lineTotal)}</td>
+                                            <td className="pt-3 pb-1 text-right font-mono text-gray-900">{formatNumber(rate)}</td>
+                                            <td className="pt-3 pb-1 text-center font-mono text-gray-900">{qty}</td>
+                                            <td className="pt-3 pb-1 text-right font-mono text-gray-900">{formatNumber(grossAmount)}</td>
                                         </tr>
-                                    );
-                                })}
 
-                                {/* Labor Cost if available */}
-                                {doc.laborCost > 0 && (
-                                    <tr className="border-b border-gray-200">
-                                        <td className="py-3 px-3 border-r border-gray-300">
-                                            <div className="font-bold text-gray-900 text-sm uppercase">Labor Charge / Workmanship</div>
-                                            <div className="text-xs text-gray-600">Body Engineering Labor Cost</div>
-                                        </td>
-                                        <td className="py-3 px-3 text-right font-mono text-xs border-r border-gray-300">{formatCurrency(doc.laborCost)}</td>
-                                        <td className="py-3 px-3 text-center font-semibold text-xs border-r border-gray-300">1</td>
-                                        <td className="py-3 px-3 text-right font-mono font-bold text-xs">{formatCurrency(doc.laborCost)}</td>
-                                    </tr>
-                                )}
-
-                                {/* Page 1 Discount row at the bottom of table */}
-                                {doc.discount > 0 && (
-                                    <tr className="text-red-600 font-bold border-t-2 border-gray-300">
-                                        <td className="py-2.5 px-3 uppercase text-sm border-r border-gray-300">{useSinhalaLanguage ? 'වට්ටම්' : 'Discount'}</td>
-                                        <td className="py-2.5 px-3 text-right font-mono text-sm border-r border-gray-300">-{formatCurrency(doc.discount)}</td>
-                                        <td className="py-2.5 px-3 text-center text-sm border-r border-gray-300">1</td>
-                                        <td className="py-2.5 px-3 text-right font-mono text-sm">-{formatCurrency(doc.discount)}</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Page 1 Footer */}
-                    <div className="mt-6 pt-3 border-t-2 border-gray-300 flex items-center justify-between text-xs font-calibri">
-                        <span className="font-semibold text-gray-700">GLX INDUSTRIES (PVT) LTD — Kotugoda, Ja-Ela, Sri Lanka</span>
-                        <span className="font-bold text-gray-800 tracking-wider">{useSinhalaLanguage ? 'පිටුව 1 / 2' : 'PAGE 1 / 2'}</span>
-                    </div>
-                </div>
-
-                {/* ================= PAGE 2 ================= */}
-                <div className="print-page border border-gray-300 rounded-lg p-3 sm:p-6 pb-6 sm:pb-8 shadow-sm bg-white flex flex-col justify-between" style={{ minHeight: '252mm' }}>
-                    <Header />
-
-                    <div className="mb-4 overflow-x-auto border border-gray-300 rounded">
-                        <table className="w-full min-w-[480px] sm:min-w-full print:min-w-full text-xs text-left border-collapse">
-                            <thead className="bg-gray-800 text-white uppercase text-[10px] tracking-wider">
-                                <tr>
-                                    <th className="py-2.5 px-3 border-r border-gray-600">{useSinhalaLanguage ? 'විස්තරය' : 'Description'}</th>
-                                    <th className="py-2.5 px-3 text-right w-28 border-r border-gray-600">{useSinhalaLanguage ? 'අනුපාතය' : 'Rate'}</th>
-                                    <th className="py-2.5 px-3 text-center w-16 border-r border-gray-600">{useSinhalaLanguage ? 'ප්‍රමාණය' : 'Qty'}</th>
-                                    <th className="py-2.5 px-3 text-right w-32">{useSinhalaLanguage ? 'මුදල' : 'Amount'}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 bg-white font-calibri">
-                                {/* Bank Details Row */}
-                                <tr className="bank-details avoid-break border-b border-gray-200">
-                                    <td className="py-4 px-3 text-gray-800 font-semibold leading-relaxed border-r border-gray-300">
-                                        <div className="font-bold text-gray-900 text-sm mb-1 uppercase">{useSinhalaLanguage ? 'ගෙවීම් සඳහා බැංකු විස්තර:' : 'Bank Details for Payments:'}</div>
-                                        {useSinhalaLanguage ? 'ගිණුම් නම : GLX Truck Body Engineers' : 'Account Name : GLX Truck Body Engineers'}<br />
-                                        {useSinhalaLanguage ? 'අංකය : 100600002717' : 'Number : 100600002717'}<br />
-                                        Nations Trust Bank<br />
-                                        Ja-Ela Branch
-                                    </td>
-                                    <td className="py-4 px-3 text-right font-mono align-top text-sm border-r border-gray-300">0.00</td>
-                                    <td className="py-4 px-3 text-center font-semibold align-top text-sm border-r border-gray-300">1</td>
-                                    <td className="py-4 px-3 text-right font-mono align-top text-sm">0.00</td>
-                                </tr>
-
-                                {/* Special Discount Row in Red */}
-                                {doc.specialDiscount > 0 && (
-                                    <tr className="text-red-600 font-bold avoid-break border-b border-gray-200">
-                                        <td className="py-3 px-3 uppercase text-sm border-r border-gray-300">{useSinhalaLanguage ? 'විශේෂ වට්ටම්' : 'Special Discount'}</td>
-                                        <td className="py-3 px-3 text-right font-mono text-sm border-r border-gray-300">-{formatCurrency(doc.specialDiscount)}</td>
-                                        <td className="py-3 px-3 text-center text-sm border-r border-gray-300">1</td>
-                                        <td className="py-3 px-3 text-right font-mono text-sm">-{formatCurrency(doc.specialDiscount)}</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Totals Summary */}
-                    <div className="avoid-break print-avoid-break flex flex-col sm:flex-row print:flex-row justify-between items-stretch sm:items-start print:items-start gap-4 mb-6">
-                        <div className="text-xs text-gray-600 leading-relaxed max-w-sm pt-2">
-                            <span className="font-bold text-gray-800">{useSinhalaLanguage ? 'විශේෂ සටහන :' : 'Remarks :'}</span> {doc.remarks || (useSinhalaLanguage ? 'කරුණාකර ගෙවීම් සෘජුවම නියමිත Nations Trust Bank ගිණුමට සිදු කරන්න.' : 'Please process payments directly to the designated Nations Trust Bank account.')}
-                        </div>
-                        <div className="w-full sm:w-80 print:w-80 bg-gray-50 border border-gray-300 rounded p-3 text-xs space-y-1.5 font-calibri">
-                            <div className="flex justify-between text-gray-700">
-                                <span>{useSinhalaLanguage ? 'භාණ්ඩ උප එකතුව:' : 'ITEMS SUB TOTAL:'}</span>
-                                <span className="font-mono">{formatCurrency(doc.subtotal || doc.totalAmount)}</span>
-                            </div>
-                            {doc.laborCost > 0 && (
-                                <div className="flex justify-between text-emerald-800 font-semibold">
-                                    <span>{useSinhalaLanguage ? 'ශ්‍රම වියදම:' : 'LABOR COST:'}</span>
-                                    <span className="font-mono">+{formatCurrency(doc.laborCost)}</span>
-                                </div>
-                            )}
-                            {(doc.discount > 0 || doc.specialDiscount > 0) && (
-                                <div className="flex justify-between text-red-600 font-bold">
-                                    <span>{useSinhalaLanguage ? 'වට්ටම්:' : 'DISCOUNT:'}</span>
-                                    <span className="font-mono">-{formatCurrency((doc.discount || 0) + (doc.specialDiscount || 0))}</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-400">
-                                <span>{useSinhalaLanguage ? 'මුළු එකතුව:' : 'GRAND TOTAL:'}</span>
-                                <span className="font-mono text-blue-900 border-b-4 border-double border-gray-900 pb-0.5">{formatCurrency(doc.grandTotal || doc.finalSellingPrice)}</span>
-                            </div>
-                            {(doc.advanceAmount > 0 || doc.amountPaid > 0) && (
-                                <div className="flex justify-between text-emerald-700 font-bold pt-1 border-t border-dashed">
-                                    <span>{useSinhalaLanguage ? 'ඉදිරි ගෙවීම:' : 'ADVANCE PAID:'}</span>
-                                    <span className="font-mono">-{formatCurrency(doc.advanceAmount || doc.amountPaid)}</span>
-                                </div>
-                            )}
-                            {(doc.balanceAmount !== undefined || doc.balanceDue !== undefined) && (
-                                <div className="flex justify-between text-amber-900 font-black pt-1 bg-amber-50 p-1 rounded border border-amber-200">
-                                    <span>{useSinhalaLanguage ? 'ඉතිරි මුදල:' : 'BALANCE DUE:'}</span>
-                                    <span className="font-mono text-sm">{formatCurrency(doc.balanceAmount ?? doc.balanceDue ?? ((doc.grandTotal || 0) - (doc.advanceAmount || doc.amountPaid || 0)))}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Payment & Warranty Terms */}
-                    <div className="avoid-break bank-details mb-6 grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3 sm:gap-6 text-xs text-gray-700 font-calibri">
-                        <div className="bg-gray-50 p-3 sm:p-4 rounded border border-gray-200">
-                            <p className="font-bold text-gray-900 uppercase mb-2">{useSinhalaLanguage ? 'ගෙවීම් කොන්දේසි:' : 'Condition of Payments:'}</p>
-                            <ul className="space-y-1 text-gray-700">
-                                <li><span className="font-semibold">a). 70%</span> {useSinhalaLanguage ? 'අනුපාතය සමඟ ඉදිරි ගෙවීම' : 'Advance Payment with the firm Order'}.</li>
-                                <li><span className="font-semibold">b). {useSinhalaLanguage ? 'ඉතිරි ගෙවීම' : 'Balance Payment'}</span> {useSinhalaLanguage ? 'කටයුතු අවසන් වූ පසු' : 'on Completion of Work'}.</li>
-                                <li className="pt-2"><span className="font-semibold">{useSinhalaLanguage ? 'කටයුතු අවසන් වීම :' : 'Completion of Work :'}</span> 18 to 26 {useSinhalaLanguage ? 'වැඩ දින' : 'working Days'} {useSinhalaLanguage ? 'අනුපාතය තහවුරු වූ පසු' : 'after the Order Confirmation'}.</li>
-                            </ul>
-                        </div>
-
-                        <div className="bg-gray-50 p-3 sm:p-4 rounded border border-gray-200 space-y-2">
-                            <p><span className="font-bold text-gray-900 uppercase">{useSinhalaLanguage ? 'වලංගුභාවය (උපස්ථ ලේඛනය) :' : 'Validity (Quotation) :'}</span> 30 {useSinhalaLanguage ? 'වැඩ දින' : 'Working Days'} {useSinhalaLanguage ? 'නිකුත් කළ දිනයේ සිට' : 'From the Issued Date'}.</p>
-                            <p><span className="font-bold text-gray-900 uppercase">{useSinhalaLanguage ? 'වගකීම :' : 'Warranty :'}</span></p>
-                            <ul className="list-alpha list-inside pl-1 text-gray-700 space-y-0.5">
-                                <li>a). {useSinhalaLanguage ? 'විස්තරය බලන්න' : 'Please See the Description'}.</li>
-                                <li>b). {useSinhalaLanguage ? 'වගකීම ගෙවීම් ලේඛනය සමඟ නිකුත් කරනු ඇත' : 'Warranty Will be Issued with the Invoice'}.</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    {/* Authorized Person Signature & QR Code */}
-                    <div className="avoid-break print-footer mt-auto pt-6 border-t border-gray-300">
-                        <div className="flex flex-col sm:flex-row print:flex-row justify-between items-center sm:items-end print:items-end gap-4 text-xs mb-4">
-                            <div className="space-y-3 text-center sm:text-left print:text-left w-full sm:w-auto">
-                                <div className="font-mono text-[10px] text-gray-500">
-                                    {useSinhalaLanguage ? 'මුද්‍රණය කළ:' : 'Printed at:'} {new Date().toLocaleString('en-GB')}
-                                </div>
-                                <div className="text-center w-56 mx-auto sm:mx-0">
-                                    <div className="border-b border-gray-800 mb-1.5 h-10"></div>
-                                    <p className="font-bold text-gray-900 uppercase">{useSinhalaLanguage ? 'ඔබේ විශ්වාසවන්තයා,' : 'Yours Faithfully,'}</p>
-                                    <p className="font-bold text-gray-900 uppercase text-[10px]">GLX INDUSTRIES - Ja Ela</p>
-                                    <p className="text-gray-600 text-[10px]">{useSinhalaLanguage ? 'අධිකාරී පුද්ගලයා' : 'Authorized Person'}</p>
-                                </div>
-                            </div>
-
-                            {/* QR Code */}
-                            <div className="flex flex-col items-center justify-center p-2 bg-white border border-gray-200 rounded shadow-sm">
-                                <QRCodeSVG value={qrString} size={90} level="M" />
-                                <p className="text-[9px] font-bold text-gray-700 mt-2 uppercase tracking-wide">{useSinhalaLanguage ? 'සත්‍යාපනය සඳහා ස්කෑන් කරන්න' : 'Scan to Verify'}</p>
-                                <p className="text-[8px] text-gray-400 font-mono mt-0.5">{docNumber}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between border-t-2 border-gray-300 pt-3 pb-1 text-xs font-calibri">
-                            <span className="font-semibold text-gray-700 text-[10px] sm:text-xs">GLX INDUSTRIES (PVT) LTD — Kotugoda, Ja-Ela, Sri Lanka</span>
-                            <span className="font-bold text-gray-800 tracking-wider text-[10px] sm:text-xs">{useSinhalaLanguage ? 'පිටුව 2 / 2' : 'PAGE 2 / 2'}</span>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        );
-    }
-
-    // Default clean A4 print view for Invoice or Estimate
-    return (
-        <div ref={ref} className="quotation-print-area print-area print-container document-print-view font-calibri text-gray-900 bg-white p-3 sm:p-8 max-w-[850px] mx-auto text-sm leading-relaxed border border-gray-200 rounded-lg shadow-sm" style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
-            <TemplateToolbar />
-            <Header />
-
-            {/* Document Metadata Grid */}
-            <div className="quotation-card avoid-break print-avoid-break grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3 sm:gap-4 bg-gray-50 p-3 sm:p-4 rounded-md border border-gray-200 mb-6 text-xs font-calibri">
-                <div className="space-y-1">
-                    {doc.insuranceCompany && (
-                        <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'රක්ෂක සමාගම:' : 'Insurance Company:'}</span> {doc.insuranceCompany}</p>
-                    )}
-                    <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'පාරිභෝගික නම:' : 'Customer Name:'}</span> <strong className="text-gray-900">{customerName}</strong></p>
-                    {contactPhone && (
-                        <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'සබඳතා අංකය:' : 'Contact Number:'}</span> {contactPhone}</p>
-                    )}
-                    {doc.vehicleNo && (
-                        <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'වාහන අංකය:' : 'Vehicle No:'}</span> <strong className="text-blue-700 font-mono text-sm">{doc.vehicleNo}</strong></p>
-                    )}
-                    {doc.vehicleModel && (
-                        <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'වාහන මොඩල්:' : 'Vehicle Model:'}</span> {doc.vehicleModel}</p>
-                    )}
-                </div>
-
-                <div className="space-y-1 text-left sm:text-right print:text-right">
-                    <p><span className="font-semibold text-gray-700">{docTitle} {useSinhalaLanguage ? 'අංකය:' : 'No:'}</span> <span className="font-mono font-bold">{docNumber}</span></p>
-                    <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'විකිණුම් නියෝජිත:' : 'Sales Rep:'}</span> <strong className="text-gray-900">{doc.salesRep || 'Asanka'}</strong></p>
-                    <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'ශාඛා:' : 'Branch:'}</span> {doc.branch || 'JA-ELA'}</p>
-                    <p><span className="font-semibold text-gray-700">{useSinhalaLanguage ? 'දිනය:' : 'Date:'}</span> {dateDisplay}</p>
-                </div>
-            </div>
-
-            {/* Line Items Table */}
-            <div className="mb-6 overflow-x-auto border border-gray-300 rounded">
-                <table className="w-full min-w-[480px] sm:min-w-full print:min-w-full text-xs text-left border-collapse">
-                    <thead className="bg-gray-800 text-white uppercase text-[10px] tracking-wider">
-                        <tr>
-                            <th className="py-2.5 px-3 w-8 text-center border-r border-gray-600">#</th>
-                            <th className="py-2.5 px-3 border-r border-gray-600">{useSinhalaLanguage ? 'විස්තරය' : 'Description'}</th>
-                            <th className="py-2.5 px-3 text-right w-28 border-r border-gray-600">{useSinhalaLanguage ? 'අනුපාතය' : 'Rate'}</th>
-                            <th className="py-2.5 px-3 text-center w-16 border-r border-gray-600">{useSinhalaLanguage ? 'ප්‍රමාණය' : 'Qty'}</th>
-                            <th className="py-2.5 px-3 text-right w-32">{useSinhalaLanguage ? 'මුදල' : 'Amount'}</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white font-calibri">
-                        {(doc.items || []).map((item, idx) => {
-                            const desc = useSinhalaLanguage ? (item.productTranslation || item.productName || item.description || 'Line item') : (item.productName || item.description || 'Line item');
-                            const qty = item.quantity || 1;
-                            const unitPrice = item.unitPrice || item.rate || 0;
-                            const lineTotal = item.lineTotal || (qty * unitPrice);
-
-                            return (
-                                <tr key={idx} className="hover:bg-gray-50 avoid-break print-table-row border-b border-gray-200">
-                                    <td className="py-2.5 px-3 text-center font-medium text-gray-500 border-r border-gray-300">{idx + 1}</td>
-                                    <td className="py-2.5 px-3 font-semibold text-gray-800 border-r border-gray-300">
-                                        <div>{desc}</div>
-                                        {!useSinhalaLanguage && item.description && item.description !== desc && (
-                                            <div className="text-[11px] text-gray-600 font-normal mt-0.5 whitespace-pre-wrap">{item.description}</div>
+                                        {/* Red Discount row beneath item if discount > 0 */}
+                                        {discRate > 0 && (
+                                            <tr className="text-red-600">
+                                                <td className="pt-0.5 pb-2 pr-3">{useSinhalaLanguage ? 'වට්ටම්' : 'Discount'}</td>
+                                                <td className="pt-0.5 pb-2 text-right font-mono">-{formatNumber(discRate)}</td>
+                                                <td className="pt-0.5 pb-2 text-center font-mono">{qty}</td>
+                                                <td className="pt-0.5 pb-2 text-right font-mono">-{formatNumber(discAmount)}</td>
+                                            </tr>
                                         )}
-                                        {!useSinhalaLanguage && item.productTranslation && (
-                                            <div className="text-[11px] text-gray-500 font-normal italic mt-0.5">{item.productTranslation}</div>
-                                        )}
-                                        {item.notes && <div className="text-[10px] text-gray-400 italic mt-0.5">{item.notes}</div>}
+                                    </React.Fragment>
+                                );
+                            })}
+
+                            {/* Labor Cost Row if present */}
+                            {laborCost > 0 && (
+                                <tr className="align-top">
+                                    <td className="pt-3 pb-1 pr-3">
+                                        <div className="font-semibold text-gray-900 uppercase">Labor Charge / Workmanship</div>
                                     </td>
-                                    <td className="py-2.5 px-3 text-right font-mono text-gray-700 border-r border-gray-300">{formatCurrency(unitPrice)}</td>
-                                    <td className="py-2.5 px-3 text-center font-semibold text-gray-800 border-r border-gray-300">{qty}</td>
-                                    <td className="py-2.5 px-3 text-right font-mono font-bold text-gray-900">{formatCurrency(lineTotal)}</td>
+                                    <td className="pt-3 pb-1 text-right font-mono text-gray-900">{formatNumber(laborCost)}</td>
+                                    <td className="pt-3 pb-1 text-center font-mono text-gray-900">1</td>
+                                    <td className="pt-3 pb-1 text-right font-mono text-gray-900">{formatNumber(laborCost)}</td>
                                 </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
 
-            {/* Totals Summary */}
-            <div className="avoid-break print-avoid-break flex justify-end mb-6">
-                <div className="w-full sm:w-72 print:w-72 bg-gray-50 border border-gray-300 rounded p-3 text-xs space-y-1.5 font-calibri">
-                    <div className="flex justify-between text-gray-700">
-                        <span>SUB TOTAL:</span>
-                        <span className="font-mono">{formatCurrency(doc.subtotal || doc.totalAmount)}</span>
+                {/* Subtotals & Remarks Grid */}
+                <div className="pt-3 border-t border-gray-400 flex justify-between items-start text-[13px] mb-6">
+                    <div className="max-w-sm text-gray-900">
+                        <span className="font-bold">{useSinhalaLanguage ? 'සටහන්' : 'Remarks'} &nbsp;: &nbsp;</span>
+                        <span className="text-gray-800">{remarksText}</span>
                     </div>
-                    {doc.discount > 0 && (
-                        <div className="flex justify-between text-red-600 font-bold">
-                            <span>DISCOUNT:</span>
-                            <span className="font-mono">-{formatCurrency(doc.discount)}</span>
+
+                    <div className="w-72 space-y-1 text-right">
+                        <div className="flex justify-between font-bold text-gray-900">
+                            <span>{useSinhalaLanguage ? 'උප එකතුව' : 'SUB TOTAL'}</span>
+                            <span className="font-mono">{formatNumber(subtotal + laborCost)}</span>
                         </div>
-                    )}
-                    <div className="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-400">
-                        <span>GRAND TOTAL:</span>
-                        <span className="font-mono text-blue-900 border-b-4 border-double border-gray-900 pb-0.5">{formatCurrency(doc.grandTotal || doc.finalSellingPrice)}</span>
+                        {totalDiscount > 0 && (
+                            <div className="flex justify-between font-bold text-red-600">
+                                <span>{useSinhalaLanguage ? 'වට්ටම්' : 'DISCOUNT'}</span>
+                                <span className="font-mono">-{formatNumber(totalDiscount)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between font-black text-gray-900 text-sm pt-1 border-t border-gray-400">
+                            <span>{useSinhalaLanguage ? 'මුළු එකතුව' : 'GRAND TOTAL'}</span>
+                            <span className="font-mono">{formatNumber(grandTotal)}</span>
+                        </div>
+
+                        {/* Invoice specific advance and balance */}
+                        {isInvoice && advancePaid > 0 && (
+                            <div className="flex justify-between font-bold text-emerald-700 pt-1">
+                                <span>{useSinhalaLanguage ? 'ඉදිරි ගෙවීම්' : 'ADVANCE PAID'}</span>
+                                <span className="font-mono">-{formatNumber(advancePaid)}</span>
+                            </div>
+                        )}
+                        {isInvoice && (
+                            <div className="flex justify-between font-black text-amber-900 pt-1">
+                                <span>{useSinhalaLanguage ? 'ඉතිරි මුදල' : 'BALANCE DUE'}</span>
+                                <span className="font-mono">{formatNumber(balanceDue)}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
 
-            {/* Authorized Person Signature & QR Code */}
-            <div className="avoid-break print-footer mt-8 sm:mt-12 pt-4 border-t border-gray-300 flex flex-col sm:flex-row print:flex-row justify-between items-center sm:items-end print:items-end gap-4 text-xs">
-                <div className="space-y-3 text-center sm:text-left print:text-left w-full sm:w-auto">
-                    <div className="font-mono text-[10px] text-gray-500">
-                        Printed at: {new Date().toLocaleString('en-GB')}
+                {/* Terms and Conditions Section */}
+                <div className="border-t border-gray-300 pt-4 text-[12px] space-y-2 mb-8 leading-relaxed">
+                    <div className="grid grid-cols-[170px_1fr] gap-2">
+                        <span className="font-bold text-gray-900">Condition of Payments &nbsp;:</span>
+                        <div className="text-gray-800 whitespace-pre-wrap">{conditionOfPayments}</div>
                     </div>
-                    <div className="text-center w-56 mx-auto sm:mx-0">
-                        <div className="border-b border-gray-800 mb-1.5 h-10"></div>
-                        <p className="font-bold text-gray-900 uppercase">GLX INDUSTRIES - Ja Ela</p>
-                        <p className="text-gray-600 text-[10px]">Authorized Signature</p>
+                    <div className="grid grid-cols-[170px_1fr] gap-2">
+                        <span className="font-bold text-gray-900">Completion of Work &nbsp;:</span>
+                        <div className="text-gray-800">{completionOfWork}</div>
+                    </div>
+                    <div className="grid grid-cols-[170px_1fr] gap-2">
+                        <span className="font-bold text-gray-900">Validity ({docLabel}) &nbsp;:</span>
+                        <div className="text-gray-800">{validityQuotation}</div>
+                    </div>
+                    <div className="grid grid-cols-[170px_1fr] gap-2">
+                        <span className="font-bold text-gray-900">Warranty &nbsp;:</span>
+                        <div className="text-gray-800 whitespace-pre-wrap">{warrantyCondition}</div>
                     </div>
                 </div>
 
-                {/* QR Code */}
-                <div className="flex flex-col items-center justify-center p-2 bg-white border border-gray-200 rounded shadow-sm">
-                    <QRCodeSVG value={qrString} size={90} level="M" />
-                    <p className="text-[9px] font-bold text-gray-700 mt-2 uppercase tracking-wide">Scan to Verify</p>
-                    <p className="text-[8px] text-gray-400 font-mono mt-0.5">{docNumber}</p>
-                </div>
-            </div>
+                {/* Footer: Signature Block on Left, QR Code on Right */}
+                <div className="flex justify-between items-end pt-4">
+                    <div className="space-y-0.5">
+                        <p className="font-bold text-gray-900 text-xs">{useSinhalaLanguage ? 'ඔබේ විශ්වාසවන්ත,' : 'Yours Faithfully,'}</p>
+                        <p className="font-bold text-gray-900 text-xs">GLX INDUSTRIES - Ja Ela</p>
+                        
+                        <div className="pt-10 border-b border-dotted border-gray-400 w-48"></div>
+                        <p className="text-[11px] text-gray-700 mt-1">{useSinhalaLanguage ? 'බලයලත් පුද්ගලයා' : 'Authorized Person'}</p>
+                        
+                        <p className="text-[10px] text-red-600 font-mono pt-4">
+                            Printed at &nbsp;&nbsp; {printTimestamp}
+                        </p>
+                    </div>
 
-            {/* Bottom Footer Bar */}
-            <div className="flex items-center justify-between border-t border-gray-200 pt-3 mt-8 text-[10px] text-gray-400 font-mono">
-                <span>GLX INDUSTRIES (PVT) LTD — Kotugoda, Ja-Ela, Sri Lanka</span>
-                <span className="tracking-wider">{useSinhalaLanguage ? 'පිටුව 1 / 1' : 'PAGE 1 / 1'}</span>
+                    {/* QR Code */}
+                    <div className="flex flex-col items-center">
+                        <div className="p-1 border border-gray-200 rounded bg-white">
+                            <QRCodeSVG value={qrString} size={88} level="M" />
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

@@ -1,0 +1,215 @@
+﻿"ref","itcode","itname","uom","cat","cost","sale"
+"41","1040","Designed Works 
+","Pcs","Labour","1500.00","1500.00"
+"42","1041","REPAIR Works
+","Pcs","Labour","1500.00","1500.00"
+"43","1042","Paint Works
+","Pcs","Labour","1500.00","1500.00"
+"4","1003","Discount
+","","Discount","-30000.00","-30000.00"
+"44","1043","Sticker Branding 
+","Pcs","Service","1500.00","1500.00"
+"46","1045","Labour Charges
+","","Labour","1500.00","1500.00"
+"47","1046","Extension Lorry Body 7 to 10 Feet","Pcs","Service","49000.00","49000.00"
+"49","1048","Extension Chassis ","Pcs","Service","9500.00","9500.00"
+"50","1049","Door Lock Set (Taiwan)","Pcs","ITEM","5000.00","15000.00"
+"52","1051","Door Lock Set (Lanka)","Pcs","ITEM","5000.00","16500.00"
+"55","1054","Door Beading (18mm)","Pcs","ITEM","115.00","350.00"
+"56","1055","Door Beading (24mm)","Pcs","ITEM","135.00","375.00"
+"58","1057","Freezer Unit ","Pcs","ITEM","65000.00","95000.00"
+"59","1058","Silicone Glue","Pcs","ITEM","560.00","750.00"
+"60","1059","Body Sealant (wurth)","Pcs","ITEM","1950.00","2950.00"
+"63","1062","Japan Rivet ","Pcs","ITEM","10.00","50.00"
+"64","1063","A/B GLUE","Pcs","ITEM","1950.00","4950.00"
+"70","1069","+ Lorry Body Installation  ","Pcs","Service","10000.00","35000.00"
+"71","1070","+ Corner Cap (Lanka)","Pcs","ITEM","1000.00","3500.00"
+"74","1073","+ McFoil Heat Resistant","Pcs","ITEM","3000.00","6000.00"
+"75","1074","+ VHB Tape","Pcs","ITEM","6500.00","13500.00"
+"83","1082","Set Bar Boarder","Pcs","ITEM","1000.00","3500.00"
+"84","1083","Door Frame Rear","Pcs","Service","10000.00","20000.00"
+"88","1087","Side Gutter","Pcs","ITEM","500.00","2000.00"
+"89","1088","Mud Guard Set (Small)","Pcs","ITEM","2500.00","5500.00"
+"90","1089","Mud Guard Set (Large)","Pcs","ITEM","5000.00","10000.00"
+"34","1033","Electric Gate Lock with Remote","Pcs","Roller Gate","7500.00","12500.00"
+"93","1092","Foot Board (Large)","Pcs","ITEM","3500.00","7500.00"
+"94","1093","Foot Board (Extra Large)","Pcs","ITEM","4500.00","10000.00"
+"95","1094","Light Guard  (Small)","Pcs","ITEM","4500.00","8500.00"
+"97","1096","Side Guard (Small)","Pcs","ITEM","2500.00","5000.00"
+"98","1097","Side Guard (Large)","Pcs","ITEM","4500.00","9500.00"
+"40","1039","Door Eye
+(180 Degree)","Pcs","Roller Gate","1000.00","1500.00"
+"99","1098","Side Guard (Extra Large)","Pcs","ITEM","8500.00","15000.00"
+"102","1101","Plywood Works 12mm ","Pcs","Service","3250.00","4850.00"
+"103","1102","Aluminium Works 1.2mm (18G)","Pcs","Service","6000.00","12000.00"
+"105","1104","Aluminium Works Corrugated (Japan Ralli)","Pcs","Service","7000.00","14500.00"
+"113","1112","LORRY BODY 3 Wheel Japan Model White Box
+(With Bed Price/Taiwan Lock Set/4mm Composite White/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","80000.00","120000.00"
+"114","1113","LORRY BODY 6.25 feet Budget Box
+(With Bed Price/Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","65000.00","95000.00"
+"115","1114","LORRY BODY 6.25 feet Japan Model Aluminium Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/1.1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","80000.00","120000.00"
+"116","1115","LORRY BODY 6.25 feet Japan Model White Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","90000.00","130000.00"
+"118","1117","LORRY BODY 7.25 feet Budget Box
+(With Bed Price/Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","70000.00","115000.00"
+"120","1119","LORRY BODY 7.25 feet Japan Model White Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite White/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","105000.00","145000.00"
+"126","1125","LORRY BODY 9.25 feet Budget Box
+(With Bed Price/Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","115000.00","155000.00"
+"130","1129","LORRY BODY 10.5 feet Budget Box
+(Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","195000.00","270000.00"
+"135","1134","LORRY BODY 12.5 feet Japan Model White Box
+(Non Rivet/Taiwan Lock Set/4mm Composite White/9mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/3X1.5 2mm Box Bar)","Pcs","ITEM","240000.00","340000.00"
+"138","1137","LORRY BODY 14.5 feet Japan Model White Box
+(Non Rivet/Taiwan Lock Set/4mm Composite White/9mm Plywood/2.5mm Metal Plate/1.5X1.5 1.6mmBox Bar/4X2 2.5mm Box Bar)","Pcs","ITEM","325000.00","425000.00"
+"48","1047","Extension Lorry Body 12 to 16 Feet
+","Pcs","Service","85000.00","85000.00"
+"78","1077","Body Light (Taiwan)","Pcs","ITEM","360.00","1000.00"
+"106","1105","Aluminium Works 2mm (14G)","Pcs","Service","12000.00","17000.00"
+"33","1032","Door Outer 2 Side Frame","Sq Feet","Tempered Glass","7000.00","11000.00"
+"107","1106","Aluminium Checker  Plate Works 1.2mm (18G)","Pcs","Service","8000.00","12000.00"
+"119","1118","LORRY BODY 7.25 feet Japan Model Aluminium Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/1.1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","95000.00","130000.00"
+"123","1122","LORRY BODY 8.25 feet Japan Model Aluminium Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/1.1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","100000.00","145000.00"
+"124","1123","LORRY BODY 8.25 feet Japan Model White Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite White/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","110000.00","160000.00"
+"125","1124","LORRY BODY 8.25 feet Freezer Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite/1.5mm Aluminium/ 1.5mm Aluminium Checker  Plate /Rigifoam High Density/1.6mm Z Panel/2X2 2mm Box Bar)","Pcs","ITEM","210000.00","310000.00"
+"129","1128","LORRY BODY 9.25 feet   Freezer Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite/1.5mm Aluminium/ 1.5mm Aluminium Checker  Plate /Rigifoam High Density/1.6mm Z Panel/2X2 2mm Box Bar)
+","Pcs","ITEM","260000.00","360000.00"
+"139","1138","LORRY BODY 16.5 feet Japan Model Aluminium Box
+(Non Rivet/Taiwan Lock Set/1.5mm Aluminium/9mm Plywood/3mm Metal Plate/1.5x1.5 1.6mmBox Bar/4X2 2.5mm Box Bar)","Pcs","ITEM","335000.00","445000.00"
+"140","1139","LORRY BODY 18.5 feet Japan Model Aluminium Box
+(Non Rivet/Taiwan Lock Set/1.5mm Aluminium/9mm Plywood/9mm Metal Plate/1.5x1.5 1.6mmBox Bar/4X2 2.5mm Box Bar)","Pcs","ITEM","375000.00","495000.00"
+"141","1140","LORRY BODY 20 feet Japan Model Aluminium Box
+(Non Rivet/Taiwan Lock Set/1.5mm Aluminium/9mm Plywood/4mm Metal Plate/2x2 1.6mm Box Bar/4X2 3mm Box Bar)","Pcs","ITEM","435000.00","545000.00"
+"142","1141","LORRY BODY 22 feet Japan Model Aluminium Box
+(Non Rivet/Taiwan Lock Set/1.5mm Aluminium/12mm Plywood/4mm Metal Plate/2x2 1.6mm Box Bar/4X2 3mm Box Bar)","Pcs","ITEM","475000.00","595000.00"
+"144","1143","LANKA BED 6 feet Lorry ","Pcs","ITEM","35000.00","60000.00"
+"148","1147","LANKA BED Mahindra Bolero 8 feet (1.6mm Zincoted)","Pcs","ITEM","48000.00","78000.00"
+"151","1150","LANKA BED Mahindra Bolero 7 feet (1.5mm Zincoted)","Pcs","ITEM","45000.00","78000.00"
+"156","1155","LANKA BED 9.5 feet (1.5mm Zincoted)","Pcs","ITEM","55000.00","88000.00"
+"158","1157","LANKA BED 12.5 feet (2mm Zincoted)","Pcs","ITEM","90000.00","150000.00"
+"160","1159","LANKA BED 16.5 feet (3mm MS & 2mm Zincoted)","Pcs","ITEM","275000.00","375000.00"
+"161","1160","LANKA BED 18.5 feet (4mm MS & 3mm MS)","Pcs","ITEM","300000.00","425000.00"
+"162","1161","LANKA BED 20.5 feet (6mm MS & 3mm MS)","Pcs","ITEM","375000.00","495000.00"
+"168","1167","ORIGINAL BED TATA Batta  ","Pcs","ITEM","50000.00","75000.00"
+"169","1168","ORIGINAL BED Mahindra Maxximo  ","Pcs","ITEM","50000.00","75000.00"
+"170","1169","ORIGINAL BED Mahindra Bolero 7 feet ","Pcs","ITEM","60000.00","85000.00"
+"172","1171","ORIGINAL BED 8.5 feet ","Pcs","ITEM","60000.00","85000.00"
+"173","1172","ORIGINAL BED 9.5 feet ","Pcs","ITEM","60000.00","85000.00"
+"174","1173","ORIGINAL BED 10.5 feet","Pcs","ITEM","65000.00","95000.00"
+"175","1174","ORIGINAL BED 12.5 feet","Pcs","ITEM","65000.00","95000.00"
+"177","1176","ORIGINAL BED 16.5 feet","Pcs","ITEM","85000.00","145000.00"
+"178","1177","ORIGINAL BED 18.5 feet","Pcs","ITEM","85000.00","145000.00"
+"179","1178","ORIGINAL BED 20.5 feet","Pcs","ITEM","125000.00","295000.00"
+"180","1179","DOOR Reconstruction (Small)
+(PVC Beading/ROBIN MDF Sheet/Zinc Alloy 0.35mm Sheet)
+","Pcs","ITEM","9000.00","16000.00"
+"181","1180","DOOR Reconstruction (Large)
+(PVC Beading/ROBIN MDF Sheet/Zinc Alloy 0.35mm  Sheet)","Pcs","ITEM","12500.00","19500.00"
+"182","1181","DOOR Reconstruction (Extra Large)
+(PVC Beading/ROBIN MDF Sheet/Zinc Alloy 0.35mm  Sheet)","Pcs","ITEM","14000.00","22500.00"
+"183","1182","DOOR Reconstruction (Shutter Board)
+(PVC Beading/MACBOOK Shutter Board/Zinc Alloy 0.35mm  Sheet)","Pcs","ITEM","18000.00","30000.00"
+"45","1044","Labour Charges
+","Pcs","Labour","1500.00","1500.00"
+"136","1135","LORRY BODY 14.5 feet Budget Box
+(Lanka Lock Set/1.1mm Aluminium/9mm Plywood/2.5mm Metal Plate/1.5X1.5 1.4mmBox Bar/4X2 2mm Box Bar)","Pcs","ITEM","275000.00","375000.00"
+"147","1146","LANKA BED Mahindra Bolero 7 feet (1.2mm Zincoted)","Pcs","ITEM","38000.00","68000.00"
+"157","1156","LANKA BED 10.5 feet (2mm Zincoted)","Pcs","ITEM","75000.00","135000.00"
+"163","1162","Canopy Lorry Body 6 feet (Box Bar / Jeep Canvas) ","Pcs","ITEM","35000.00","52000.00"
+"176","1175","ORIGINAL BED 14.5 feet","Pcs","ITEM","80000.00","125000.00"
+"186","1185","Battery Bracket","Pcs","ITEM","2000.00","5500.00"
+"187","1186","When the Use Flat Bed is used to Production","Pcs","Service","65000.00","65000.00"
+"188","1187","WARRANTY 
+[ 1 year For 3 Doors / 5 Years For Body Structure / 3 Years For Waterproofing  (Condition Apply) ]","Pcs","ITEM","0.00","0.00"
+"189","1188","CONSTRUCTION of 20.0 Feet Container Box
+(Floorboad Coverd 2mm (14g) M/S Sheet /2 Side Guard Set / 2 Mud Guard Set / Inside and Outside Light / Chassis Bar and U Bolt /Full Paint / Good Cundition Container Box )
+ 
+
+","Pcs","ITEM","500000.00","650000.00"
+"190","1189","Tinker Works","Pcs","Service","0.00","0.00"
+"51","1050","Door Lock Set Stainless Steel (Taiwan)","Pcs","ITEM","35000.00","48000.00"
+"100","1099","Plywood Works 5mm ","Pcs","Service","1850.00","2850.00"
+"127","1126","LORRY BODY 9.25 feet Japan Model Aluminium Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/1.1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","125000.00","175000.00"
+"128","1127","LORRY BODY 9.25 feet Japan Model White Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite White/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","135000.00","190000.00"
+"133","1132","LORRY BODY 12.5 feet Budget Box
+(Lanka Lock Set/1mm Aluminium/9mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/3X1.5 2mm Box Bar)","Pcs","ITEM","210000.00","300000.00"
+"134","1133","LORRY BODY 12.5 feet Japan Model Aluminium Box
+(Non Rivet/Taiwan Lock Set/1.2mm Aluminium/9mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/3X1.5 2mm Box Bar)","Pcs","ITEM","225000.00","325000.00"
+"53","1052","New Latching Bar Reconstruction 
+","Pcs","Service","1500.00","4500.00"
+"54","1053","Door Beading (15mm)","Pcs","ITEM","105.00","310.00"
+"62","1061","Rivet
+","Pcs","ITEM","2.00","5.00"
+"65","1064","A/B Foam","Pcs","ITEM","2000.00","6000.00"
+"66","1065","+ Side Door
+","Pcs","ITEM","5000.00","10000.00"
+"67","1066","+ Corrugated 
+","Pcs","ITEM","15000.00","15000.00"
+"68","1067","+ Square Corrugated Panels (Anodized Aluminium)","Pcs","ITEM","25000.00","45000.00"
+"69","1068","+ Lorry Bed Installation","Pcs","Service","1000.00","2000.00"
+"73","1072","+ Rigifoam High Density","Pcs","ITEM","2000.00","9500.00"
+"76","1075","+ VHB Remover Alcohol   ","Pcs","ITEM","1000.00","3950.00"
+"77","1076","U Bolt","Pcs","ITEM","650.00","2000.00"
+"80","1079","Front Corner","Pcs","Service","3500.00","9000.00"
+"81","1080","Set Bar Corner (1 feet)","Pcs","ITEM","150.00","2000.00"
+"82","1081","Set Bar Bottom","Pcs","ITEM","150.00","2000.00"
+"87","1086","Rear Gutter ","Pcs","ITEM","1000.00","4500.00"
+"91","1090","Mud Guard (Extra Large)","Pcs","ITEM","6500.00","15000.00"
+"92","1091","Foot Board (Small)","Pcs","ITEM","2500.00","5500.00"
+"101","1100","Plywood Works 9mm ","Pcs","Service","2650.00","3850.00"
+"104","1103","Aluminium Works 1.5mm (16G)","Pcs","Service","7000.00","14000.00"
+"109","1108","Aluminium Checker  Plate Works 2mm (14G)","Pcs","Service","12500.00","18500.00"
+"110","1109","Silicone Works for 1 feet (Roof)","Pcs","Service","200.00","1200.00"
+"111","1110","LORRY BODY 3 Wheel Budget Box
+(With Bed Price/Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mmBox Bar)","Pcs","ITEM","50000.00","95000.00"
+"112","1111","LORRY BODY 3 Wheel Japan Model Aluminium Box
+(With Bed Price/Taiwan Lock Set/1.1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)
+","Pcs","ITEM","70000.00","105000.00"
+"57","1056","Door Hinges","Pcs","ITEM","500.00","1950.00"
+"61","1060","Rivet Box","Pcs","ITEM","1250.00","1490.00"
+"72","1071","+ Corner Cap (Japan)
+","Pcs","ITEM","2000.00","5000.00"
+"79","1078","Body Light (Normal)","Pcs","ITEM","250.00","600.00"
+"85","1084","Door Frame Side","Pcs","Service","5000.00","12000.00"
+"86","1085","Side Frame Structure Panel ","Pcs","ITEM","500.00","1500.00"
+"96","1095","Light Guard  (Large)","Pcs","ITEM","4500.00","9500.00"
+"108","1107","Aluminium Checker  Plate Works 1.5mm (16G)","Pcs","Service","9000.00","14000.00"
+"117","1116","LORRY BODY 6.25 feet Freezer Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite/1.5mm Aluminium/ 1.5mm Aluminium Checker  Plate /Rigifoam High Density/1.6mm Z Panel/2X2 2mm Box Bar)","Pcs","ITEM","160000.00","260000.00"
+"122","1121","LORRY BODY 8.25 feet Budget Box
+(With Bed Price/Lanka Lock Set/1mm Aluminium/5mm Plywood/2mm Metal Plate/1x1 1.1mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","90000.00","130000.00"
+"131","1130","LORRY BODY 10.5 feet Japan Model Aluminium Box
+(Non Rivet/Taiwan Lock Set/1.2mm Aluminium/9mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","195000.00","295000.00"
+"132","1131","LORRY BODY 10.5 feet Japan Model White Box
+(Non Rivet/Taiwan Lock Set/4mm Composite White/9mm Plywood/2mm Metal Plate/1x1 1.4mmBox Bar/2X2 2mm Box Bar)","Pcs","ITEM","215000.00","315000.00"
+"137","1136","LORRY BODY 14.5 feet Japan Model Aluminium Box
+(Non Rivet/Taiwan Lock Set/1.5mm Aluminium/9mm Plywood/2.5mm Metal Plate/1.5X1.5 1.6mmBox Bar/4X2 2.5mm Box Bar)","Pcs","ITEM","310000.00","410000.00"
+"152","1151","LANKA BED Mahindra Bolero 8 feet  (2mm Zincoted)","Pcs","ITEM","48000.00","85000.00"
+"159","1158","LANKA BED 14.5 feet (3mm MS & 2mm Zincoted)","Pcs","ITEM","225000.00","325000.00"
+"121","1120","LORRY BODY 7.25 feet Freezer Box
+(With Bed Price/ Non Rivet/Taiwan Lock Set/4mm Composite/1.5mm Aluminium/ 1.5mm Aluminium Checker  Plate /Rigifoam High Density/1.6mm Z Panel/2X2 2mm Box Bar)","Pcs","ITEM","185000.00","285000.00"
+"143","1142","LORRY BODY 24 feet Japan Model Aluminium Box
+(Non Rivet/Taiwan Lock Set/2mm Aluminium/12mm Plywood/4mm Metal Plate/2x2 2mmBox Bar/4X2 3mm Box Bar)","Pcs","ITEM","525000.00","675000.00"
+"145","1144","LANKA BED TATA Batta   (1.2mm Zincoted)","Pcs","ITEM","35000.00","63000.00"
+"146","1145","LANKA BED Mahindra Maxximo  (1.2mm Zincoted)","Pcs","ITEM","35000.00","63000.00"
+"149","1148","LANKA BED TATA Batta   (1.5mm Zincoted)","Pcs","ITEM","42000.00","73000.00"
+"150","1149","LANKA BED Mahindra Maxximo   (1.5mm Zincoted)","Pcs","ITEM","42000.00","73000.00"
+"153","1152","LANKA BED TATA 207  (2mm MS Plate)","Pcs","ITEM","50000.00","85000.00"
+"154","1153","LANKA BED TATA Lokka 8.5 feet (1.5mm Zincoted)","Pcs","ITEM","45000.00","70000.00"
+"155","1154","LANKA BED 8.5 feet (1.5mm Zincoted)","Pcs","ITEM","45000.00","78000.00"
+"165","1164","Canopy Lorry Body 8 feet (Box Bar / Jeep Canvas)","Pcs","ITEM","40000.00","65000.00"
+"166","1165","Canopy Lorry Body 10 feet (Box Bar / Jeep Canvas)","Pcs","ITEM","65000.00","95000.00"
+"167","1166","ORIGINAL BED 6 feet Lorry ","Pcs","ITEM","45000.00","65000.00"
+"171","1170","ORIGINAL BED Mahindra Bolero 8 feet","Pcs","ITEM","60000.00","85000.00"
+"185","1184","DOOR Reconstruction (Freezer)","Pcs","ITEM","20000.00","40000.00"
+"164","1163","Canopy Lorry Body 7 feet (Box Bar / Jeep Canvas)","Pcs","ITEM","38000.00","58000.00"
+"184","1183","DOOR Reconstruction (Box Bar Metal /Zincoted )
+(PVC Beading/1” x 2” inch 1.6mm high tensile galvanize hollow sections/Zinc Coted 1.5mm Sheet)","Pcs","ITEM","18000.00","35000.00"

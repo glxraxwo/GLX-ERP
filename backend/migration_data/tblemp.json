@@ -1,0 +1,92 @@
+﻿[
+    {
+        "ref":  1,
+        "nic":  "198823601365V",
+        "short":  "AMILA",
+        "name":  "Amila Sampath",
+        "mob_no":  "0714942440",
+        "epf_no":  "0",
+        "rph":  "200",
+        "status":  "Active"
+    },
+    {
+        "ref":  2,
+        "nic":  "920430813V",
+        "short":  "HARSHA",
+        "name":  "Harsha Manjula",
+        "mob_no":  "0788230062",
+        "epf_no":  "0",
+        "rph":  "200",
+        "status":  "Active"
+    },
+    {
+        "ref":  3,
+        "nic":  "19951026",
+        "short":  "DINUKA",
+        "name":  "Dinuka Udayanga",
+        "mob_no":  "0754432928",
+        "epf_no":  "00",
+        "rph":  "200",
+        "status":  "Active"
+    },
+    {
+        "ref":  5,
+        "nic":  "960971590v",
+        "short":  "SUJITH",
+        "name":  "Anton Sujith",
+        "mob_no":  "000",
+        "epf_no":  "000",
+        "rph":  "150",
+        "status":  "Active"
+    },
+    {
+        "ref":  7,
+        "nic":  "199521703260",
+        "short":  "NIMESH",
+        "name":  "Nimesh Maduranga",
+        "mob_no":  "0785900075",
+        "epf_no":  "00",
+        "rph":  "150",
+        "status":  "Active"
+    },
+    {
+        "ref":  8,
+        "nic":  "951721859V",
+        "short":  "SAMARAKOON",
+        "name":  "Dushantha Samarakoon",
+        "mob_no":  "0779019875",
+        "epf_no":  "00",
+        "rph":  "250",
+        "status":  "Active"
+    },
+    {
+        "ref":  9,
+        "nic":  "191022229V",
+        "short":  "PUBUDU",
+        "name":  "PUBUDU RANGANA",
+        "mob_no":  "0713738446",
+        "epf_no":  "",
+        "rph":  "250",
+        "status":  "Active"
+    },
+    {
+        "ref":  4,
+        "nic":  "198823204281",
+        "short":  "ROHAN",
+        "name":  "Rohan Chandrasena",
+        "mob_no":  "0781744838",
+        "epf_no":  "00",
+        "rph":  "150",
+        "status":  "Active"
+    },
+    {
+        "ref":  6,
+        "nic":  "200152200371",
+        "short":  "ANUSHA",
+        "name":  "Anusha Sandamalee",
+        "mob_no":  "070213688",
+        "epf_no":  "00",
+        "rph":  "57.7",
+        "status":  "Active"
+    }
+]

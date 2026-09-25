@@ -1,0 +1,38 @@
+﻿[
+    {
+        "ref":  1,
+        "cat":  "GATE"
+    },
+    {
+        "ref":  2,
+        "cat":  "MOTOR"
+    },
+    {
+        "ref":  3,
+        "cat":  "Labour"
+    },
+    {
+        "ref":  4,
+        "cat":  "fdfhdhfd"
+    },
+    {
+        "ref":  5,
+        "cat":  "Discount"
+    },
+    {
+        "ref":  6,
+        "cat":  "Roller Gate"
+    },
+    {
+        "ref":  7,
+        "cat":  "Tempered Glass"
+    },
+    {
+        "ref":  8,
+        "cat":  "Service"
+    },
+    {
+        "ref":  9,
+        "cat":  "ITEM"
+    }
+]

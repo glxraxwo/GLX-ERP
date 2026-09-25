@@ -1,0 +1,6 @@
+﻿"ref","uname","des","utype","pass","branch","sp"
+"1","admin","System Administrator","ADMIN","1","JA-ELA",
+"2","asanka","Asanka Thilakarathna","ADMIN","1","JA-ELA",
+"3","ALL","ALL","ADMIN","123","JA-ELA",
+"6","1","Worker","WORK","1","JA-ELA",
+"4","Nadeesha","cashier","CASHIER","123","JA-ELA",

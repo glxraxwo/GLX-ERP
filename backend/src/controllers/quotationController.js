@@ -260,22 +260,33 @@ export const convertQuotationToInvoice = asyncHandler(async (req, res) => {
 
     const { default: Invoice } = await import('../models/Invoice.js');
 
-    const invoiceItems = (quotation.items || []).map((item, index) => ({
-        lineNumber: index + 1,
-        productId: item.product || undefined,
-        productName: item.productName || 'Custom Line Item',
-        description: item.description || '',
-        quantity: item.quantity || 1,
-        unitOfMeasure: 'pcs',
-        unitPrice: item.unitPrice || 0,
-        discountPercent: 0,
-        discountAmount: 0,
-        taxRate: 0,
-        taxAmount: 0,
-        taxable: false,
-        lineSubtotal: (item.quantity || 1) * (item.unitPrice || 0),
-        lineTotal: item.subtotal || ((item.quantity || 1) * (item.unitPrice || 0))
-    }));
+    const invoiceItems = (quotation.items || []).map((item, index) => {
+        const qty = Number(item.quantity || 1);
+        const unitPrice = Number(item.unitPrice || 0);
+        const discRate = Number(item.discount || 0);
+        const discAmount = +(discRate * qty).toFixed(2);
+        const subtotal = +(qty * unitPrice).toFixed(2);
+        const total = +(subtotal - discAmount).toFixed(2);
+
+        return {
+            lineNumber: index + 1,
+            productId: item.product || undefined,
+            productName: item.productName || 'Custom Line Item',
+            productTranslation: item.productTranslation || '',
+            description: item.description || '',
+            quantity: qty,
+            unitOfMeasure: 'pcs',
+            unitPrice: unitPrice,
+            discountPercent: 0,
+            discountAmount: discAmount,
+            taxRate: 0,
+            taxAmount: 0,
+            taxable: false,
+            lineSubtotal: subtotal,
+            lineDiscount: discAmount,
+            lineTotal: total
+        };
+    });
 
     if (quotation.laborCost && Number(quotation.laborCost) > 0) {
         invoiceItems.push({
@@ -329,6 +340,12 @@ export const convertQuotationToInvoice = asyncHandler(async (req, res) => {
         specifications: quotation.specifications || [],
         warrantyInfo: quotation.warrantyInfo || '',
         paymentConditions: quotation.paymentConditions || [],
+
+        conditionOfPayments: quotation.conditionOfPayments || '',
+        completionOfWork: quotation.completionOfWork || '',
+        validityQuotation: quotation.validityQuotation || '',
+        warrantyCondition: quotation.warrantyCondition || '',
+        remarks: quotation.remarks || quotation.notes || '',
 
         customerId: quotation.customerId || undefined,
         customerSnapshot: {

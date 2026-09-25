@@ -1,0 +1,22 @@
+﻿[
+    {
+        "ref":  1,
+        "bcode":  "JA",
+        "branch":  "JA-ELA"
+    },
+    {
+        "ref":  2,
+        "bcode":  "KG",
+        "branch":  "KEGALLE"
+    },
+    {
+        "ref":  3,
+        "bcode":  "PN",
+        "branch":  "PANADURA"
+    },
+    {
+        "ref":  4,
+        "bcode":  "GM",
+        "branch":  "GAMPAHA"
+    }
+]

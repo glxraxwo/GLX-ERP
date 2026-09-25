@@ -1,0 +1,1001 @@
+﻿[
+    {
+        "ref":  "JA/QT/1",
+        "des":  "",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "1",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/2",
+        "des":  "",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "2",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/EST/1",
+        "des":  "",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "1",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/EST/2",
+        "des":  "",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "2",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/4",
+        "des":  "",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "4",
+        "br":  "JA-ELA",
+        "uname":  "admin"
+    },
+    {
+        "ref":  "JA/EST/3",
+        "des":  "",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "3",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/1",
+        "des":  "Perfoma Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "1",
+        "br":  "JA-ELA",
+        "uname":  "admin"
+    },
+    {
+        "ref":  "JA/INV/2",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "2",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/5",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "5",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/3",
+        "des":  "Perfoma Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "3",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/4",
+        "des":  "Perfoma Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "4",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/6",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 Day",
+        "inv_ref":  "6",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/7",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 Day",
+        "inv_ref":  "7",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/5",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 Day",
+        "inv_ref":  "5",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/8",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "8",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/9",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "15 to 20",
+        "inv_ref":  "9",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/10",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "2 to 3",
+        "inv_ref":  "10",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/6",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "6",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/14",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "10 to 14",
+        "inv_ref":  "14",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/7",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "7",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/EST/4",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "4",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/15",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "5 to 9",
+        "inv_ref":  "15",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/16",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "10 to 14",
+        "inv_ref":  "16",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/17",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "17",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/10",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "10",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/20",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 14",
+        "inv_ref":  "20",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/21",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "5 to 8",
+        "inv_ref":  "21",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/22",
+        "des":  "Invoice No.",
+        "per":  "Full Amount",
+        "day":  "2 to 3",
+        "inv_ref":  "22",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/23",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 to 2",
+        "inv_ref":  "23",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/11",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "11",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/12",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "12",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/25",
+        "des":  "Invoice No.",
+        "per":  "75%",
+        "day":  "50 to 70",
+        "inv_ref":  "25",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/27",
+        "des":  "Invoice No.",
+        "per":  "75%",
+        "day":  "50 to 70",
+        "inv_ref":  "27",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/28",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "3 to 4",
+        "inv_ref":  "28",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/13",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 to 2 Days",
+        "inv_ref":  "13",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/EST/5",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "5",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/14",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "14",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/31",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "1",
+        "inv_ref":  "31",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/34",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "2",
+        "inv_ref":  "34",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/35",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "14 to 21",
+        "inv_ref":  "35",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/36",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "2 to 3",
+        "inv_ref":  "36",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/37",
+        "des":  "Invoice No.",
+        "per":  "100%",
+        "day":  "2 to 3",
+        "inv_ref":  "37",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/38",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 to 2",
+        "inv_ref":  "38",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/39",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "14 to 21",
+        "inv_ref":  "39",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/16",
+        "des":  "Perfoma Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "16",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/40",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "15 to 19",
+        "inv_ref":  "40",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/41",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "14 to 16",
+        "inv_ref":  "41",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/42",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "42",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/18",
+        "des":  "Perfoma Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "18",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/20",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "20",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/21",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "21",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/43",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "2 to 3",
+        "inv_ref":  "43",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/44",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "3 to 4",
+        "inv_ref":  "44",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/46",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "3 to 4",
+        "inv_ref":  "46",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/47",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "10 to 14",
+        "inv_ref":  "47",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/48",
+        "des":  "Invoice No.",
+        "per":  "Rs.30000.00",
+        "day":  "14 to 18",
+        "inv_ref":  "48",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/49",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "21 to 30",
+        "inv_ref":  "49",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/EST/7",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "7",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/22",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "22",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/52",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "52",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/55",
+        "des":  "Invoice No.",
+        "per":  "Rs.300,000.00",
+        "day":  "10 to 18",
+        "inv_ref":  "55",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/27",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "27",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/58",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "30 to 40",
+        "inv_ref":  "58",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/29",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "29",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/60",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "15 to 25",
+        "inv_ref":  "60",
+        "br":  "JA-ELA",
+        "uname":  "admin"
+    },
+    {
+        "ref":  "JA/QT/64",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 to 2",
+        "inv_ref":  "64",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/61",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "14 to 18",
+        "inv_ref":  "61",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/24",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 to 2",
+        "inv_ref":  "24",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/32",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "3 to 4",
+        "inv_ref":  "32",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/23",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "23",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/53",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "53",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/26",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "26",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/28",
+        "des":  "Perfoma Invoice No.",
+        "per":  "50%",
+        "day":  "10 to 18",
+        "inv_ref":  "28",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/30",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "30",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/31",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "31",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/62",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "3 to 4",
+        "inv_ref":  "62",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/33",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "33",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/66",
+        "des":  "Invoice No.",
+        "per":  "55%",
+        "day":  "19 to 24",
+        "inv_ref":  "66",
+        "br":  "JA-ELA",
+        "uname":  "admin"
+    },
+    {
+        "ref":  "JA/INV/32",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "32",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/70",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "14 to 18",
+        "inv_ref":  "70",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/9",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "9",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/24",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "24",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/59",
+        "des":  "Invoice No.",
+        "per":  "",
+        "day":  "2",
+        "inv_ref":  "59",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/25",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "25",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/18",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 ",
+        "inv_ref":  "18",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/19",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1",
+        "inv_ref":  "19",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/33",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "0",
+        "inv_ref":  "33",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/45",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "40 to 50",
+        "inv_ref":  "45",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/51",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "35 to 45",
+        "inv_ref":  "51",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/63",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "4 to 6",
+        "inv_ref":  "63",
+        "br":  "JA-ELA",
+        "uname":  "admin"
+    },
+    {
+        "ref":  "JA/QT/69",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "2 to 4",
+        "inv_ref":  "69",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/13",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "7 to 10",
+        "inv_ref":  "13",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/EST/6",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 to 2",
+        "inv_ref":  "6",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/15",
+        "des":  "Perfoma Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "15",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/17",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "17",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/19",
+        "des":  "Perfoma Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "19",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/12",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "3 to 6 Days",
+        "inv_ref":  "12",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/56",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "10 to 18",
+        "inv_ref":  "56",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/57",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "10 to 18",
+        "inv_ref":  "57",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/65",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "10 to 14",
+        "inv_ref":  "65",
+        "br":  "JA-ELA",
+        "uname":  "admin"
+    },
+    {
+        "ref":  "JA/INV/8",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "8",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/26",
+        "des":  "Invoice No.",
+        "per":  "75%",
+        "day":  "50 to 70",
+        "inv_ref":  "26",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/29",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "45 to 50",
+        "inv_ref":  "29",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/3",
+        "des":  "",
+        "per":  "50%",
+        "day":  "10 to 15",
+        "inv_ref":  "3",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/30",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "20 to 25",
+        "inv_ref":  "30",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/50",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "14 to 21",
+        "inv_ref":  "50",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/54",
+        "des":  "Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "54",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/67",
+        "des":  "Invoice No.",
+        "per":  "75%",
+        "day":  "25 to 30",
+        "inv_ref":  "67",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/11",
+        "des":  "Invoice No.",
+        "per":  "0",
+        "day":  "1 to 2 Days",
+        "inv_ref":  "11",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/QT/68",
+        "des":  "Invoice No.",
+        "per":  "75%",
+        "day":  "14 to 21",
+        "inv_ref":  "68",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    },
+    {
+        "ref":  "JA/INV/34",
+        "des":  "Perfoma Invoice No.",
+        "per":  "50%",
+        "day":  "7 to 10",
+        "inv_ref":  "34",
+        "br":  "JA-ELA",
+        "uname":  "asanka"
+    }
+]
