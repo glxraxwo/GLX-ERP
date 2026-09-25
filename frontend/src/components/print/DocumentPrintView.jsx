@@ -342,19 +342,17 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
                             <span className="font-mono">{formatNumber(grandTotal)}</span>
                         </div>
 
-                        {/* Invoice specific advance and balance */}
-                        {isInvoice && advancePaid > 0 && (
+                        {/* Advance and Balance Due - shown for Quotations, Estimates, and Invoices */}
+                        {advancePaid > 0 && (
                             <div className="flex justify-between font-bold text-emerald-700 pt-1">
                                 <span>{useSinhalaLanguage ? 'ඉදිරි ගෙවීම්' : 'ADVANCE PAID'}</span>
                                 <span className="font-mono">-{formatNumber(advancePaid)}</span>
                             </div>
                         )}
-                        {isInvoice && (
-                            <div className="flex justify-between font-black text-amber-900 pt-1">
-                                <span>{useSinhalaLanguage ? 'ඉතිරි මුදල' : 'BALANCE DUE'}</span>
-                                <span className="font-mono">{formatNumber(balanceDue)}</span>
-                            </div>
-                        )}
+                        <div className="flex justify-between font-black text-amber-900 pt-1">
+                            <span>{useSinhalaLanguage ? 'ඉතිරි මුදල' : 'BALANCE DUE'}</span>
+                            <span className="font-mono">{formatNumber(balanceDue)}</span>
+                        </div>
                     </div>
                 </div>
 

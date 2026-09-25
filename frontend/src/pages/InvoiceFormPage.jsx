@@ -424,7 +424,6 @@ export default function InvoiceFormPage() {
                                                 label="Unit Price (LKR)" 
                                                 type="number" 
                                                 step="0.01" 
-                                                min="0"
                                                 value={item.unitPrice} 
                                                 onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)} 
                                             />
