@@ -1,14 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import api from '../api/axios';
 import { format } from 'date-fns';
 import {
     Plus, FileText, Trash2, Send,
-    MapPin, Clock, X, ShoppingCart, Edit, Eye, Download, Search, Image as ImageIcon, Printer, CheckCircle, RotateCcw, Briefcase
+    MapPin, Clock, X, ShoppingCart, Edit, Eye, Download, Search, Image as ImageIcon, Printer, CheckCircle, RotateCcw, Briefcase,
+    Calendar, LayoutList, LayoutGrid
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Table from '../components/ui/Table';
+import Badge from '../components/ui/Badge';
+import PageHeader from '../components/ui/PageHeader';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useSettings } from '../features/settings/useSettings';
 import DocumentPrintView from '../components/print/DocumentPrintView';
@@ -17,6 +22,8 @@ import { exportDocumentToPDF, exportElementToPDF, printDocumentAsPDF, printEleme
 import { getApiUrl } from '../api/config';
 import { translateText, detectLanguage } from '../utils/translationService';
 import { usePermission } from '../hooks/usePermission';
+
+const fmt = (n) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 2 }).format(n || 0);
 
 const formatDate = (dateStr) => {
     if (!dateStr) return '—';
@@ -55,6 +62,10 @@ const QuotationsPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [documentTypeFilter, setDocumentTypeFilter] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [viewMode, setViewMode] = useState('table');
+    const [activeTab, setActiveTab] = useState('all');
     const [useSinhalaLanguage, setUseSinhalaLanguage] = useState(false);
 
     const printRef = useRef();
@@ -131,7 +142,8 @@ const QuotationsPage = () => {
 
     const fetchQuotations = async () => {
         try {
-            const { data } = await api.get('/crm/quotations');
+            setLoading(true);
+            const { data } = await api.get('/crm/quotations?limit=1000');
             setQuotations(data.data || []);
         } catch (error) {
             toast.error('Failed to load quotations / estimates');
@@ -140,15 +152,76 @@ const QuotationsPage = () => {
         }
     };
 
-    const filteredQuotations = quotations.filter((quote) => {
-        const matchesSearch = 
-            (quote.quoteNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (quote.vehicleNo || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (quote.customerName || quote.vehicleOwner || quote.customerId?.companyName || '').toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus = statusFilter ? quote.status === statusFilter : true;
-        const matchesDocType = documentTypeFilter ? quote.documentType === documentTypeFilter : true;
-        return matchesSearch && matchesStatus && matchesDocType;
-    });
+    const summaryMetrics = useMemo(() => {
+        let totalCount = quotations.length;
+        let totalVal = 0;
+        let qCount = 0;
+        let qVal = 0;
+        let estCount = 0;
+        let estVal = 0;
+        let convCount = 0;
+        let convVal = 0;
+
+        quotations.forEach(q => {
+            const val = Number(q.grandTotal || q.totalAmount || 0);
+            totalVal += val;
+            const isEst = q.documentType === 'estimate' || q.quoteNumber?.startsWith('EST');
+            if (isEst) {
+                estCount++;
+                estVal += val;
+            } else {
+                qCount++;
+                qVal += val;
+            }
+            if (q.status === 'converted') {
+                convCount++;
+                convVal += val;
+            }
+        });
+
+        return { totalCount, totalVal, qCount, qVal, estCount, estVal, convCount, convVal };
+    }, [quotations]);
+
+    const filteredQuotations = useMemo(() => {
+        return quotations.filter((quote) => {
+            const matchesSearch = 
+                (quote.quoteNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (quote.quotationCode || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (quote.vehicleNo || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (quote.vehicleModel || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (quote.insuranceCompany || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (quote.customerName || quote.vehicleOwner || quote.customerId?.companyName || quote.customerId?.displayName || '').toLowerCase().includes(searchQuery.toLowerCase());
+            
+            // Tab filtering
+            let matchesTab = true;
+            const isEst = quote.documentType === 'estimate' || quote.quoteNumber?.startsWith('EST');
+            if (activeTab === 'quotation') matchesTab = !isEst;
+            else if (activeTab === 'estimate') matchesTab = isEst;
+            else if (activeTab === 'converted') matchesTab = quote.status === 'converted';
+
+            const matchesStatus = statusFilter ? quote.status === statusFilter : true;
+            const matchesDocType = documentTypeFilter ? quote.documentType === documentTypeFilter : true;
+
+            // Date filtering
+            let matchesDate = true;
+            const rawDate = quote.date || quote.createdAt;
+            if (rawDate) {
+                const qDate = new Date(rawDate);
+                if (startDate) {
+                    matchesDate = matchesDate && qDate >= new Date(startDate);
+                }
+                if (endDate) {
+                    const end = new Date(endDate);
+                    end.setHours(23, 59, 59, 999);
+                    matchesDate = matchesDate && qDate <= end;
+                }
+            } else if (startDate || endDate) {
+                matchesDate = false;
+            }
+
+            return matchesSearch && matchesTab && matchesStatus && matchesDocType && matchesDate;
+        });
+    }, [quotations, searchQuery, activeTab, statusFilter, documentTypeFilter, startDate, endDate]);
 
     const fetchData = async () => {
         try {
@@ -574,14 +647,162 @@ const QuotationsPage = () => {
         setFormData({ ...formData, items: newItems, totalAmount: subtotal, grandTotal });
     };
 
+    const columns = [
+        {
+            key: 'quoteNumber',
+            label: 'Ref / Code #',
+            width: '140px',
+            render: (r) => {
+                const isEst = r.documentType === 'estimate' || r.quoteNumber?.startsWith('EST');
+                return (
+                    <div className="flex items-center gap-1.5">
+                        <span className={`px-1.5 py-0.5 text-[10px] font-black rounded uppercase tracking-wider ${isEst ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {isEst ? 'EST' : 'QUT'}
+                        </span>
+                        <span className="font-mono font-bold text-xs text-gray-900">{r.quoteNumber || r.quotationCode}</span>
+                    </div>
+                );
+            }
+        },
+        {
+            key: 'date',
+            label: 'Date',
+            width: '110px',
+            render: (r) => <span className="text-xs text-gray-700 font-medium">{formatDate(r.date || r.createdAt)}</span>
+        },
+        {
+            key: 'customer',
+            label: 'Customer / Owner',
+            render: (r) => (
+                <div>
+                    <p className="font-medium text-gray-900 text-sm">{r.vehicleOwner || r.customerName || r.customerId?.displayName || r.customerId?.companyName || '—'}</p>
+                    {r.insuranceCompany ? (
+                        <p className="text-[11px] text-gray-500 font-semibold">🏢 {r.insuranceCompany}</p>
+                    ) : r.customerId?.customerCode ? (
+                        <p className="text-xs text-gray-400">{r.customerId.customerCode}</p>
+                    ) : null}
+                </div>
+            )
+        },
+        {
+            key: 'vehicle',
+            label: 'Vehicle Details',
+            render: (r) => (
+                <div>
+                    {r.vehicleNo ? (
+                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-mono font-bold rounded text-xs border border-blue-200 inline-block">
+                            {r.vehicleNo}
+                        </span>
+                    ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                    )}
+                    {r.vehicleModel && (
+                        <p className="text-[11px] text-gray-500 mt-0.5">{r.vehicleModel}</p>
+                    )}
+                </div>
+            )
+        },
+        {
+            key: 'grandTotal',
+            label: 'Total Amount',
+            render: (r) => (
+                <div>
+                    <span className="font-bold text-gray-900 font-mono text-sm">
+                        {fmt(r.grandTotal || r.totalAmount || 0)}
+                    </span>
+                    {r.advanceAmount > 0 && (
+                        <p className="text-[10px] text-emerald-600 font-semibold">Adv: {fmt(r.advanceAmount)}</p>
+                    )}
+                </div>
+            )
+        },
+        {
+            key: 'status',
+            label: 'Status',
+            width: '110px',
+            render: (r) => (
+                <span className={`px-2.5 py-1 rounded-lg border text-[10px] uppercase font-bold tracking-wider inline-block ${getStatusStyle(r.status)}`}>
+                    {r.status}
+                </span>
+            )
+        },
+        {
+            key: 'actions',
+            label: 'Actions',
+            width: '210px',
+            render: (r) => (
+                <div className="flex items-center gap-1 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                    <button
+                        onClick={() => { setPreviewQuote(r); setIsPreviewOpen(true); }}
+                        className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded transition"
+                        title="View Document"
+                    >
+                        <Eye size={16} />
+                    </button>
+                    {canEdit && (
+                        <button
+                            onClick={() => openForm(r)}
+                            className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded transition"
+                            title="Edit"
+                        >
+                            <Edit size={16} />
+                        </button>
+                    )}
+                    {r.status === 'converted' ? (
+                        canEdit && (
+                            <button
+                                onClick={() => { setRevertQuote(r); setRevertAdminPassword(''); setIsRevertModalOpen(true); }}
+                                className="px-2 py-1 text-xs font-bold bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg transition flex items-center gap-1 border border-amber-200"
+                                title="Revert Conversion"
+                            >
+                                <RotateCcw size={12} /> Revert
+                            </button>
+                        )
+                    ) : (
+                        canEdit && (
+                            <button
+                                onClick={() => handleOpenConvertToInvoiceModal(r, 'commercial')}
+                                className="px-2 py-1 text-xs font-bold bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition flex items-center gap-1 shadow-xs"
+                                title="Convert to Commercial Invoice"
+                            >
+                                <ShoppingCart size={12} /> Invoice
+                            </button>
+                        )
+                    )}
+                    <button
+                        onClick={() => exportDocumentToPDF(r, r.documentType || 'quotation')}
+                        className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded transition"
+                        title="Download PDF"
+                    >
+                        <Download size={16} />
+                    </button>
+                    <button
+                        onClick={() => { setPreviewQuote(r); setShareModalOpen(true); }}
+                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+                        title="Share via SMS"
+                    >
+                        <Send size={16} />
+                    </button>
+                    {canDelete && (
+                        <button
+                            onClick={() => setDeleting(r)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition"
+                            title="Delete"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    )}
+                </div>
+            )
+        }
+    ];
+
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-gray-900">
-                <div>
-                    <h2 className="text-xl sm:text-2xl font-bold">Quotations & Estimates</h2>
-                    <p className="text-sm text-gray-500">Manage vehicle body engineering quotations, insurance estimates & convert to invoices</p>
-                </div>
-                {canCreate && (
+            <PageHeader
+                title="Quotations & Estimates"
+                description="Manage vehicle body engineering quotations, insurance estimates & convert to invoices"
+                actions={canCreate && (
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" onClick={() => openForm(null, 'estimate')}>
                             <Plus size={16} className="mr-1.5" /> New Estimate (EST)
@@ -591,175 +812,348 @@ const QuotationsPage = () => {
                         </Button>
                     </div>
                 )}
+            />
+
+            {/* KPI Summary Banner (Matching Invoices Page aging/kpi summary) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                    {
+                        key: 'all',
+                        label: 'All Documents',
+                        count: summaryMetrics.totalCount,
+                        val: summaryMetrics.totalVal,
+                        color: 'bg-slate-50 text-slate-700 border-slate-200'
+                    },
+                    {
+                        key: 'quotation',
+                        label: 'Quotations (QUT)',
+                        count: summaryMetrics.qCount,
+                        val: summaryMetrics.qVal,
+                        color: 'bg-blue-50 text-blue-700 border-blue-200'
+                    },
+                    {
+                        key: 'estimate',
+                        label: 'Estimates (EST)',
+                        count: summaryMetrics.estCount,
+                        val: summaryMetrics.estVal,
+                        color: 'bg-amber-50 text-amber-700 border-amber-200'
+                    },
+                    {
+                        key: 'converted',
+                        label: 'Converted to Invoice/Project',
+                        count: summaryMetrics.convCount,
+                        val: summaryMetrics.convVal,
+                        color: 'bg-purple-50 text-purple-700 border-purple-200'
+                    },
+                ].map((b) => (
+                    <button
+                        key={b.key}
+                        type="button"
+                        onClick={() => setActiveTab(b.key)}
+                        className={`border rounded-xl p-3.5 text-left transition-all ${b.color} ${
+                            activeTab === b.key ? 'ring-2 ring-offset-1 ring-primary-500 shadow-xs' : 'hover:opacity-90'
+                        }`}
+                    >
+                        <p className="text-xs font-semibold uppercase tracking-wide opacity-75">{b.label}</p>
+                        <p className="text-xl font-bold mt-1 font-mono">{fmt(b.val)}</p>
+                        <p className="text-xs opacity-75 mt-0.5">{b.count} documents</p>
+                    </button>
+                ))}
             </div>
 
-            {/* Search and Filter Controls */}
-            <div className="bg-white p-4 border border-gray-200 rounded-2xl shadow-sm flex flex-col md:flex-row gap-3">
-                <div className="relative flex-1">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input 
-                        type="text"
-                        placeholder="Search by quote/estimate ref, vehicle no, customer name..."
-                        className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-all"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={async (e) => {
-                            if (e.key === 'Enter') {
-                                const searchVal = e.target.value.trim();
-                                if (searchVal.toUpperCase().startsWith('QUT-') || searchVal.toUpperCase().startsWith('EST-')) {
-                                    const found = quotations.find(q => q.quoteNumber?.toUpperCase() === searchVal.toUpperCase() || q.quotationCode?.toUpperCase() === searchVal.toUpperCase());
-                                    if (found) {
-                                        setPreviewQuote(found);
-                                        setIsPreviewOpen(true);
-                                    } else {
-                                        try {
-                                            const res = await api.get(`/crm/quotations?search=${searchVal}`);
-                                            const foundBack = res.data?.data?.find(q => q.quoteNumber?.toUpperCase() === searchVal.toUpperCase() || q.quotationCode?.toUpperCase() === searchVal.toUpperCase());
-                                            if (foundBack) {
-                                                setPreviewQuote(foundBack);
-                                                setIsPreviewOpen(true);
+            <Card>
+                {/* Document Type Filter Pills (Matching Invoices layout) */}
+                <div className="flex overflow-x-auto flex-nowrap border-b border-gray-200 bg-white rounded-t-xl">
+                    <button
+                        onClick={() => setActiveTab('all')}
+                        className={`flex-1 py-3 px-4 text-xs md:text-sm font-semibold border-b-2 text-center transition-all ${
+                            activeTab === 'all'
+                                ? 'border-primary-600 text-primary-600 bg-slate-50'
+                                : 'border-transparent text-gray-500 hover:text-slate-800 hover:bg-slate-50'
+                        }`}
+                    >
+                        All Documents
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('quotation')}
+                        className={`flex-1 py-3 px-4 text-xs md:text-sm font-semibold border-b-2 text-center transition-all ${
+                            activeTab === 'quotation'
+                                ? 'border-primary-600 text-primary-600 bg-slate-50'
+                                : 'border-transparent text-gray-500 hover:text-slate-800 hover:bg-slate-50'
+                        }`}
+                    >
+                        Quotations (QUT)
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('estimate')}
+                        className={`flex-1 py-3 px-4 text-xs md:text-sm font-semibold border-b-2 text-center transition-all ${
+                            activeTab === 'estimate'
+                                ? 'border-primary-600 text-primary-600 bg-slate-50'
+                                : 'border-transparent text-gray-500 hover:text-slate-800 hover:bg-slate-50'
+                        }`}
+                    >
+                        Estimates (EST)
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('converted')}
+                        className={`flex-1 py-3 px-4 text-xs md:text-sm font-semibold border-b-2 text-center transition-all ${
+                            activeTab === 'converted'
+                                ? 'border-primary-600 text-primary-600 bg-slate-50'
+                                : 'border-transparent text-gray-500 hover:text-slate-800 hover:bg-slate-50'
+                        }`}
+                    >
+                        Converted ({summaryMetrics.convCount})
+                    </button>
+                </div>
+
+                {/* Filter Toolbar with Search, Status, Date Filters, and View Switcher */}
+                <div className="p-4 border-b border-gray-200 flex flex-col lg:flex-row flex-wrap items-center gap-3">
+                    <div className="relative flex-1 min-w-[220px] w-full lg:w-auto">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input 
+                            type="text"
+                            placeholder="Search by ref #, customer, vehicle no, model..."
+                            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm text-[16px] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={async (e) => {
+                                if (e.key === 'Enter') {
+                                    const searchVal = e.target.value.trim();
+                                    if (searchVal.toUpperCase().startsWith('QUT-') || searchVal.toUpperCase().startsWith('EST-')) {
+                                        const found = quotations.find(q => q.quoteNumber?.toUpperCase() === searchVal.toUpperCase() || q.quotationCode?.toUpperCase() === searchVal.toUpperCase());
+                                        if (found) {
+                                            setPreviewQuote(found);
+                                            setIsPreviewOpen(true);
+                                        } else {
+                                            try {
+                                                const res = await api.get(`/crm/quotations?search=${searchVal}`);
+                                                const foundBack = res.data?.data?.find(q => q.quoteNumber?.toUpperCase() === searchVal.toUpperCase() || q.quotationCode?.toUpperCase() === searchVal.toUpperCase());
+                                                if (foundBack) {
+                                                    setPreviewQuote(foundBack);
+                                                    setIsPreviewOpen(true);
+                                                }
+                                            } catch (err) {
+                                                console.error('Barcode fetch failed', err);
                                             }
-                                        } catch (err) {
-                                            console.error('Barcode fetch failed', err);
                                         }
                                     }
                                 }
-                            }
+                            }}
+                        />
+                    </div>
+
+                    <div className="w-full sm:w-44">
+                        <select 
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            value={documentTypeFilter}
+                            onChange={(e) => setDocumentTypeFilter(e.target.value)}
+                        >
+                            <option value="">All Document Types</option>
+                            <option value="quotation">Quotations (QUT)</option>
+                            <option value="estimate">Estimates (EST)</option>
+                        </select>
+                    </div>
+
+                    <div className="w-full sm:w-40">
+                        <select 
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="draft">Draft</option>
+                            <option value="sent">Sent</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="converted">Converted</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+
+                    {/* Date-wise filter inputs */}
+                    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-1 min-h-[44px]">
+                        <Calendar size={15} className="text-gray-400 shrink-0" />
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-bold text-gray-500 uppercase leading-none">From Date</span>
+                            <input
+                                type="date"
+                                className="bg-transparent text-xs text-gray-800 focus:outline-none"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-1 min-h-[44px]">
+                        <Calendar size={15} className="text-gray-400 shrink-0" />
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-bold text-gray-500 uppercase leading-none">To Date</span>
+                            <input
+                                type="date"
+                                className="bg-transparent text-xs text-gray-800 focus:outline-none"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    {(startDate || endDate) && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => { setStartDate(''); setEndDate(''); }}
+                            className="text-xs text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1 self-center"
+                            title="Clear date range"
+                        >
+                            <X size={13} /> Clear Dates
+                        </Button>
+                    )}
+
+                    {/* View Switcher: Table vs Cards */}
+                    <div className="flex items-center bg-gray-100 p-1 rounded-lg border border-gray-200 ml-auto">
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('table')}
+                            className={`p-1.5 rounded-md text-xs font-semibold flex items-center gap-1 transition ${
+                                viewMode === 'table'
+                                    ? 'bg-white text-primary-600 shadow-xs'
+                                    : 'text-gray-500 hover:text-gray-800'
+                            }`}
+                            title="Table View (Invoice Format)"
+                        >
+                            <LayoutList size={16} /> Table
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('cards')}
+                            className={`p-1.5 rounded-md text-xs font-semibold flex items-center gap-1 transition ${
+                                viewMode === 'cards'
+                                    ? 'bg-white text-primary-600 shadow-xs'
+                                    : 'text-gray-500 hover:text-gray-800'
+                            }`}
+                            title="Grid Cards View"
+                        >
+                            <LayoutGrid size={16} /> Cards
+                        </button>
+                    </div>
+                </div>
+
+                {/* Content Render: Table or Cards */}
+                {loading ? (
+                    <div className="py-16 text-center text-gray-500">Loading quotations & estimates...</div>
+                ) : filteredQuotations.length === 0 ? (
+                    <div className="py-16 text-center text-gray-500">
+                        <FileText size={48} className="mx-auto text-gray-300 mb-3" />
+                        <p className="font-semibold text-gray-700">No matching quotations or estimates found</p>
+                        <p className="text-xs text-gray-400 mt-1">Try adjusting your search query, status, or date filters</p>
+                    </div>
+                ) : viewMode === 'table' ? (
+                    <Table
+                        columns={columns}
+                        data={filteredQuotations}
+                        onRowClick={(quote) => {
+                            setPreviewQuote(quote);
+                            setIsPreviewOpen(true);
                         }}
                     />
-                </div>
-                <div className="w-full sm:w-44">
-                    <select 
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[16px] sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px]"
-                        value={documentTypeFilter}
-                        onChange={(e) => setDocumentTypeFilter(e.target.value)}
-                    >
-                        <option value="">All Document Types</option>
-                        <option value="quotation">Quotations (QUT)</option>
-                        <option value="estimate">Estimates (EST)</option>
-                    </select>
-                </div>
-                <div className="w-full sm:w-40">
-                    <select 
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[16px] sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px]"
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                        <option value="">All Statuses</option>
-                        <option value="draft">Draft</option>
-                        <option value="sent">Sent</option>
-                        <option value="accepted">Accepted</option>
-                        <option value="converted">Converted</option>
-                        <option value="rejected">Rejected</option>
-                    </select>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {loading ? (
-                    Array(3).fill(0).map((_, i) => <div key={i} className="h-64 bg-gray-100 rounded-xl animate-pulse"></div>)
-                ) : filteredQuotations.length === 0 ? (
-                    <div className="col-span-full py-20 bg-white border border-dashed border-gray-300 rounded-xl text-center text-gray-500">
-                        <FileText size={48} className="mx-auto text-gray-200 mb-4" />
-                        <p className="italic">No matching quotations or estimates found</p>
-                    </div>
                 ) : (
-                    filteredQuotations.map((quote) => {
-                        const isEst = quote.documentType === 'estimate' || quote.quoteNumber?.startsWith('EST');
-                        return (
-                            <div key={quote._id} className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col group h-full">
-                                <div className="p-5 border-b border-gray-100">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="text-gray-900">
-                                            <div className="flex items-center gap-2">
-                                                <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase ${isEst ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
-                                                    {isEst ? 'ESTIMATE' : 'QUOTATION'}
-                                                </span>
-                                                <h3 className="font-bold font-mono tracking-tight">{quote.quoteNumber || quote.quotationCode}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
+                        {filteredQuotations.map((quote) => {
+                            const isEst = quote.documentType === 'estimate' || quote.quoteNumber?.startsWith('EST');
+                            return (
+                                <div key={quote._id} className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col group h-full">
+                                    <div className="p-5 border-b border-gray-100">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="text-gray-900">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase ${isEst ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
+                                                        {isEst ? 'ESTIMATE' : 'QUOTATION'}
+                                                    </span>
+                                                    <h3 className="font-bold font-mono tracking-tight">{quote.quoteNumber || quote.quotationCode}</h3>
+                                                </div>
+                                                <p className="text-xs font-semibold text-gray-700 mt-1">{quote.vehicleOwner || quote.customerName || 'Client'}</p>
                                             </div>
-                                            <p className="text-xs font-semibold text-gray-700 mt-1">{quote.vehicleOwner || quote.customerName || 'Client'}</p>
+                                            <span className={`px-2.5 py-1 rounded-lg border text-[10px] uppercase tracking-widest ${getStatusStyle(quote.status)}`}>
+                                                {quote.status}
+                                            </span>
                                         </div>
-                                        <span className={`px-2.5 py-1 rounded-lg border text-[10px] uppercase tracking-widest ${getStatusStyle(quote.status)}`}>
-                                            {quote.status}
-                                        </span>
-                                    </div>
 
-                                    {quote.vehicleNo && (
-                                        <div className="mt-2 text-xs font-mono text-blue-700 bg-blue-50 px-2 py-1 rounded inline-block font-bold">
-                                            🚘 Vehicle No: {quote.vehicleNo}
-                                        </div>
-                                    )}
+                                        {quote.vehicleNo && (
+                                            <div className="mt-2 text-xs font-mono text-blue-700 bg-blue-50 px-2 py-1 rounded inline-block font-bold">
+                                                🚘 Vehicle No: {quote.vehicleNo}
+                                            </div>
+                                        )}
 
-                                    <div className="flex items-center justify-between mt-3">
-                                        <div className="text-xl font-black text-gray-900 font-mono">
-                                            LKR {(quote.grandTotal || quote.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                        </div>
-                                        <div className="text-[10px] font-bold text-gray-400 uppercase">Grand Total</div>
-                                    </div>
-                                </div>
-
-                                <div className="p-5 flex-1 space-y-2 text-xs text-gray-600">
-                                    {quote.insuranceCompany && (
-                                        <p><span className="text-gray-400">Insurance:</span> {quote.insuranceCompany}</p>
-                                    )}
-                                    {quote.vehicleModel && (
-                                        <p><span className="text-gray-400">Model:</span> {quote.vehicleModel}</p>
-                                    )}
-                                    <div className="flex items-center gap-2 text-[11px] text-gray-500 pt-1">
-                                        <Clock size={13} className="text-gray-400" />
-                                        Date: {formatDate(quote.date || quote.createdAt)}
-                                    </div>
-
-                                    {/* Thumbnail Indicators for photos */}
-                                    <div className="flex gap-2 pt-2">
-                                        <div className={`px-2 py-0.5 rounded text-[10px] border flex items-center gap-1 ${quote.numberPlateImage ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
-                                            <ImageIcon size={12} /> Plate Photo {quote.numberPlateImage ? '✓' : ''}
-                                        </div>
-                                        <div className={`px-2 py-0.5 rounded text-[10px] border flex items-center gap-1 ${quote.lorryBodyImage ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
-                                            <ImageIcon size={12} /> Body Photo {quote.lorryBodyImage ? '✓' : ''}
+                                        <div className="flex items-center justify-between mt-3">
+                                            <div className="text-xl font-black text-gray-900 font-mono">
+                                                {fmt(quote.grandTotal || quote.totalAmount || 0)}
+                                            </div>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase">Grand Total</div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="p-3 bg-gray-50 flex gap-2 rounded-b-2xl border-t border-gray-100 flex-wrap">
-                                    <Button variant="outline" size="sm" className="flex-1" onClick={() => { setPreviewQuote(quote); setIsPreviewOpen(true); }}>
-                                        <Eye size={14} className="mr-1" /> View
-                                    </Button>
-                                    {canEdit && (
-                                        <Button variant="outline" size="sm" className="flex-1" onClick={() => openForm(quote)}>
-                                            <Edit size={14} className="mr-1" /> Edit
+                                    <div className="p-5 flex-1 space-y-2 text-xs text-gray-600">
+                                        {quote.insuranceCompany && (
+                                            <p><span className="text-gray-400">Insurance:</span> {quote.insuranceCompany}</p>
+                                        )}
+                                        {quote.vehicleModel && (
+                                            <p><span className="text-gray-400">Model:</span> {quote.vehicleModel}</p>
+                                        )}
+                                        <div className="flex items-center gap-2 text-[11px] text-gray-500 pt-1">
+                                            <Clock size={13} className="text-gray-400" />
+                                            Date: {formatDate(quote.date || quote.createdAt)}
+                                        </div>
+
+                                        {/* Thumbnail Indicators for photos */}
+                                        <div className="flex gap-2 pt-2">
+                                            <div className={`px-2 py-0.5 rounded text-[10px] border flex items-center gap-1 ${quote.numberPlateImage ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
+                                                <ImageIcon size={12} /> Plate Photo {quote.numberPlateImage ? '✓' : ''}
+                                            </div>
+                                            <div className={`px-2 py-0.5 rounded text-[10px] border flex items-center gap-1 ${quote.lorryBodyImage ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
+                                                <ImageIcon size={12} /> Body Photo {quote.lorryBodyImage ? '✓' : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-3 bg-gray-50 flex gap-2 rounded-b-2xl border-t border-gray-100 flex-wrap">
+                                        <Button variant="outline" size="sm" className="flex-1" onClick={() => { setPreviewQuote(quote); setIsPreviewOpen(true); }}>
+                                            <Eye size={14} className="mr-1" /> View
                                         </Button>
-                                    )}
-                                    <Button variant="outline" size="sm" onClick={() => exportDocumentToPDF(quote, quote.documentType || 'quotation')} title="Download PDF">
-                                        <Download size={14} />
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { setPreviewQuote(quote); setShareModalOpen(true); }} title="Share Quotation Link via SMS">
-                                        <Send size={14} />
-                                    </Button>
-                                    {quote.status === 'converted' ? (
-                                        canEdit && (
-                                            <Button variant="outline" size="sm" className="text-amber-700 border-amber-300 bg-amber-50 hover:bg-amber-100 font-bold" onClick={() => { setRevertQuote(quote); setRevertAdminPassword(''); setIsRevertModalOpen(true); }} title="Revert Conversion (Admin Password required)">
-                                                <RotateCcw size={14} className="mr-1" /> Revert
+                                        {canEdit && (
+                                            <Button variant="outline" size="sm" className="flex-1" onClick={() => openForm(quote)}>
+                                                <Edit size={14} className="mr-1" /> Edit
                                             </Button>
-                                        )
-                                    ) : (
-                                        canEdit && (
-                                            <Button variant="primary" size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white" onClick={() => { setPreviewQuote(quote); setIsPreviewOpen(true); }}>
-                                                <ShoppingCart size={14} className="mr-1" /> Convert
-                                            </Button>
-                                        )
-                                    )}
-                                    {canDelete && (
-                                        <Button variant="outline" size="sm" onClick={() => setDeleting(quote)}>
-                                            <Trash2 size={14} className="text-red-500" />
+                                        )}
+                                        <Button variant="outline" size="sm" onClick={() => exportDocumentToPDF(quote, quote.documentType || 'quotation')} title="Download PDF">
+                                            <Download size={14} />
                                         </Button>
-                                    )}
+                                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { setPreviewQuote(quote); setShareModalOpen(true); }} title="Share Quotation Link via SMS">
+                                            <Send size={14} />
+                                        </Button>
+                                        {quote.status === 'converted' ? (
+                                            canEdit && (
+                                                <Button variant="outline" size="sm" className="text-amber-700 border-amber-300 bg-amber-50 hover:bg-amber-100 font-bold" onClick={() => { setRevertQuote(quote); setRevertAdminPassword(''); setIsRevertModalOpen(true); }} title="Revert Conversion (Admin Password required)">
+                                                    <RotateCcw size={14} className="mr-1" /> Revert
+                                                </Button>
+                                            )
+                                        ) : (
+                                            canEdit && (
+                                                <Button variant="primary" size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white" onClick={() => { setPreviewQuote(quote); setIsPreviewOpen(true); }}>
+                                                    <ShoppingCart size={14} className="mr-1" /> Convert
+                                                </Button>
+                                            )
+                                        )}
+                                        {canDelete && (
+                                            <Button variant="outline" size="sm" onClick={() => setDeleting(quote)}>
+                                                <Trash2 size={14} className="text-red-500" />
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })
+                            );
+                        })}
+                    </div>
                 )}
-            </div>
+            </Card>
 
             {/* Quotation / Estimate Form Modal */}
             <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editing ? `Edit ${formData.documentType === 'estimate' ? 'Estimate' : 'Quotation'}` : `New ${formData.documentType === 'estimate' ? 'Estimate (EST)' : 'Quotation (QUT)'}`} size="xl">

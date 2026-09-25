@@ -14,11 +14,13 @@ import Textarea from '../components/ui/Textarea';
 import EmptyState from '../components/ui/EmptyState';
 import { useAuthStore } from '../store/authStore';
 import ProductAutocompleteSelect from '../components/ui/ProductAutocompleteSelect';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 
 export default function GrnsPage() {
     const { user } = useAuthStore();
     const canManage = ['admin', 'manager', 'procurement_staff', 'production_staff'].includes(user?.role);
 
+    const [filters, setFilters] = useState({ search: '', status: '', startDate: '', endDate: '' });
     const [grns, setGrns] = useState([]);
     const [suppliers, setSuppliers] = useState([]);
     const [farms, setFarms] = useState([]);
@@ -77,8 +79,14 @@ export default function GrnsPage() {
     const fetchAllData = useCallback(async () => {
         setLoading(true);
         try {
+            const params = {};
+            if (filters.search) params.search = filters.search;
+            if (filters.status) params.status = filters.status;
+            if (filters.startDate) params.startDate = filters.startDate;
+            if (filters.endDate) params.endDate = filters.endDate;
+
             const [grnRes, supRes, whRes, prodRes, poRes, bankRes] = await Promise.all([
-                api.get('/grns').catch(() => ({ data: { data: [] } })),
+                api.get('/grns', { params }).catch(() => ({ data: { data: [] } })),
                 api.get('/suppliers').catch(() => ({ data: { data: [] } })),
                 api.get('/warehouses').catch(() => ({ data: { data: [] } })),
                 api.get('/products').catch(() => ({ data: { data: [] } })),
@@ -98,7 +106,7 @@ export default function GrnsPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [filters]);
 
     useEffect(() => {
         fetchAllData();
@@ -344,8 +352,36 @@ export default function GrnsPage() {
             />
 
             <Card className="p-4">
-                <div className="flex justify-end mb-4">
-                    <button onClick={fetchAllData} className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search GRN #..."
+                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            value={filters.search}
+                            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                        />
+                    </div>
+                    <div className="w-44">
+                        <Select
+                            placeholder="All Statuses"
+                            options={[
+                                { value: 'pending_approval', label: 'Pending QA' },
+                                { value: 'approved', label: 'QA Approved' },
+                            ]}
+                            value={filters.status}
+                            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                        />
+                    </div>
+                    <DateRangeFilter
+                        startDate={filters.startDate}
+                        endDate={filters.endDate}
+                        onStartDateChange={(val) => setFilters(prev => ({ ...prev, startDate: val }))}
+                        onEndDateChange={(val) => setFilters(prev => ({ ...prev, endDate: val }))}
+                        onClear={() => setFilters(prev => ({ ...prev, startDate: '', endDate: '' }))}
+                    />
+                    <button onClick={fetchAllData} className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition" title="Refresh">
                         <RefreshCw size={16} className="text-gray-500" />
                     </button>
                 </div>

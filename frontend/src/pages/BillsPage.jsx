@@ -10,6 +10,7 @@ import Table from '../components/ui/Table';
 import Badge from '../components/ui/Badge';
 import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 import { useBills, usePayablesAging } from '../features/bills/useBills';
 
 const statusVariant = {
@@ -20,7 +21,7 @@ const statusVariant = {
 export default function BillsPage() {
     const navigate = useNavigate();
     const [filters, setFilters] = useState({
-        search: '', paymentStatus: '', agingBucket: '', page: 1, limit: 15,
+        search: '', paymentStatus: '', agingBucket: '', startDate: '', endDate: '', page: 1, limit: 15,
     });
 
     const { data, isLoading } = useBills(filters);
@@ -106,6 +107,13 @@ export default function BillsPage() {
                             value={filters.paymentStatus}
                             onChange={(e) => setFilters((f) => ({ ...f, paymentStatus: e.target.value, page: 1 }))} />
                     </div>
+                    <DateRangeFilter
+                        startDate={filters.startDate}
+                        endDate={filters.endDate}
+                        onStartDateChange={(val) => setFilters((f) => ({ ...f, startDate: val, page: 1 }))}
+                        onEndDateChange={(val) => setFilters((f) => ({ ...f, endDate: val, page: 1 }))}
+                        onClear={() => setFilters((f) => ({ ...f, startDate: '', endDate: '', page: 1 }))}
+                    />
                     {filters.agingBucket && (
                         <Button variant="outline" size="sm" onClick={() => setFilters((f) => ({ ...f, agingBucket: '' }))}>
                             Clear filter

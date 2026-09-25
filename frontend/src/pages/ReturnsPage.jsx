@@ -10,6 +10,7 @@ import Table from '../components/ui/Table';
 import Badge from '../components/ui/Badge';
 import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 import { useReturns } from '../features/returns/useReturns';
 import { useAuthStore } from '../store/authStore';
 
@@ -24,7 +25,7 @@ export default function ReturnsPage() {
     const { user } = useAuthStore();
     const canCreate = ['admin', 'manager', 'sales_manager', 'sales_rep', 'accountant'].includes(user?.role);
 
-    const [filters, setFilters] = useState({ search: '', status: '', page: 1, limit: 15 });
+    const [filters, setFilters] = useState({ search: '', status: '', startDate: '', endDate: '', page: 1, limit: 15 });
     const { data, isLoading } = useReturns(filters);
     const returns = data?.data || [];
 
@@ -66,8 +67,8 @@ export default function ReturnsPage() {
                 )} />
 
             <Card>
-                <div className="p-4 border-b flex gap-3">
-                    <div className="relative flex-1">
+                <div className="p-4 border-b flex flex-wrap gap-3">
+                    <div className="relative flex-1 min-w-[200px]">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input type="text" placeholder="Search..." className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm"
                             value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))} />
@@ -81,6 +82,13 @@ export default function ReturnsPage() {
                             ]}
                             value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))} />
                     </div>
+                    <DateRangeFilter
+                        startDate={filters.startDate}
+                        endDate={filters.endDate}
+                        onStartDateChange={(val) => setFilters((f) => ({ ...f, startDate: val, page: 1 }))}
+                        onEndDateChange={(val) => setFilters((f) => ({ ...f, endDate: val, page: 1 }))}
+                        onClear={() => setFilters((f) => ({ ...f, startDate: '', endDate: '', page: 1 }))}
+                    />
                 </div>
                 {isLoading ? (
                     <div className="py-16 text-center text-gray-500">Loading...</div>

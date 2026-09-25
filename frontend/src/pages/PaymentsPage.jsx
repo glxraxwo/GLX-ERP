@@ -12,6 +12,7 @@ import Table from '../components/ui/Table';
 import Badge from '../components/ui/Badge';
 import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 import { usePayments } from '../features/payments/usePayments';
 import { useAuthStore } from '../store/authStore';
 import { usePermission } from '../hooks/usePermission';
@@ -43,13 +44,17 @@ function PaymentsPage() {
     const [search, setSearch] = useState('');
     const [direction, setDirection] = useState('');
     const [method, setMethod] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     const { data, isLoading, error } = usePayments({
         page,
         limit,
         search,
         direction,
-		method,
+        method,
+        startDate,
+        endDate,
     });
 
     const payments = data?.data || [];
@@ -160,6 +165,13 @@ function PaymentsPage() {
                             <option value="card">Card</option>
                             <option value="mobile_payment">Mobile Payment</option>
                         </Select>
+                        <DateRangeFilter
+                            startDate={startDate}
+                            endDate={endDate}
+                            onStartDateChange={(val) => { setStartDate(val); setPage(1); }}
+                            onEndDateChange={(val) => { setEndDate(val); setPage(1); }}
+                            onClear={() => { setStartDate(''); setEndDate(''); setPage(1); }}
+                        />
                     </div>
                 </div>
 

@@ -19,7 +19,11 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
     if (startDate || endDate) {
         query.createdAt = {};
         if (startDate) query.createdAt.$gte = new Date(startDate);
-        if (endDate) query.createdAt.$lte = new Date(endDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            query.createdAt.$lte = end;
+        }
     }
 
     const count = await AuditLog.countDocuments(query);
@@ -61,9 +65,26 @@ export const getAuditLogById = asyncHandler(async (req, res) => {
  * @access  Private/Admin
  */
 export const getSmsLogs = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 50 } = req.query;
-    const count = await SmsLog.countDocuments({ deletedAt: null });
-    const logs = await SmsLog.find({ deletedAt: null })
+    const { page = 1, limit = 50, startDate, endDate, search } = req.query;
+    const query = { deletedAt: null };
+    if (search) {
+        query.$or = [
+            { recipientName: { $regex: search, $options: 'i' } },
+            { contact: { $regex: search, $options: 'i' } },
+            { message: { $regex: search, $options: 'i' } },
+        ];
+    }
+    if (startDate || endDate) {
+        query.date = {};
+        if (startDate) query.date.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            query.date.$lte = end;
+        }
+    }
+    const count = await SmsLog.countDocuments(query);
+    const logs = await SmsLog.find(query)
         .populate({
             path: 'grnId',
             select: 'grnNumber totalAcceptedValue totalPayableLKR'

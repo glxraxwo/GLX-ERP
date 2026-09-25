@@ -12,13 +12,14 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Textarea from '../components/ui/Textarea';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 import { useCreditNotes, useCreateCreditNote } from '../features/returns/useReturns';
 import { useCustomers } from '../features/customers/useCustomers';
 import toast from 'react-hot-toast';
 
 export default function CreditNotesPage() {
     const navigate = useNavigate();
-    const [filters, setFilters] = useState({ status: '', page: 1, limit: 15 });
+    const [filters, setFilters] = useState({ search: '', status: '', startDate: '', endDate: '', page: 1, limit: 15 });
     const { data, isLoading } = useCreditNotes(filters);
     const notes = data?.data || [];
     
@@ -113,6 +114,40 @@ export default function CreditNotesPage() {
                 }
             />
             <Card>
+                <div className="p-4 border-b border-gray-200 flex flex-wrap gap-3">
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by CN # or customer..."
+                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            value={filters.search}
+                            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
+                        />
+                    </div>
+                    <div className="w-48">
+                        <Select
+                            placeholder="All Statuses"
+                            options={[
+                                { value: 'issued', label: 'Issued' },
+                                { value: 'partially_applied', label: 'Partially Applied' },
+                                { value: 'fully_applied', label: 'Fully Applied' },
+                                { value: 'refunded', label: 'Refunded' },
+                                { value: 'voided', label: 'Voided' },
+                            ]}
+                            value={filters.status}
+                            onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))}
+                        />
+                    </div>
+                    <DateRangeFilter
+                        startDate={filters.startDate}
+                        endDate={filters.endDate}
+                        onStartDateChange={(val) => setFilters((f) => ({ ...f, startDate: val, page: 1 }))}
+                        onEndDateChange={(val) => setFilters((f) => ({ ...f, endDate: val, page: 1 }))}
+                        onClear={() => setFilters((f) => ({ ...f, startDate: '', endDate: '', page: 1 }))}
+                    />
+                </div>
+
                 {isLoading ? <div className="py-16 text-center text-gray-500">Loading...</div>
                     : notes.length === 0 ? <EmptyState icon={FileText} title="No credit notes" description="Credit notes are issued from processed returns or manually" />
                         : <>

@@ -71,6 +71,7 @@ const quotationSchema = new mongoose.Schema({
         validUntil: Date,
         notes: String,
     },
+    date: { type: Date, default: Date.now },
     status: { type: String, default: 'draft' }, // draft, sent, accepted, rejected, converted
     convertedInvoiceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice' },
     convertedProjectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },

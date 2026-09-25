@@ -6,6 +6,7 @@ import {
     ChevronLeft, ChevronRight, RefreshCw, Shield
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 
 const AuditLogPage = () => {
     const [logs, setLogs] = useState([]);
@@ -16,6 +17,8 @@ const AuditLogPage = () => {
         module: '',
         action: '',
         userId: '',
+        startDate: '',
+        endDate: '',
     });
 
     const formatDateSafely = (dateStr) => {
@@ -133,6 +136,16 @@ const AuditLogPage = () => {
                         <option value="export">Export</option>
                         <option value="login">Login</option>
                     </select>
+                </div>
+                <div className="flex-initial">
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Date Range</label>
+                    <DateRangeFilter
+                        startDate={filters.startDate}
+                        endDate={filters.endDate}
+                        onStartDateChange={(val) => setFilters(prev => ({ ...prev, startDate: val }))}
+                        onEndDateChange={(val) => setFilters(prev => ({ ...prev, endDate: val }))}
+                        onClear={() => setFilters(prev => ({ ...prev, startDate: '', endDate: '' }))}
+                    />
                 </div>
             </div>
 

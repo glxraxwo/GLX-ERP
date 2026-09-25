@@ -98,18 +98,56 @@ export const createQuotation = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getQuotations = asyncHandler(async (req, res) => {
-    const { status, page = 1, limit = 20 } = req.query;
+    const { status, documentType, search, startDate, endDate, page = 1, limit = 1000 } = req.query;
     const filter = { deletedAt: null };
     if (status) filter.status = status;
+    if (documentType) filter.documentType = documentType;
+
+    const andConditions = [];
+
+    if (search) {
+        andConditions.push({
+            $or: [
+                { quoteNumber: { $regex: search, $options: 'i' } },
+                { quotationCode: { $regex: search, $options: 'i' } },
+                { customerName: { $regex: search, $options: 'i' } },
+                { vehicleOwner: { $regex: search, $options: 'i' } },
+                { vehicleNo: { $regex: search, $options: 'i' } },
+                { vehicleModel: { $regex: search, $options: 'i' } },
+                { insuranceCompany: { $regex: search, $options: 'i' } },
+            ]
+        });
+    }
+
+    if (startDate || endDate) {
+        const dateFilter = {};
+        if (startDate) dateFilter.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            dateFilter.$lte = end;
+        }
+        andConditions.push({
+            $or: [
+                { date: dateFilter },
+                { createdAt: dateFilter }
+            ]
+        });
+    }
+
+    if (andConditions.length > 0) {
+        filter.$and = andConditions;
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
 
     const [quotations, total] = await Promise.all([
         Quotation.find(filter)
-            .populate('customerId', 'displayName companyName introducer introducerName')
-            .populate('introducer', 'firstName lastName callingName employeeCode')
+            .populate('customerId', 'displayName companyName customerCode primaryContact billingAddress introducer introducerName')
+            .populate('introducer', 'firstName lastName callingName employeeCode designation')
             .populate('biller', 'firstName lastName')
-            .populate('items.product', 'name productCode')
+            .populate('items.product', 'name productCode uom basePrice sku')
+            .populate('createdBy', 'firstName lastName')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(Number(limit)),

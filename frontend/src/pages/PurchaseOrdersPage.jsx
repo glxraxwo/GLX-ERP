@@ -10,6 +10,7 @@ import Table from '../components/ui/Table';
 import Badge from '../components/ui/Badge';
 import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 import { usePurchaseOrders } from '../features/purchaseOrders/usePurchaseOrders';
 import { useAuthStore } from '../store/authStore';
 
@@ -29,7 +30,7 @@ export default function PurchaseOrdersPage() {
     const { user } = useAuthStore();
     const canCreate = ['admin', 'manager', 'accountant'].includes(user?.role);
 
-    const [filters, setFilters] = useState({ search: '', status: '', page: 1, limit: 10 });
+    const [filters, setFilters] = useState({ search: '', status: '', startDate: '', endDate: '', page: 1, limit: 10 });
     const { data, isLoading } = usePurchaseOrders(filters);
 
     const orders = data?.data || [];
@@ -109,6 +110,13 @@ export default function PurchaseOrdersPage() {
                             value={filters.status}
                             onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))} />
                     </div>
+                    <DateRangeFilter
+                        startDate={filters.startDate}
+                        endDate={filters.endDate}
+                        onStartDateChange={(val) => setFilters((f) => ({ ...f, startDate: val, page: 1 }))}
+                        onEndDateChange={(val) => setFilters((f) => ({ ...f, endDate: val, page: 1 }))}
+                        onClear={() => setFilters((f) => ({ ...f, startDate: '', endDate: '', page: 1 }))}
+                    />
                 </div>
 
                 {isLoading ? (

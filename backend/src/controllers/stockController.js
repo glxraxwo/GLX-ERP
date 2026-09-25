@@ -112,7 +112,11 @@ export const getStockMovements = asyncHandler(async (req, res) => {
     if (startDate || endDate) {
         filter.timestamp = {};
         if (startDate) filter.timestamp.$gte = new Date(startDate);
-        if (endDate) filter.timestamp.$lte = new Date(endDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.timestamp.$lte = end;
+        }
     }
 
     const skip = (Number(page) - 1) * Number(limit);

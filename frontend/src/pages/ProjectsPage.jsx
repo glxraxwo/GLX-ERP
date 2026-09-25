@@ -12,6 +12,7 @@ import Badge from '../components/ui/Badge';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import CustomerAutocompleteSelect from '../components/ui/CustomerAutocompleteSelect';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 import { useEmployees } from '../features/hr/useHr';
 import api from '../api/axios';
 
@@ -27,6 +28,8 @@ export default function ProjectsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     
     // Modal states
     const [isOpen, setIsOpen] = useState(false);
@@ -43,7 +46,13 @@ export default function ProjectsPage() {
     const fetchProjects = async () => {
         setIsLoading(true);
         try {
-            const res = await api.get(`/projects?search=${search}&status=${status}`);
+            const params = {};
+            if (search) params.search = search;
+            if (status) params.status = status;
+            if (startDate) params.startDate = startDate;
+            if (endDate) params.endDate = endDate;
+
+            const res = await api.get('/projects', { params });
             setProjects(res.data?.data || []);
         } catch (err) {
             toast.error('Failed to load projects');
@@ -54,7 +63,7 @@ export default function ProjectsPage() {
 
     useEffect(() => {
         fetchProjects();
-    }, [search, status]);
+    }, [search, status, startDate, endDate]);
 
     const handleCreateProject = async (e) => {
         e.preventDefault();
@@ -240,6 +249,13 @@ export default function ProjectsPage() {
                             value={status}
                             onChange={(e) => setStatus(e.target.value)} />
                     </div>
+                    <DateRangeFilter
+                        startDate={startDate}
+                        endDate={endDate}
+                        onStartDateChange={setStartDate}
+                        onEndDateChange={setEndDate}
+                        onClear={() => { setStartDate(''); setEndDate(''); }}
+                    />
                 </div>
 
                 <Table columns={columns} data={projects} loading={isLoading}

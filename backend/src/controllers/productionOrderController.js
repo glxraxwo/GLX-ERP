@@ -110,21 +110,37 @@ export const getProductionOrders = asyncHandler(async (req, res) => {
     } = req.query;
 
     const filter = {};
+    const andClauses = [];
     if (search) {
-        filter.$or = [
-            { productionNumber: { $regex: search, $options: 'i' } },
-            { finishedProductName: { $regex: search, $options: 'i' } },
-            { bomCode: { $regex: search, $options: 'i' } },
-        ];
+        andClauses.push({
+            $or: [
+                { productionNumber: { $regex: search, $options: 'i' } },
+                { finishedProductName: { $regex: search, $options: 'i' } },
+                { bomCode: { $regex: search, $options: 'i' } },
+            ]
+        });
     }
     if (status) filter.status = status;
     if (bomId) filter.bomId = bomId;
     if (finishedProductId) filter.finishedProductId = finishedProductId;
     if (priority) filter.priority = priority;
     if (startDate || endDate) {
-        filter.plannedStartDate = {};
-        if (startDate) filter.plannedStartDate.$gte = new Date(startDate);
-        if (endDate) filter.plannedStartDate.$lte = new Date(endDate);
+        const dateCond = {};
+        if (startDate) dateCond.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            dateCond.$lte = end;
+        }
+        andClauses.push({
+            $or: [
+                { plannedStartDate: dateCond },
+                { createdAt: dateCond },
+            ]
+        });
+    }
+    if (andClauses.length > 0) {
+        filter.$and = andClauses;
     }
 
     const skip = (Number(page) - 1) * Number(limit);

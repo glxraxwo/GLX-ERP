@@ -75,12 +75,19 @@ export const createDamage = asyncHandler(async (req, res) => {
 
 export const getDamages = asyncHandler(async (req, res) => {
     const {
-        productId, warehouseId, source, disposition,
+        search, productId, warehouseId, source, disposition,
         startDate, endDate,
         page = 1, limit = 20,
     } = req.query;
 
     const filter = {};
+    if (search) {
+        filter.$or = [
+            { damageNumber: { $regex: search, $options: 'i' } },
+            { productName: { $regex: search, $options: 'i' } },
+            { productCode: { $regex: search, $options: 'i' } },
+        ];
+    }
     if (productId) filter.productId = productId;
     if (warehouseId) filter.warehouseId = warehouseId;
     if (source) filter.source = source;
@@ -88,7 +95,11 @@ export const getDamages = asyncHandler(async (req, res) => {
     if (startDate || endDate) {
         filter.createdAt = {};
         if (startDate) filter.createdAt.$gte = new Date(startDate);
-        if (endDate) filter.createdAt.$lte = new Date(endDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.createdAt.$lte = end;
+        }
     }
 
     const skip = (Number(page) - 1) * Number(limit);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, FileText, AlertTriangle, CheckCircle, RefreshCw, Briefcase, FileCheck, Layers, RotateCcw } from 'lucide-react';
+import { Plus, Search, Eye, FileText, AlertTriangle, CheckCircle, RefreshCw, Briefcase, FileCheck, Layers, RotateCcw, Calendar, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -57,6 +57,7 @@ export default function InvoicesPage() {
 
     const [filters, setFilters] = useState({
         search: '', paymentStatus: '', agingBucket: '', invoiceType: 'commercial',
+        startDate: '', endDate: '',
         page: 1, limit: 15,
     });
 
@@ -403,6 +404,44 @@ export default function InvoicesPage() {
                             value={filters.paymentStatus}
                             onChange={(e) => setFilters((f) => ({ ...f, paymentStatus: e.target.value, page: 1 }))} />
                     </div>
+
+                    {/* Date-wise filter inputs */}
+                    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-1 min-h-[44px]">
+                        <Calendar size={15} className="text-gray-400 shrink-0" />
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-bold text-gray-500 uppercase leading-none">From Date</span>
+                            <input
+                                type="date"
+                                className="bg-transparent text-xs text-gray-800 focus:outline-none"
+                                value={filters.startDate || ''}
+                                onChange={(e) => setFilters((f) => ({ ...f, startDate: e.target.value, page: 1 }))}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-1 min-h-[44px]">
+                        <Calendar size={15} className="text-gray-400 shrink-0" />
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-bold text-gray-500 uppercase leading-none">To Date</span>
+                            <input
+                                type="date"
+                                className="bg-transparent text-xs text-gray-800 focus:outline-none"
+                                value={filters.endDate || ''}
+                                onChange={(e) => setFilters((f) => ({ ...f, endDate: e.target.value, page: 1 }))}
+                            />
+                        </div>
+                    </div>
+                    {(filters.startDate || filters.endDate) && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFilters((f) => ({ ...f, startDate: '', endDate: '', page: 1 }))}
+                            className="text-xs text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1 self-center"
+                            title="Clear date range"
+                        >
+                            <X size={13} /> Clear Dates
+                        </Button>
+                    )}
+
                     {filters.agingBucket && (
                         <Button variant="outline" size="sm" onClick={() => setFilters((f) => ({ ...f, agingBucket: '', page: 1 }))}>
                             Clear aging filter

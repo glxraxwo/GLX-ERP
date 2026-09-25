@@ -72,11 +72,21 @@ export const recalculateProjectFinancials = async (projectId) => {
  * List all projects with search and filters
  */
 export const getProjects = asyncHandler(async (req, res) => {
-    const { search, status } = req.query;
+    const { search, status, startDate, endDate } = req.query;
     const filter = { deletedAt: null };
 
     if (status) {
         filter.status = status;
+    }
+
+    if (startDate || endDate) {
+        filter.createdAt = {};
+        if (startDate) filter.createdAt.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.createdAt.$lte = end;
+        }
     }
 
     let projectIds = [];

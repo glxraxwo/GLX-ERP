@@ -418,6 +418,7 @@ export const approveGrnQA = asyncHandler(async (req, res) => {
 export const getGrns = asyncHandler(async (req, res) => {
     const {
         search, purchaseOrderId, supplierId, warehouseId, status,
+        startDate, endDate,
         page = 1, limit = 20,
     } = req.query;
 
@@ -427,6 +428,15 @@ export const getGrns = asyncHandler(async (req, res) => {
     if (supplierId) filter.supplierId = supplierId;
     if (warehouseId) filter.warehouseId = warehouseId;
     if (status) filter.status = status;
+    if (startDate || endDate) {
+        filter.receiptDate = {};
+        if (startDate) filter.receiptDate.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.receiptDate.$lte = end;
+        }
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
 

@@ -264,21 +264,34 @@ export const createFromSalesOrder = asyncHandler(async (req, res) => {
  */
 export const getInvoices = asyncHandler(async (req, res) => {
     const {
-        search, customerId, paymentStatus, status, agingBucket,
+        search, customerId, paymentStatus, status, agingBucket, invoiceType,
         startDate, endDate,
         page = 1, limit = 20,
         sortBy = 'invoiceDate', sortOrder = 'desc',
     } = req.query;
 
-    const filter = {};
+    const filter = { deletedAt: null };
+    const andConditions = [];
+
     if (search) {
-        filter.$or = [
-            { invoiceNumber: { $regex: search, $options: 'i' } },
-            { 'customerSnapshot.name': { $regex: search, $options: 'i' } },
-            { 'customerSnapshot.code': { $regex: search, $options: 'i' } },
-        ];
+        andConditions.push({
+            $or: [
+                { invoiceNumber: { $regex: search, $options: 'i' } },
+                { 'customerSnapshot.name': { $regex: search, $options: 'i' } },
+                { 'customerSnapshot.code': { $regex: search, $options: 'i' } },
+                { vehicleNo: { $regex: search, $options: 'i' } },
+                { vehicleOwner: { $regex: search, $options: 'i' } },
+            ]
+        });
     }
     if (customerId) filter.customerId = customerId;
+    if (invoiceType) {
+        if (invoiceType === 'commercial') {
+            filter.invoiceType = { $in: ['commercial', 'standard'] };
+        } else {
+            filter.invoiceType = invoiceType;
+        }
+    }
     if (paymentStatus) {
         // Support comma-separated values: "unpaid,partially_paid,overdue"
         const statuses = paymentStatus.split(',').map((s) => s.trim()).filter(Boolean);
@@ -287,9 +300,23 @@ export const getInvoices = asyncHandler(async (req, res) => {
     if (status) filter.status = status;
     if (agingBucket) filter.agingBucket = agingBucket;
     if (startDate || endDate) {
-        filter.invoiceDate = {};
-        if (startDate) filter.invoiceDate.$gte = new Date(startDate);
-        if (endDate) filter.invoiceDate.$lte = new Date(endDate);
+        const dateFilter = {};
+        if (startDate) dateFilter.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            dateFilter.$lte = end;
+        }
+        andConditions.push({
+            $or: [
+                { invoiceDate: dateFilter },
+                { createdAt: dateFilter }
+            ]
+        });
+    }
+
+    if (andConditions.length > 0) {
+        filter.$and = andConditions;
     }
 
     const skip = (Number(page) - 1) * Number(limit);

@@ -6,11 +6,14 @@ import toast from 'react-hot-toast';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 
 export default function SmsLogsPage() {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [page, setPage] = useState(1);
     const [pages, setPages] = useState(1);
 
@@ -35,7 +38,10 @@ export default function SmsLogsPage() {
     const fetchLogs = useCallback(async () => {
         Promise.resolve().then(() => setLoading(true));
         try {
-            const res = await api.get(`/audit/sms?page=${page}&limit=20`);
+            const params = { page, limit: 20 };
+            if (startDate) params.startDate = startDate;
+            if (endDate) params.endDate = endDate;
+            const res = await api.get('/audit/sms', { params });
             setLogs(res.data.data || []);
             setPages(res.data.pages || 1);
         } catch {
@@ -43,7 +49,7 @@ export default function SmsLogsPage() {
         } finally {
             setLoading(false);
         }
-    }, [page]);
+    }, [page, startDate, endDate]);
 
     useEffect(() => {
         Promise.resolve().then(() => fetchLogs());
@@ -109,8 +115,8 @@ export default function SmsLogsPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <div className="relative max-w-sm">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-[200px] max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
                         type="text"
@@ -120,6 +126,13 @@ export default function SmsLogsPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+                <DateRangeFilter
+                    startDate={startDate}
+                    endDate={endDate}
+                    onStartDateChange={setStartDate}
+                    onEndDateChange={setEndDate}
+                    onClear={() => { setStartDate(''); setEndDate(''); }}
+                />
             </div>
 
             {/* Table / List */}

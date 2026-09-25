@@ -101,7 +101,11 @@ export const getPurchaseOrders = asyncHandler(async (req, res) => {
     if (startDate || endDate) {
         filter.poDate = {};
         if (startDate) filter.poDate.$gte = new Date(startDate);
-        if (endDate) filter.poDate.$lte = new Date(endDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.poDate.$lte = end;
+        }
     }
 
     const skip = (Number(page) - 1) * Number(limit);

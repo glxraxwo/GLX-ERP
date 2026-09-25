@@ -4,6 +4,7 @@ import {
   Building2, Trash2, Edit, CheckCircle, FileText, TrendingUp, AlertCircle
 } from 'lucide-react';
 import api from '../api/axios';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 
 const EXPENSE_CATEGORIES = [
   'Raw Materials',
@@ -27,6 +28,8 @@ export default function ExpensesPage() {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -57,6 +60,8 @@ export default function ExpensesPage() {
       if (search) params.search = search;
       if (categoryFilter) params.category = categoryFilter;
       if (paymentMethodFilter) params.paymentMethod = paymentMethodFilter;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
 
       const [listRes, summaryRes] = await Promise.all([
         api.get('/expenses', { params }),
@@ -94,7 +99,7 @@ export default function ExpensesPage() {
   useEffect(() => {
     fetchExpenses();
     fetchLookups();
-  }, [search, categoryFilter, paymentMethodFilter]);
+  }, [search, categoryFilter, paymentMethodFilter, startDate, endDate]);
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...(formData.items || [])];
@@ -317,6 +322,14 @@ export default function ExpensesPage() {
           <option value="Cheque">Cheque</option>
           <option value="Petty Cash">Petty Cash</option>
         </select>
+
+        <DateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onClear={() => { setStartDate(''); setEndDate(''); }}
+        />
       </div>
 
       {/* Expenses Table */}

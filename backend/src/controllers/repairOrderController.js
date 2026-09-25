@@ -26,7 +26,7 @@ export const createRepair = asyncHandler(async (req, res) => {
 });
 
 export const getRepairs = asyncHandler(async (req, res) => {
-    const { status, productId, page = 1, limit = 20 } = req.query;
+    const { search, status, productId, startDate, endDate, page = 1, limit = 20 } = req.query;
 
     // Auto-sync any unlinked damage records that had disposition='repair'
     try {
@@ -54,8 +54,24 @@ export const getRepairs = asyncHandler(async (req, res) => {
     }
 
     const filter = {};
+    if (search) {
+        filter.$or = [
+            { repairNumber: { $regex: search, $options: 'i' } },
+            { productName: { $regex: search, $options: 'i' } },
+            { productCode: { $regex: search, $options: 'i' } },
+        ];
+    }
     if (status) filter.status = status;
     if (productId) filter.productId = productId;
+    if (startDate || endDate) {
+        filter.createdAt = {};
+        if (startDate) filter.createdAt.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.createdAt.$lte = end;
+        }
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
 

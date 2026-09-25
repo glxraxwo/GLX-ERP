@@ -14,6 +14,7 @@ import Product from './src/models/Product.js';
 import StockItem from './src/models/StockItem.js';
 import Employee from './src/models/Employee.js';
 import Invoice from './src/models/Invoice.js';
+import Quotation from './src/models/Quotation.js';
 import PettyCash from './src/models/PettyCash.js';
 
 dotenv.config();
@@ -297,11 +298,12 @@ async function migrate() {
     console.log(`✓ Employees migrated: ${empCount}`);
 
     // ----------------------------------------------------
-    // 8. Invoices & Line Items (tblSale.json + tblSaleItems.json)
+    // 8. Invoices & Sales & Quotations (tblSale.json + tblSaleItems.json + tblDes.json)
     // ----------------------------------------------------
-    console.log('\n--- 8. Migrating Invoices & Sales ---');
+    console.log('\n--- 8. Migrating Invoices, Quotations & Sales ---');
     const tblSale = readJson('tblSale.json');
     const tblSaleItems = readJson('tblSaleItems.json');
+    const tblDes = readJson('tblDes.json');
 
     // Group items by sale code
     const itemsByCode = new Map();
@@ -314,15 +316,26 @@ async function migrate() {
         itemsByCode.get(saleCode).push(item);
     }
 
+    // Map descriptions by ref
+    const desMap = new Map();
+    for (const d of tblDes) {
+        if (d.ref) {
+            desMap.set(d.ref.trim().toUpperCase(), d);
+        }
+    }
+
     let invCount = 0;
+    let quoteCount = 0;
     for (const s of tblSale) {
         const invNum = s.code ? s.code.trim().toUpperCase() : `INV-${s.ref}`;
         const isQuotation = s.type && s.type.toLowerCase().includes('quot');
+        const isEstimate = s.type && s.type.toLowerCase().includes('est');
         const total = parseFloat(s.total) || 0;
         const discount = Math.abs(parseFloat(s.discount) || 0);
         const grandTotal = parseFloat(s.gtotal) || total;
         const balance = parseFloat(s.balance) || 0;
         const paid = Math.max(0, grandTotal - balance);
+        const desInfo = desMap.get(invNum) || {};
 
         // Find customer
         let cusId = customerMap.get(s.cus_code?.trim().toUpperCase()) ||
@@ -353,11 +366,12 @@ async function migrate() {
 
         const invDate = s.date ? new Date(s.date) : new Date();
 
+        // 1) Upsert to Invoice
         await Invoice.findOneAndUpdate(
             { invoiceNumber: invNum },
             {
                 invoiceNumber: invNum,
-                invoiceType: isQuotation ? 'proforma' : 'standard',
+                invoiceType: isQuotation ? 'proforma' : (isEstimate ? 'estimate' : 'standard'),
                 branch: s.branch ? s.branch.trim() : 'JA-ELA',
                 invoiceDate: isNaN(invDate.getTime()) ? new Date() : invDate,
                 customerId: cusId || undefined,
@@ -365,7 +379,7 @@ async function migrate() {
                     name: s.cname ? s.cname.trim() : 'Walk-in Customer',
                     contactName: s.con ? s.con.trim() : ''
                 },
-                remarks: s.remarks ? s.remarks.trim() : '',
+                remarks: s.remarks ? s.remarks.trim() : (desInfo.des ? desInfo.des.trim() : ''),
                 items: invoiceItems,
                 subtotal: total,
                 totalDiscount: discount,
@@ -383,8 +397,58 @@ async function migrate() {
             { upsert: true, new: true }
         );
         invCount++;
+
+        // 2) If Quotation or Estimate, also upsert to Quotation model so Quotations screen shows it
+        if (isQuotation || isEstimate) {
+            const quoteItems = rawItems.map(it => {
+                const itCode = it.itcode ? String(it.itcode) : '';
+                const prodId = productMap.get(itCode) || productMap.get(it.item?.trim().toLowerCase());
+                const qty = parseFloat(it.qty) || 1;
+                const up = parseFloat(it.up) || 0;
+                const lineTot = parseFloat(it.tot) || (qty * up);
+
+                return {
+                    product: prodId || undefined,
+                    productName: it.item ? it.item.trim() : 'Custom Work',
+                    description: '',
+                    quantity: qty,
+                    unitPrice: up,
+                    discount: 0,
+                    subtotal: lineTot
+                };
+            });
+
+            await Quotation.findOneAndUpdate(
+                { quotationCode: invNum },
+                {
+                    documentType: isEstimate ? 'estimate' : 'quotation',
+                    quotationCode: invNum,
+                    quoteNumber: invNum,
+                    customerId: cusId || undefined,
+                    customerName: s.cname ? s.cname.trim() : 'Walk-in Customer',
+                    customerPhone: s.con ? s.con.trim() : '',
+                    customerAddress: s.ad ? s.ad.trim() : '',
+                    salesRep: s.salep ? s.salep.trim() : 'Asanka',
+                    branch: s.branch ? s.branch.trim() : 'JA-ELA',
+                    conditionOfPayments: desInfo.per ? `${desInfo.per} Advance Payment with the firm Order.\nBalance Payment on Completion of Work` : 'a). 50% Advance Payment with the firm Order.\nb). Balance Payment on Completion of Work',
+                    completionOfWork: desInfo.day ? `${desInfo.day} working Days after the Order Confirmation.` : '4 to 6 working Days after the Order Confirmation.',
+                    remarks: desInfo.des || s.remarks || '',
+                    items: quoteItems,
+                    totalAmount: total,
+                    discount: discount,
+                    grandTotal: grandTotal,
+                    advanceAmount: paid,
+                    balanceAmount: balance,
+                    status: 'sent',
+                    createdAt: isNaN(invDate.getTime()) ? new Date() : invDate
+                },
+                { upsert: true, new: true }
+            );
+            quoteCount++;
+        }
     }
-    console.log(`✓ Invoices & Quotations migrated: ${invCount}`);
+    console.log(`✓ Invoices migrated: ${invCount}`);
+    console.log(`✓ Quotations & Estimates migrated to CRM: ${quoteCount}`);
 
     // ----------------------------------------------------
     // 9. Petty Cash & Cash In/Out (tblcash.json)

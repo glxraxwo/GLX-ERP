@@ -12,6 +12,7 @@ import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
 import Textarea from '../components/ui/Textarea';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useDamages, useCreateDamage, useUpdateDamage, useDeleteDamage, useDamageSummary } from '../features/returns/useReturns';
@@ -20,7 +21,7 @@ import { useWarehouses } from '../features/warehouses/useWarehouses';
 
 export default function DamagesPage() {
     const navigate = useNavigate();
-    const [filters, setFilters] = useState({ source: '', page: 1, limit: 15 });
+    const [filters, setFilters] = useState({ search: '', source: '', startDate: '', endDate: '', page: 1, limit: 15 });
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
 
@@ -149,6 +150,16 @@ export default function DamagesPage() {
 
             <Card>
                 <div className="p-4 border-b flex flex-wrap gap-3">
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by damage # or product..."
+                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            value={filters.search}
+                            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
+                        />
+                    </div>
                     <div className="w-full sm:w-56">
                         <Select placeholder="All Sources"
                             options={[
@@ -163,6 +174,13 @@ export default function DamagesPage() {
                             ]}
                             value={filters.source} onChange={(e) => setFilters((f) => ({ ...f, source: e.target.value, page: 1 }))} />
                     </div>
+                    <DateRangeFilter
+                        startDate={filters.startDate}
+                        endDate={filters.endDate}
+                        onStartDateChange={(val) => setFilters((f) => ({ ...f, startDate: val, page: 1 }))}
+                        onEndDateChange={(val) => setFilters((f) => ({ ...f, endDate: val, page: 1 }))}
+                        onClear={() => setFilters((f) => ({ ...f, startDate: '', endDate: '', page: 1 }))}
+                    />
                 </div>
                 {isLoading ? <div className="py-16 text-center text-gray-500">Loading...</div>
                     : damages.length === 0 ? <EmptyState icon={AlertTriangle} title="No damages" description="Record damage when found" />

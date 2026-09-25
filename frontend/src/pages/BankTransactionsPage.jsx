@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 
 export default function BankTransactionsPage() {
     const [accounts, setAccounts] = useState([]);
@@ -13,6 +14,8 @@ export default function BankTransactionsPage() {
     const [search, setSearch] = useState('');
     const [accountFilter, setAccountFilter] = useState('');
     const [typeFilter, setTypeFilter] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({
@@ -125,7 +128,9 @@ export default function BankTransactionsPage() {
                               (tx.referenceNo || '').toLowerCase().includes(search.toLowerCase());
         const matchesAccount = !accountFilter || tx.accountId === accountFilter || tx.accountName.includes(accountFilter);
         const matchesType = !typeFilter || tx.type === typeFilter;
-        return matchesSearch && matchesAccount && matchesType;
+        const matchesDate = (!startDate || new Date(tx.date) >= new Date(startDate)) &&
+                            (!endDate || new Date(tx.date) <= new Date(`${endDate}T23:59:59.999`));
+        return matchesSearch && matchesAccount && matchesType && matchesDate;
     });
 
     return (
@@ -161,8 +166,8 @@ export default function BankTransactionsPage() {
                 </button>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
                     <input
                         type="text"
@@ -190,10 +195,18 @@ export default function BankTransactionsPage() {
                     className="px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 outline-none"
                 >
                     <option value="">All Types</option>
-                    <option value="deposit">Deposits / Inflow</option>
-                    <option value="withdrawal">Withdrawals / Outflow</option>
+                    <option value="deposit">Deposits</option>
+                    <option value="withdrawal">Withdrawals</option>
                     <option value="transfer">Transfers</option>
                 </select>
+
+                <DateRangeFilter
+                    startDate={startDate}
+                    endDate={endDate}
+                    onStartDateChange={setStartDate}
+                    onEndDateChange={setEndDate}
+                    onClear={() => { setStartDate(''); setEndDate(''); }}
+                />
             </div>
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">

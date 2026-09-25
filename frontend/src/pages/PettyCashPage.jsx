@@ -6,6 +6,7 @@ import {
     Clock, CheckCircle2, XCircle, TrendingDown, RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 
 const CATEGORIES = [
     { key: 'rawMaterials', label: 'Row materials', color: 'bg-green-500' },
@@ -35,6 +36,8 @@ export default function PettyCashPage() {
     const [entries, setEntries]     = useState([]);
     const [balanceData, setBalance] = useState(null);
     const [loading, setLoading]     = useState(true);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate]     = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [formType, setFormType]   = useState('expense');
     const [formData, setFormData]   = useState(emptyExpense());
@@ -43,9 +46,13 @@ export default function PettyCashPage() {
     const fetchAll = useCallback(async () => {
         setLoading(true);
         try {
+            const params = { limit: 100 };
+            if (startDate) params.startDate = startDate;
+            if (endDate) params.endDate = endDate;
+
             const [entRes, balRes] = await Promise.all([
-                api.get('/finance/petty-cash?limit=50')
-                    .catch(() => api.get('/petty-cash?limit=50'))
+                api.get('/finance/petty-cash', { params })
+                    .catch(() => api.get('/petty-cash', { params }))
                     .catch(() => ({ data: { data: [] } })),
                 api.get('/finance/petty-cash/balance')
                     .catch(() => api.get('/petty-cash/balance'))
@@ -59,7 +66,7 @@ export default function PettyCashPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [startDate, endDate]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -160,9 +167,23 @@ export default function PettyCashPage() {
 
             {/* Transaction List */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h4 className="font-bold text-gray-800">Recent Transactions</h4>
-                    <p className="text-xs text-gray-400">{entries.length} entries</p>
+                <div className="p-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-3 bg-gray-50/50">
+                    <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-gray-800">Recent Transactions</h4>
+                        <span className="text-xs text-gray-400">({entries.length} entries)</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <DateRangeFilter
+                            startDate={startDate}
+                            endDate={endDate}
+                            onStartDateChange={setStartDate}
+                            onEndDateChange={setEndDate}
+                            onClear={() => { setStartDate(''); setEndDate(''); }}
+                        />
+                        <button onClick={fetchAll} className="p-2 border border-gray-200 rounded-lg hover:bg-white bg-white text-gray-600 transition" title="Refresh">
+                            <RefreshCw size={14} />
+                        </button>
+                    </div>
                 </div>
                 <div className="divide-y divide-gray-100 font-sans">
                     {loading ? (

@@ -15,6 +15,7 @@ import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
 import Textarea from '../components/ui/Textarea';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 import { useSupplierReturns, useCreateSupplierReturn } from '../features/returns/useReturns';
 import { suppliersApi } from '../features/suppliers/suppliersApi';
 import { productsApi } from '../features/products/productsApi';
@@ -22,7 +23,7 @@ import { useWarehouses } from '../features/warehouses/useWarehouses';
 
 export default function SupplierReturnsPage() {
     const navigate = useNavigate();
-    const [filters, setFilters] = useState({ status: '', page: 1, limit: 15 });
+    const [filters, setFilters] = useState({ search: '', status: '', startDate: '', endDate: '', page: 1, limit: 15 });
     const [isFormOpen, setIsFormOpen] = useState(false);
 
     const [supplierId, setSupplierId] = useState('');
@@ -96,7 +97,17 @@ export default function SupplierReturnsPage() {
                 </Button>} />
 
             <Card>
-                <div className="p-4 border-b flex gap-3">
+                <div className="p-4 border-b border-gray-200 flex flex-wrap gap-3">
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by ref # or supplier..."
+                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            value={filters.search}
+                            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
+                        />
+                    </div>
                     <div className="w-48">
                         <Select placeholder="All Statuses"
                             options={[
@@ -105,6 +116,13 @@ export default function SupplierReturnsPage() {
                             ]}
                             value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))} />
                     </div>
+                    <DateRangeFilter
+                        startDate={filters.startDate}
+                        endDate={filters.endDate}
+                        onStartDateChange={(val) => setFilters((f) => ({ ...f, startDate: val, page: 1 }))}
+                        onEndDateChange={(val) => setFilters((f) => ({ ...f, endDate: val, page: 1 }))}
+                        onClear={() => setFilters((f) => ({ ...f, startDate: '', endDate: '', page: 1 }))}
+                    />
                 </div>
                 {isLoading ? <div className="py-16 text-center text-gray-500">Loading...</div>
                     : returns.length === 0 ? <EmptyState icon={TruckIcon} title="No supplier returns" description="Create one when returning goods to supplier" />

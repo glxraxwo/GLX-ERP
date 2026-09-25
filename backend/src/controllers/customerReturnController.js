@@ -97,7 +97,11 @@ export const getReturns = asyncHandler(async (req, res) => {
     if (startDate || endDate) {
         filter.requestDate = {};
         if (startDate) filter.requestDate.$gte = new Date(startDate);
-        if (endDate) filter.requestDate.$lte = new Date(endDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.requestDate.$lte = end;
+        }
     }
 
     const skip = (Number(page) - 1) * Number(limit);

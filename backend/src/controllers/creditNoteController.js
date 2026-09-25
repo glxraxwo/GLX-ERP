@@ -31,10 +31,25 @@ export const createCreditNote = asyncHandler(async (req, res) => {
 });
 
 export const getCreditNotes = asyncHandler(async (req, res) => {
-    const { customerId, status, page = 1, limit = 20 } = req.query;
+    const { search, customerId, status, startDate, endDate, page = 1, limit = 20 } = req.query;
     const filter = {};
+    if (search) {
+        filter.$or = [
+            { creditNoteNumber: { $regex: search, $options: 'i' } },
+            { 'customerSnapshot.name': { $regex: search, $options: 'i' } },
+        ];
+    }
     if (customerId) filter.customerId = customerId;
     if (status) filter.status = status;
+    if (startDate || endDate) {
+        filter.issueDate = {};
+        if (startDate) filter.issueDate.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.issueDate.$lte = end;
+        }
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
 

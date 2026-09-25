@@ -172,10 +172,27 @@ export const createPettyCashEntry = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getPettyCashEntries = asyncHandler(async (req, res) => {
-    const { status, type, page = 1, limit = 20 } = req.query;
+    const { status, type, startDate, endDate, search, page = 1, limit = 50 } = req.query;
     const filter = { deletedAt: null };
     if (status) filter.status = status;
-    if (type) filter.type = type;
+    if (type) filter.transactionType = type;
+    if (search) {
+        filter.$or = [
+            { item: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } },
+            { category: { $regex: search, $options: 'i' } },
+            { voucherNumber: { $regex: search, $options: 'i' } },
+        ];
+    }
+    if (startDate || endDate) {
+        filter.date = {};
+        if (startDate) filter.date.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.date.$lte = end;
+        }
+    }
     const skip = (Number(page) - 1) * Number(limit);
     const [entries, total] = await Promise.all([
         PettyCash.find(filter)

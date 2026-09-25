@@ -52,10 +52,25 @@ export const createSupplierReturn = asyncHandler(async (req, res) => {
 });
 
 export const getSupplierReturns = asyncHandler(async (req, res) => {
-    const { supplierId, status, page = 1, limit = 20 } = req.query;
+    const { search, supplierId, status, startDate, endDate, page = 1, limit = 20 } = req.query;
     const filter = {};
+    if (search) {
+        filter.$or = [
+            { returnNumber: { $regex: search, $options: 'i' } },
+            { 'supplierSnapshot.name': { $regex: search, $options: 'i' } },
+        ];
+    }
     if (supplierId) filter.supplierId = supplierId;
     if (status) filter.status = status;
+    if (startDate || endDate) {
+        filter.returnDate = {};
+        if (startDate) filter.returnDate.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.returnDate.$lte = end;
+        }
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
 
