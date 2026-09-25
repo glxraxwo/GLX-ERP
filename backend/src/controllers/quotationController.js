@@ -315,6 +315,7 @@ export const convertQuotationToInvoice = asyncHandler(async (req, res) => {
             quantity: qty,
             unitOfMeasure: 'pcs',
             unitPrice: unitPrice,
+            discount: discRate,
             discountPercent: 0,
             discountAmount: discAmount,
             taxRate: 0,

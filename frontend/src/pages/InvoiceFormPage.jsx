@@ -28,7 +28,9 @@ export default function InvoiceFormPage() {
     const [notes, setNotes] = useState('');
     const [paymentInstructions, setPaymentInstructions] = useState('');
     const [shippingCost, setShippingCost] = useState(0);
-    const [items, setItems] = useState([{ productName: '', quantity: 1, unitPrice: 0, taxRate: 18, taxable: true }]);
+    const [items, setItems] = useState([
+        { productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, discount: 0, taxRate: 18, taxable: true, unitOfMeasure: 'pcs' }
+    ]);
 
     const [introducer, setIntroducer] = useState('');
     const [introducerName, setIntroducerName] = useState('');
@@ -69,7 +71,10 @@ export default function InvoiceFormPage() {
             value: p._id, label: `${p.name} — ${p.productCode}`,
         }));
 
-    const addItem = () => setItems([...items, { productName: '', description: '', quantity: 1, unitPrice: 0, taxRate: 18, taxable: true }]);
+    const addItem = () => setItems([
+        ...items, 
+        { productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, discount: 0, taxRate: 18, taxable: true, unitOfMeasure: 'pcs' }
+    ]);
     const removeItem = (idx) => setItems(items.filter((_, i) => i !== idx));
     const updateItem = (idx, field, value) => {
         const newItems = [...items];
@@ -83,23 +88,54 @@ export default function InvoiceFormPage() {
                 newItems[idx].unitPrice = p.basePrice || p.costs?.lastPurchaseCost || p.costs?.averageCost || 0;
                 newItems[idx].taxRate = p.tax?.taxRate || 0;
                 newItems[idx].taxable = p.tax?.taxable ?? true;
-                newItems[idx].unitOfMeasure = p.unitOfMeasure;
+                newItems[idx].unitOfMeasure = p.unitOfMeasure || 'pcs';
             }
         }
         setItems(newItems);
     };
 
+    const handleTranslateItem = async (index) => {
+        const item = items[index];
+        const text = item.productName || '';
+        if (!text.trim()) return;
+        try {
+            const detected = detectLanguage(text);
+            if (detected === 'si' || detected === 'ta') {
+                const translated = await translateText(text, 'en');
+                updateItem(index, 'productName', translated);
+                updateItem(index, 'productTranslation', text);
+                toast.success('Translated to English!');
+            } else {
+                const translated = await translateText(text, 'si');
+                updateItem(index, 'productTranslation', translated);
+                toast.success('Translated to Sinhala!');
+            }
+        } catch (err) {
+            toast.error('Translation failed: ' + err.message);
+        }
+    };
+
     const totals = useMemo(() => {
-        let sub = 0, tax = 0;
+        let sub = 0, totalDisc = 0, tax = 0;
         items.forEach((i) => {
             const q = +i.quantity || 0;
             const p = +i.unitPrice || 0;
+            const disc = +i.discount || 0;
             const lSub = q * p;
-            const lTax = i.taxable ? lSub * (+i.taxRate || 0) / 100 : 0;
-            sub += lSub; tax += lTax;
+            const lDisc = Math.min(lSub, disc * q);
+            const lTaxable = Math.max(0, lSub - lDisc);
+            const lTax = i.taxable ? lTaxable * (+i.taxRate || 0) / 100 : 0;
+            sub += lSub;
+            totalDisc += lDisc;
+            tax += lTax;
         });
-        const grand = sub + tax + (+shippingCost || 0);
-        return { sub: +sub.toFixed(2), tax: +tax.toFixed(2), grand: +grand.toFixed(2) };
+        const grand = Math.max(0, sub - totalDisc + tax + (+shippingCost || 0));
+        return { 
+            sub: +sub.toFixed(2), 
+            discount: +totalDisc.toFixed(2), 
+            tax: +tax.toFixed(2), 
+            grand: +grand.toFixed(2) 
+        };
     }, [items, shippingCost]);
 
     const fmt = (n) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 2 }).format(n || 0);
@@ -123,18 +159,24 @@ export default function InvoiceFormPage() {
                 billerName: billerName || undefined,
                 numberPlateImage: numberPlateImage || undefined,
                 lorryBodyImage: lorryBodyImage || undefined,
-                items: items.map((i) => ({
-                    productId: i.productId || undefined,
-                    productCode: i.productCode || undefined,
-                    productName: i.productName,
-                    productTranslation: i.productTranslation || undefined,
-                    description: i.description || undefined,
-                    quantity: +i.quantity,
-                    unitOfMeasure: i.unitOfMeasure || undefined,
-                    unitPrice: +i.unitPrice,
-                    taxRate: +i.taxRate || 0,
-                    taxable: i.taxable,
-                })),
+                items: items.map((i) => {
+                    const q = +i.quantity || 1;
+                    const d = +i.discount || 0;
+                    return {
+                        productId: i.productId || undefined,
+                        productCode: i.productCode || undefined,
+                        productName: i.productName,
+                        productTranslation: i.productTranslation || undefined,
+                        description: i.description || undefined,
+                        quantity: q,
+                        unitOfMeasure: i.unitOfMeasure || undefined,
+                        unitPrice: +i.unitPrice || 0,
+                        discount: d,
+                        discountAmount: +(d * q).toFixed(2),
+                        taxRate: +i.taxRate || 0,
+                        taxable: i.taxable,
+                    };
+                }),
                 shippingCost: +shippingCost || 0,
                 notes: notes || undefined,
                 paymentInstructions: paymentInstructions || undefined,
@@ -281,44 +323,141 @@ export default function InvoiceFormPage() {
 
                     <Card className="p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-semibold text-gray-700">Line Items</h3>
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-700">Line Items</h3>
+                                <p className="text-xs text-gray-400">Add products/services, product-by-product discounts, and custom specifications</p>
+                            </div>
                             <Button type="button" variant="outline" size="sm" onClick={addItem}>
                                 <Plus size={14} className="mr-1" /> Add Item
                             </Button>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {items.map((item, idx) => {
-                                const lSub = (+item.quantity || 0) * (+item.unitPrice || 0);
-                                const lTax = item.taxable ? lSub * (+item.taxRate || 0) / 100 : 0;
-                                const lTot = lSub + lTax;
+                                const q = +item.quantity || 0;
+                                const p = +item.unitPrice || 0;
+                                const d = +item.discount || 0;
+                                const lGross = q * p;
+                                const lDisc = Math.min(lGross, d * q);
+                                const lTaxable = Math.max(0, lGross - lDisc);
+                                const lTax = item.taxable ? lTaxable * (+item.taxRate || 0) / 100 : 0;
+                                const lTot = lTaxable + lTax;
+
                                 return (
-                                    <div key={idx} className="border rounded-lg p-3 space-y-2">
-                                        <div className="flex gap-2">
-                                            <span className="text-xs text-gray-500 mt-2 w-6">{idx + 1}</span>
-                                            <div className="flex-1">
-                                                <Select placeholder="Product (or type below for service)..." options={productOptions}
-                                                    value={item.productId || ''} onChange={(e) => updateItem(idx, 'productId', e.target.value)} />
+                                    <div key={idx} className="border border-gray-200 bg-gray-50/60 rounded-xl p-4 space-y-3 relative hover:border-gray-300 transition">
+                                        <div className="flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-6 h-6 rounded-full bg-primary-100 text-primary-800 font-bold text-xs flex items-center justify-center">
+                                                    {idx + 1}
+                                                </span>
+                                                <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Item #{idx + 1}</span>
                                             </div>
-                                            <button type="button" onClick={() => removeItem(idx)} className="text-red-600 hover:bg-red-50 p-2 rounded mt-1">
-                                                <Trash2 size={14} />
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleTranslateItem(idx)}
+                                                    className="text-[11px] text-blue-600 hover:text-blue-800 font-bold bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded transition"
+                                                >
+                                                    Translate (SI/EN)
+                                                </button>
+                                                {items.length > 1 && (
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => removeItem(idx)} 
+                                                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition"
+                                                        title="Remove Item"
+                                                    >
+                                                        <Trash2 size={15} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            <Input label="Item Name / Title *" required
-                                                value={item.productName} onChange={(e) => updateItem(idx, 'productName', e.target.value)} />
-                                            <Input label="Detailed Description / Work Specs" placeholder="Custom work specs, alloy welding details..."
-                                                value={item.description || ''} onChange={(e) => updateItem(idx, 'description', e.target.value)} />
+
+                                        <div>
+                                            <Select 
+                                                label="Catalog Product (Optional)"
+                                                placeholder="Select catalog product or enter custom below..." 
+                                                options={productOptions}
+                                                value={item.productId || ''} 
+                                                onChange={(e) => updateItem(idx, 'productId', e.target.value)} 
+                                            />
                                         </div>
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                            <Input label="Qty" type="number" step="0.01" min="0.01"
-                                                value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', e.target.value)} />
-                                            <Input label="Unit Price" type="number" step="0.01" min="0"
-                                                value={item.unitPrice} onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)} />
-                                            <Input label="Tax %" type="number" step="0.01" min="0"
-                                                value={item.taxRate} onChange={(e) => updateItem(idx, 'taxRate', e.target.value)} />
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <Input 
+                                                label="Item Name / Title *" 
+                                                required
+                                                placeholder="e.g. Repair Works / Cargo Lorry Body DOOR Reconstruction"
+                                                value={item.productName} 
+                                                onChange={(e) => updateItem(idx, 'productName', e.target.value)} 
+                                            />
+                                            <Input 
+                                                label="Translation (Sinhala / Tamil)" 
+                                                placeholder="සිංහල / தமிழ் නම"
+                                                value={item.productTranslation || ''} 
+                                                onChange={(e) => updateItem(idx, 'productTranslation', e.target.value)} 
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                                Detailed Specifications / Work Description (Multiline)
+                                            </label>
+                                            <textarea
+                                                rows={2}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs leading-relaxed bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 font-sans"
+                                                placeholder="Detailed specifications (e.g. *** Roof 3 x 3 Aluminium Patch *** or bullet points: 01. Waterproof Shutter Board...)"
+                                                value={item.description || ''}
+                                                onChange={(e) => updateItem(idx, 'description', e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
+                                            <Input 
+                                                label="Qty" 
+                                                type="number" 
+                                                step="0.01" 
+                                                min="0.01"
+                                                value={item.quantity} 
+                                                onChange={(e) => updateItem(idx, 'quantity', e.target.value)} 
+                                            />
+                                            <Input 
+                                                label="Unit Price (LKR)" 
+                                                type="number" 
+                                                step="0.01" 
+                                                min="0"
+                                                value={item.unitPrice} 
+                                                onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)} 
+                                            />
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Total</label>
-                                                <p className="px-3 py-2 bg-gray-50 rounded-lg text-sm font-medium">{fmt(lTot)}</p>
+                                                <label className="block text-xs font-bold text-red-600 mb-1 uppercase tracking-wide">
+                                                    Discount / Unit (LKR)
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    placeholder="0.00"
+                                                    className="w-full px-3 py-2 border border-red-200 rounded-lg text-sm bg-white font-mono text-red-600 focus:outline-none focus:ring-1 focus:ring-red-400 placeholder-red-300"
+                                                    value={item.discount || ''}
+                                                    onChange={(e) => updateItem(idx, 'discount', e.target.value)}
+                                                />
+                                            </div>
+                                            <Input 
+                                                label="Tax %" 
+                                                type="number" 
+                                                step="0.01" 
+                                                min="0"
+                                                value={item.taxRate} 
+                                                onChange={(e) => updateItem(idx, 'taxRate', e.target.value)} 
+                                            />
+                                            <div className="col-span-2 sm:col-span-1">
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1">Line Total</label>
+                                                <div className="px-3 py-2 bg-white border border-gray-200 rounded-lg">
+                                                    <p className="text-sm font-bold text-gray-900">{fmt(lTot)}</p>
+                                                    {lDisc > 0 && (
+                                                        <p className="text-[10px] text-red-500 font-mono">-Disc: {fmt(lDisc)}</p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -341,6 +480,12 @@ export default function InvoiceFormPage() {
                         <h3 className="text-sm font-semibold text-gray-700 mb-4">Summary</h3>
                         <div className="space-y-3 text-sm">
                             <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span>{fmt(totals.sub)}</span></div>
+                            {totals.discount > 0 && (
+                                <div className="flex justify-between text-red-600 font-medium">
+                                    <span>Discount</span>
+                                    <span>-{fmt(totals.discount)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between"><span className="text-gray-600">Tax</span><span>{fmt(totals.tax)}</span></div>
                             <div className="flex items-center justify-between gap-2">
                                 <span className="text-gray-600">Shipping</span>

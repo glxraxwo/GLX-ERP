@@ -267,7 +267,8 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
                                 const rate = Number(item.unitPrice || item.rate || 0);
                                 const grossAmount = qty * rate;
                                 const discRate = Number(item.discount || 0);
-                                const discAmount = discRate > 0 ? (discRate * qty) : Number(item.discountAmount || item.lineDiscount || 0);
+                                const discAmount = discRate > 0 ? (discRate * qty) : Number(item.discountAmount || item.lineDiscount || (item.discountPercent ? (grossAmount * item.discountPercent / 100) : 0));
+                                const effectiveDiscRate = discRate > 0 ? discRate : (qty > 0 ? +(discAmount / qty).toFixed(2) : 0);
 
                                 const title = useSinhalaLanguage 
                                     ? (item.productTranslation || item.productName || item.description || 'Line Item') 
@@ -291,10 +292,10 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
                                         </tr>
 
                                         {/* Red Discount row beneath item if discount > 0 */}
-                                        {discRate > 0 && (
+                                        {(discAmount > 0 || effectiveDiscRate > 0) && (
                                             <tr className="text-red-600">
                                                 <td className="pt-0.5 pb-2 pr-3">{useSinhalaLanguage ? 'වට්ටම්' : 'Discount'}</td>
-                                                <td className="pt-0.5 pb-2 text-right font-mono">-{formatNumber(discRate)}</td>
+                                                <td className="pt-0.5 pb-2 text-right font-mono">-{formatNumber(effectiveDiscRate)}</td>
                                                 <td className="pt-0.5 pb-2 text-center font-mono">{qty}</td>
                                                 <td className="pt-0.5 pb-2 text-right font-mono">-{formatNumber(discAmount)}</td>
                                             </tr>

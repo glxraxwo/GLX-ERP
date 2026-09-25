@@ -370,24 +370,32 @@ export default function InvoiceDetailPage() {
                                     <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Item</th>
                                     <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Qty</th>
                                     <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Price</th>
+                                    <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Discount</th>
                                     <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Tax</th>
                                     <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Total</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {inv.items.map((item) => (
-                                    <tr key={item._id || item.lineNumber}>
-                                        <td className="px-4 py-3">
-                                            <p className="font-medium text-sm">{item.productName}</p>
-                                            {item.productCode && <p className="text-xs text-gray-500 font-mono">{item.productCode}</p>}
-                                            {item.description && <p className="text-xs text-gray-600 mt-1">{item.description}</p>}
-                                        </td>
-                                        <td className="px-4 py-3 text-right text-sm">{item.quantity} {item.unitOfMeasure}</td>
-                                        <td className="px-4 py-3 text-right text-sm">{fmt(item.unitPrice)}</td>
-                                        <td className="px-4 py-3 text-right text-sm">{fmt(item.lineTax)}</td>
-                                        <td className="px-4 py-3 text-right text-sm font-medium">{fmt(item.lineTotal)}</td>
-                                    </tr>
-                                ))}
+                                {inv.items.map((item) => {
+                                    const disc = Number(item.lineDiscount || item.discountAmount || (item.discount ? item.discount * item.quantity : 0));
+                                    return (
+                                        <tr key={item._id || item.lineNumber}>
+                                            <td className="px-4 py-3">
+                                                <p className="font-medium text-sm text-gray-900">{item.productName}</p>
+                                                {item.productTranslation && <p className="text-xs text-blue-600 font-medium">{item.productTranslation}</p>}
+                                                {item.productCode && <p className="text-xs text-gray-500 font-mono">{item.productCode}</p>}
+                                                {item.description && <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">{item.description}</p>}
+                                            </td>
+                                            <td className="px-4 py-3 text-right text-sm">{item.quantity} {item.unitOfMeasure || ''}</td>
+                                            <td className="px-4 py-3 text-right text-sm">{fmt(item.unitPrice)}</td>
+                                            <td className="px-4 py-3 text-right text-sm font-mono text-red-600">
+                                                {disc > 0 ? `-${fmt(disc)}` : '-'}
+                                            </td>
+                                            <td className="px-4 py-3 text-right text-sm">{fmt(item.lineTax)}</td>
+                                            <td className="px-4 py-3 text-right text-sm font-semibold">{fmt(item.lineTotal)}</td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                         </div>

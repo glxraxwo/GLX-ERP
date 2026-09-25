@@ -1393,7 +1393,7 @@ const QuotationsPage = () => {
                         <div className="overflow-x-auto space-y-2">
                         {formData.items.map((item, index) => (
                             <div key={index} className="grid grid-cols-12 gap-3 items-start bg-gray-50/80 p-3 rounded-xl relative border border-gray-200 mb-2">
-                                <div className="col-span-12 md:col-span-5 space-y-1">
+                                <div className="col-span-12 md:col-span-4 space-y-1">
                                     <div className="flex justify-between items-center">
                                         <label className="text-[10px] font-bold text-gray-500 uppercase">Item Name / Title *</label>
                                         <button 
@@ -1473,50 +1473,64 @@ const QuotationsPage = () => {
                                     />
                                     <textarea 
                                         rows={3} 
-                                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white text-gray-800 mt-1 font-calibri leading-relaxed"
-                                        placeholder="Detailed Specifications (multiline e.g. *** Roof 3 x 3 Aluminium Pach*** or bullet points 01. Waterproof Shutter Board...)"
+                                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white text-gray-800 mt-1 font-calibri leading-relaxed focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                        placeholder="Detailed Specifications (multiline e.g. *** Roof 3 x 3 Aluminium Patch *** or bullet points: 01. Waterproof Shutter Board...)"
                                         value={item.description || ''}
                                         onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                                     />
                                 </div>
 
-                                <div className="col-span-4 md:col-span-2 space-y-1">
+                                <div className="col-span-4 sm:col-span-2 md:col-span-1 space-y-1">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase">Qty</label>
                                     <input 
                                         type="number" 
                                         step="any" 
                                         min="0.01" 
-                                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white text-center font-semibold" 
+                                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm bg-white text-center font-semibold" 
                                         value={item.quantity} 
                                         onChange={e => handleItemChange(index, 'quantity', e.target.value)} 
                                     />
                                 </div>
 
-                                <div className="col-span-4 md:col-span-2 space-y-1">
+                                <div className="col-span-4 sm:col-span-2 md:col-span-2 space-y-1">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase">Rate (LKR)</label>
                                     <input 
                                         type="number" 
                                         step="any" 
-                                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white font-mono" 
+                                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm bg-white font-mono" 
                                         value={item.unitPrice} 
                                         onChange={e => handleItemChange(index, 'unitPrice', e.target.value)} 
                                     />
                                 </div>
 
-                                <div className="col-span-4 md:col-span-2 space-y-1">
-                                    <label className="text-[10px] font-bold text-red-600 uppercase">Discount Rate</label>
+                                <div className="col-span-4 sm:col-span-2 md:col-span-2 space-y-1">
+                                    <label className="text-[10px] font-bold text-red-600 uppercase">Discount/Unit</label>
                                     <input 
                                         type="number" 
                                         step="any" 
                                         placeholder="0.00"
-                                        className="w-full px-3 py-1.5 border border-red-200 rounded-lg text-sm bg-white font-mono text-red-600 placeholder-red-300" 
+                                        className="w-full px-2 py-1.5 border border-red-200 rounded-lg text-sm bg-white font-mono text-red-600 placeholder-red-300" 
                                         value={item.discount || ''} 
                                         onChange={e => handleItemChange(index, 'discount', e.target.value)} 
                                     />
                                 </div>
 
-                                <div className="col-span-12 md:col-span-1 flex justify-center items-center md:pt-6">
-                                    <button type="button" onClick={() => removeItem(index)} className="text-gray-400 hover:text-red-600 transition p-1 rounded-lg hover:bg-red-50" disabled={formData.items.length <= 1} title="Remove line item">
+                                <div className="col-span-8 sm:col-span-4 md:col-span-2 space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-700 uppercase">Net Subtotal</label>
+                                    <div className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg">
+                                        <div className="text-xs font-mono font-bold text-gray-900 truncate">
+                                            LKR {Number(item.subtotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        </div>
+                                        {Number(item.discount || 0) > 0 && (
+                                            <div className="text-[9px] text-red-500 font-mono truncate">
+                                                -Disc: LKR {(Number(item.discount || 0) * Number(item.quantity || 1)).toLocaleString()}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="col-span-4 sm:col-span-2 md:col-span-1 flex justify-center items-center pt-2 md:pt-6">
+                                    <button type="button" onClick={() => removeItem(index)} className="text-gray-400 hover:text-red-600 transition p-1.5 rounded-lg hover:bg-red-50" disabled={formData.items.length <= 1} title="Remove line item">
                                         <X size={18} />
                                     </button>
                                 </div>
