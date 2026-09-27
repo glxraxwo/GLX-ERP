@@ -134,7 +134,7 @@ export default function MyAdvancesPage() {
                     <div className="py-16 text-center text-gray-500">Loading advances...</div>
                 ) : advances.length === 0 ? (
                     <EmptyState
-                        icon={<Plus size={40} />}
+                        icon={Plus}
                         title="No advance requests"
                         description="You haven't made any advance requests yet"
                         action={

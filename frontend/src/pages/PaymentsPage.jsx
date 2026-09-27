@@ -181,7 +181,7 @@ function PaymentsPage() {
                     <div className="p-8 text-center text-red-500">Error loading payments: {error.message}</div>
                 ) : payments.length === 0 ? (
                     <EmptyState
-                        icon={<ArrowLeft size={40} />}
+                        icon={ArrowLeft}
                         title="No payments found"
                         description={search ? 'Try adjusting your search or filters' : 'Get started by creating your first payment'}
                         action={

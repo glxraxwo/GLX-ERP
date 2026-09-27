@@ -121,7 +121,7 @@ export default function AdminAdvanceApprovalsPage() {
                     <div className="py-16 text-center text-gray-500">Loading advances...</div>
                 ) : advances.length === 0 ? (
                     <EmptyState
-                        icon={<Filter size={40} />}
+                        icon={Filter}
                         title="No advance requests found"
                         description={filters.status || filters.search ? 'Try adjusting your filters' : 'No pending advance requests'}
                     />
