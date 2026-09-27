@@ -159,7 +159,7 @@ export default function ExpensesPage() {
         notes: expense.notes || '',
         isStockConsumption: expense.isStockConsumption || false,
         items: expense.items || [],
-        bankAccountId: expense.bankAccountId || ''
+        bankAccountId: expense.bankAccountId?._id || expense.bankAccountId || ''
       });
     } else {
       setEditingExpense(null);
@@ -186,10 +186,17 @@ export default function ExpensesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        bankAccountId: (formData.paymentMethod === 'Bank Transfer' && formData.bankAccountId) ? formData.bankAccountId : null,
+        chequeNumber: formData.paymentMethod === 'Cheque' ? formData.chequeNumber : '',
+        chequeDate: (formData.paymentMethod === 'Cheque' && formData.chequeDate) ? formData.chequeDate : null,
+      };
+
       if (editingExpense) {
-        await api.put(`/expenses/${editingExpense._id}`, formData);
+        await api.put(`/expenses/${editingExpense._id}`, payload);
       } else {
-        await api.post('/expenses', formData);
+        await api.post('/expenses', payload);
       }
       setShowModal(false);
       fetchExpenses();

@@ -46,6 +46,7 @@ export const getExpenses = async (req, res) => {
     const expenses = await Expense.find(query)
       .populate('createdBy', 'firstName lastName')
       .populate('supplierId', 'name companyName')
+      .populate('bankAccountId', 'bankName accountNumber accountName')
       .sort({ date: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -84,7 +85,8 @@ export const getExpenseById = async (req, res) => {
   try {
     const expense = await Expense.findById(req.params.id)
       .populate('createdBy', 'firstName lastName')
-      .populate('supplierId', 'name companyName');
+      .populate('supplierId', 'name companyName')
+      .populate('bankAccountId', 'bankName accountNumber accountName');
 
     if (!expense) {
       return res.status(404).json({ success: false, message: 'Expense not found' });
@@ -107,6 +109,16 @@ export const createExpense = async (req, res) => {
       ...req.body,
       createdBy: req.user?._id,
     };
+
+    // Sanitize empty string fields to prevent Mongoose CastError on ObjectId / Date
+    ['bankAccountId', 'supplierId', 'projectId', 'createdBy', 'updatedBy'].forEach(key => {
+      if (expenseData[key] === '' || expenseData[key] === undefined) {
+        delete expenseData[key];
+      }
+    });
+    if (expenseData.chequeDate === '' || expenseData.chequeDate === undefined) {
+      delete expenseData.chequeDate;
+    }
 
     if (req.body.isStockConsumption && Array.isArray(req.body.items) && req.body.items.length > 0) {
       const totalAmount = req.body.items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.costPerUnit || 0)), 0);
@@ -175,6 +187,16 @@ export const updateExpense = async (req, res) => {
       ...req.body,
       updatedBy: req.user?._id,
     };
+
+    // Sanitize empty string fields to null for Mongoose update
+    ['bankAccountId', 'supplierId', 'projectId'].forEach(key => {
+      if (updateData[key] === '') {
+        updateData[key] = null;
+      }
+    });
+    if (updateData.chequeDate === '') {
+      updateData.chequeDate = null;
+    }
 
     expense = await Expense.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
