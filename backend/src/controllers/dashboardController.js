@@ -288,25 +288,34 @@ export const getTopCustomers = asyncHandler(async (req, res) => {
  * Returns aggregated metrics for General, Operations, Finance, Sales, and HR department tabs
  */
 export const getDepartmentDashboardMetrics = asyncHandler(async (req, res) => {
+    const { startDate, endDate } = req.query;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startOfMonth = startDate ? new Date(startDate) : new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : tomorrow;
+    const dateRangeFilter = { $gte: startOfMonth, $lte: endOfMonth };
 
     // Fetch targets for current month
     const targetDoc = await MonthlyTarget.findOne({
-        year: today.getFullYear(),
-        month: today.getMonth() + 1
+        year: startOfMonth.getFullYear(),
+        month: startOfMonth.getMonth() + 1
     });
     const targetProduction = targetDoc?.productionTarget || 0;
     const targetExpenditure = targetDoc?.expenditureTarget || 0;
 
     // 1. General Management (MD)
+    const search = req.query.search ? req.query.search.trim() : '';
+    const dateQueryInvoices = startDate || endDate ? { deletedAt: null, invoiceDate: dateRangeFilter } : { deletedAt: null };
+    const dateQueryGrns = startDate || endDate ? { deletedAt: null, receiptDate: dateRangeFilter } : { deletedAt: null };
+    const dateQueryBatches = startDate || endDate ? { deletedAt: null, date: dateRangeFilter } : { deletedAt: null };
+    const dateQueryOrders = startDate || endDate ? { deletedAt: null, orderDate: dateRangeFilter } : { deletedAt: null };
+
     const [recentInvoices, recentGrns, recentBatches, recentOrders] = await Promise.all([
-        Invoice.find({ deletedAt: null }).sort({ createdAt: -1 }).limit(5).populate('customerId', 'displayName'),
-        GoodsReceiptNote.find({ deletedAt: null }).sort({ createdAt: -1 }).limit(5),
-        ProductionBatch.find({ deletedAt: null }).sort({ createdAt: -1 }).limit(5),
-        SalesOrder.find({ deletedAt: null }).sort({ createdAt: -1 }).limit(5).populate('customerId', 'displayName')
+        Invoice.find(dateQueryInvoices).sort({ createdAt: -1 }).limit(15).populate('customerId', 'displayName'),
+        GoodsReceiptNote.find(dateQueryGrns).sort({ createdAt: -1 }).limit(15),
+        ProductionBatch.find(dateQueryBatches).sort({ createdAt: -1 }).limit(15),
+        SalesOrder.find(dateQueryOrders).sort({ createdAt: -1 }).limit(15).populate('customerId', 'displayName')
     ]);
 
     // 2. Operations
@@ -333,13 +342,13 @@ export const getDepartmentDashboardMetrics = asyncHandler(async (req, res) => {
 
     const [activeProd, completedProdThisMonth] = await Promise.all([
         ProductionOrder.countDocuments({ status: 'in_progress', deletedAt: null }),
-        ProductionOrder.countDocuments({ status: 'completed', actualEndDate: { $gte: startOfMonth }, deletedAt: null })
+        ProductionOrder.countDocuments({ status: 'completed', actualEndDate: dateRangeFilter, deletedAt: null })
     ]);
 
     // Calculate actual finished output (kg) for completed batches this month
     const completedBatchesThisMonth = await ProductionBatch.find({
         status: 'completed',
-        date: { $gte: startOfMonth },
+        date: dateRangeFilter,
         deletedAt: null
     });
     const actualProductionThisMonth = completedBatchesThisMonth.reduce((sum, b) => sum + (b.outputWeight_total || 0), 0);
@@ -384,7 +393,7 @@ export const getDepartmentDashboardMetrics = asyncHandler(async (req, res) => {
     const pettyExpensesThisMonth = await PettyCash.find({
         transactionType: 'expense',
         status: 'approved',
-        date: { $gte: startOfMonth },
+        date: dateRangeFilter,
         deletedAt: null
     });
     const actualExpenditureThisMonth = pettyExpensesThisMonth.reduce((sum, pe) => sum + (pe.amount || 0), 0);
@@ -406,7 +415,7 @@ export const getDepartmentDashboardMetrics = asyncHandler(async (req, res) => {
         {
             $match: {
                 deletedAt: null,
-                orderDate: { $gte: startOfMonth },
+                orderDate: dateRangeFilter,
                 status: { $nin: ['draft', 'cancelled'] }
             }
         },

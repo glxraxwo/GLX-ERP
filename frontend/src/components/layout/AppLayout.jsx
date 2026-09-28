@@ -8,8 +8,22 @@ import { useSocket } from '../../hooks/useSocket';
 export default function AppLayout() {
     const { user } = useAuthStore();
     const location = useLocation();
-    // Desktop: open by default (>=1024px), mobile: closed
-    const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
+    // Desktop: open by default (>=1024px) or read from localStorage, mobile: closed
+    const [sidebarOpen, setSidebarOpen] = useState(() => {
+        const saved = localStorage.getItem('sidebar_open');
+        if (saved !== null && window.innerWidth >= 1024) return saved === 'true';
+        return window.innerWidth >= 1024;
+    });
+
+    const toggleSidebar = () => {
+        setSidebarOpen(prev => {
+            const next = !prev;
+            if (window.innerWidth >= 1024) {
+                localStorage.setItem('sidebar_open', String(next));
+            }
+            return next;
+        });
+    };
 
     // Initialize real-time notifications
     useSocket();
@@ -25,7 +39,8 @@ export default function AppLayout() {
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth >= 1024) {
-                setSidebarOpen(true);
+                const saved = localStorage.getItem('sidebar_open');
+                setSidebarOpen(saved !== null ? saved === 'true' : true);
             } else {
                 setSidebarOpen(false);
             }
@@ -42,7 +57,7 @@ export default function AppLayout() {
                 onClose={() => setSidebarOpen(false)}
             />
             <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-                <Header onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+                <Header onToggleSidebar={toggleSidebar} />
                 <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6">
                     <Outlet />
                 </main>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Ban, Printer, Receipt, Download, CheckCircle, RefreshCw, Briefcase, FileCheck, FileText, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Send, Ban, Printer, Receipt, Download, CheckCircle, RefreshCw, Briefcase, FileCheck, FileText, RotateCcw, Eye } from 'lucide-react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
@@ -9,6 +9,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import { useInvoice, useChangeInvoiceStatus } from '../features/invoices/useInvoices';
 import { useAuthStore } from '../store/authStore';
 
@@ -20,6 +21,7 @@ import { getApiUrl } from '../api/config';
 import { useQuery } from '@tanstack/react-query';
 import { paymentsApi } from '../features/payments/paymentsApi';
 import DocumentPaymentAudit from '../components/finance/DocumentPaymentAudit';
+import { useSettings } from '../features/settings/useSettings';
 
 const paymentStatusVariant = {
     unpaid: 'warning', partially_paid: 'info', paid: 'success',
@@ -30,8 +32,12 @@ export default function InvoiceDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuthStore();
+    const { data: settingsData } = useSettings();
+    const settings = settingsData?.data;
+    const [includeHeader, setIncludeHeader] = useState(true);
     const [action, setAction] = useState(null);
     const [reason, setReason] = useState('');
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
     const { data, isLoading } = useInvoice(id);
     const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -233,11 +239,13 @@ export default function InvoiceDetailPage() {
         email: 'info@yourcompany.lk',
     };
 
+    const isProforma = inv.invoiceType === 'proforma' || (inv.invoiceNumber && inv.invoiceNumber.startsWith('PI'));
+
     return (
         <div>
             <PageHeader
                 title={<span className="flex items-center gap-3">
-                    Invoice {inv.invoiceNumber}
+                    {isProforma ? `Proforma Invoice ${inv.invoiceNumber}` : `Invoice ${inv.invoiceNumber}`}
                     <Badge variant={paymentStatusVariant[inv.paymentStatus]}>{inv.paymentStatus.replace('_', ' ')}</Badge>
                     {inv.daysPastDue > 0 && <Badge variant="danger">{inv.daysPastDue}d overdue</Badge>}
                 </span>}
@@ -247,14 +255,60 @@ export default function InvoiceDetailPage() {
                         <Button variant="outline" size="sm" onClick={() => navigate('/invoices')}>
                             <ArrowLeft size={14} className="mr-1" /> Back
                         </Button>
-                        <Button variant="outline" size="sm" onClick={handlePrint}>
+
+                        {/* Interactive A4 Preview & Edit Modal Launcher */}
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setIsPreviewModalOpen(true)}
+                            className="border-blue-300 text-blue-700 bg-blue-50/60 hover:bg-blue-100 font-bold"
+                            title="Interactive A4 Print Preview with Dynamic Language Switcher and Quick Edit"
+                        >
+                            <Eye size={14} className="mr-1" /> Preview &amp; Edit
+                        </Button>
+
+                        {/* With Header / Without Header Mode Selector */}
+                        <div className="flex items-center rounded-lg border border-gray-300 bg-white p-0.5 text-xs font-semibold shadow-xs">
+                            <button
+                                type="button"
+                                onClick={() => setIncludeHeader(true)}
+                                className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${includeHeader ? 'bg-blue-600 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                                title="Print / Download with company letterhead header"
+                            >
+                                With Header
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIncludeHeader(false)}
+                                className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${!includeHeader ? 'bg-amber-600 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                                title="Print / Download without header (For pre-printed letterhead paper)"
+                            >
+                                Without Header
+                            </button>
+                        </div>
+
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={handlePrint}
+                            className={!includeHeader ? 'border-amber-300 bg-amber-50/50 text-amber-900' : ''}
+                            title={includeHeader ? 'Print with Header' : 'Print without Header (Pre-printed Paper)'}
+                        >
                             <Printer size={14} className="mr-1" /> Print
+                            {!includeHeader && <span className="ml-1 text-[10px] text-amber-700 font-bold">(No Header)</span>}
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => setShareModalOpen(true)}>
                             <Send size={14} className="mr-1" /> SMS
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => exportElementToPDF(printRef.current, `invoice_${(inv.invoiceNumber || 'document').replace(/[\/\\:]/g, '_')}.pdf`)}>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => exportElementToPDF(printRef.current, `${isProforma ? 'proforma_invoice' : 'invoice'}_${(inv.invoiceNumber || 'document').replace(/[\/\\:]/g, '_')}${!includeHeader ? '_no_header' : ''}.pdf`)}
+                            className={!includeHeader ? 'border-amber-300 bg-amber-50/50 text-amber-900' : ''}
+                            title={includeHeader ? 'Download PDF with Header' : 'Download PDF without Header'}
+                        >
                             <Download size={14} className="mr-1" /> PDF
+                            {!includeHeader && <span className="ml-1 text-[10px] text-amber-700 font-bold">(No Header)</span>}
                         </Button>
                         {inv.balanceDue > 0 && inv.paymentStatus !== 'cancelled' && (
                             <Button variant="primary" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold" onClick={() => {
@@ -509,11 +563,48 @@ export default function InvoiceDetailPage() {
             <div className="print-only-container">
                 <PrintableInvoice
                     ref={printRef}
-                    companyInfo={companyInfo}
+                    companyInfo={settings || companyInfo}
                     invoice={inv}
                     payments={payments}
+                    hideLetterheadHeader={!includeHeader}
                 />
             </div>
+
+            {/* Interactive A4 Print & Quick-Edit Preview Modal */}
+            <Modal isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} title={`Invoice ${inv.invoiceNumber} — Interactive A4 Preview & Edit`} size="xl">
+                <div className="p-3 sm:p-6 space-y-4">
+                    <div className="max-h-[75vh] overflow-y-auto p-2 bg-gray-100 rounded-xl">
+                        <PrintableInvoice
+                            companyInfo={settings || companyInfo}
+                            invoice={inv}
+                            payments={payments}
+                            hideLetterheadHeader={!includeHeader}
+                            hideToolbar={false}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 gap-3 flex-wrap">
+                        <button
+                            onClick={() => setIsPreviewModalOpen(false)}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
+                            Close
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={handlePrint}>
+                                <Printer size={14} className="mr-1" /> Print
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => exportElementToPDF(printRef.current, `invoice_${(inv.invoiceNumber || 'document').replace(/[\/\\:]/g, '_')}${!includeHeader ? '_no_header' : ''}.pdf`)}
+                            >
+                                <Download size={14} className="mr-1" /> PDF
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
+
             {inv && (
                 <ShareDocumentSmsModal
                     isOpen={shareModalOpen}

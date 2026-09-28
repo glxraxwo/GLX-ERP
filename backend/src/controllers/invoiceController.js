@@ -6,6 +6,7 @@ import Customer from '../models/Customer.js';
 import SalesOrder from '../models/SalesOrder.js';
 import Warehouse from '../models/Warehouse.js';
 import { decreaseStock } from '../services/stockService.js';
+import { getNextSequence } from '../models/Counter.js';
 
 const deductStockForInvoice = async (invoice, userId) => {
     if (invoice.invoiceType === 'proforma') return; // Proforma NEVER impacts stock
@@ -470,6 +471,11 @@ export const convertProformaToCommercial = asyncHandler(async (req, res) => {
     }
 
     invoice.invoiceType = 'standard';
+    // If it was a PI- number, generate an official commercial invoice number
+    if (invoice.invoiceNumber && invoice.invoiceNumber.startsWith('PI-')) {
+        const seq = await getNextSequence('invoice');
+        invoice.invoiceNumber = `INV-${seq}`;
+    }
     await invoice.save();
 
     await deductStockForInvoice(invoice, req.user._id);
@@ -477,7 +483,7 @@ export const convertProformaToCommercial = asyncHandler(async (req, res) => {
     res.json({
         success: true,
         data: invoice,
-        message: 'Successfully converted Proforma Invoice to Commercial Invoice and deducted inventory.'
+        message: `Successfully converted Proforma Invoice to Commercial Invoice (${invoice.invoiceNumber}) and deducted inventory.`
     });
 });
 
@@ -493,12 +499,19 @@ export const convertInvoiceToProforma = asyncHandler(async (req, res) => {
     }
 
     invoice.invoiceType = 'proforma';
+    // Generate a unique Proforma Invoice ID (PI-xxxx) if not already assigned
+    if (!invoice.proformaNumber || !invoice.invoiceNumber.startsWith('PI-')) {
+        const seq = await getNextSequence('proforma_invoice');
+        const piNumber = `PI-${seq}`;
+        invoice.proformaNumber = piNumber;
+        invoice.invoiceNumber = piNumber;
+    }
     await invoice.save();
 
     res.json({
         success: true,
         data: invoice,
-        message: 'Successfully converted Invoice to Proforma Invoice.'
+        message: `Successfully converted Invoice to Proforma Invoice (${invoice.invoiceNumber}).`
     });
 });
 

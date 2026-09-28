@@ -6,8 +6,10 @@ import {
     DollarSign, ShoppingCart, TrendingUp, AlertTriangle,
     Package, Factory, FileText, Users, CreditCard, ArrowRight,
     Camera, RefreshCw, Layers, ShieldCheck, Wallet, Landmark,
-    Calendar, CheckCircle, Clock, Home, Workflow, Plus, Settings
+    Calendar, CheckCircle, Clock, Home, Workflow, Plus, Settings,
+    Receipt, Calculator, ArrowDownUp, Briefcase, Search, X, Filter
 } from 'lucide-react';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 import {
     LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
     BarChart, Bar, CartesianGrid, Legend, Cell,
@@ -28,6 +30,7 @@ import { useDashboardKpis, useRevenueChart } from '../features/reports/useReport
 import { useSocket } from '../hooks/useSocket';
 import { useAuthStore } from '../store/authStore';
 import { useMyProfile, useMyPayslips, useLeaves, useAttendance, useCreateLeave, useMyAdvanceLedger, useCreateSalaryAdvance } from '../features/hr/useHr';
+import EmployeeAdvanceHub from '../components/dashboard/EmployeeAdvanceHub';
 import toast from 'react-hot-toast';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -45,15 +48,49 @@ export default function DashboardPage() {
     const { data: revenueData } = useRevenueChart(6);
     const { socket } = useSocket();
 
-    const [activeTab, setActiveTab] = useState('general'); // general, operations, finance, sales, hr
+    const [activeTab, setActiveTab] = useState('general'); // general, operations, finance, sales, hr, advances
     const [deptData, setDeptData] = useState(null);
     const [deptLoading, setDeptLoading] = useState(true);
     const [realtimeAlerts, setRealtimeAlerts] = useState([]);
 
-    const fetchDeptMetrics = async () => {
+    // Overview search & date range filter
+    const [overviewSearch, setOverviewSearch] = useState('');
+    const [overviewStartDate, setOverviewStartDate] = useState('');
+    const [overviewEndDate, setOverviewEndDate] = useState('');
+    const [activePreset, setActivePreset] = useState('all');
+
+    const handlePreset = (preset) => {
+        setActivePreset(preset);
+        const today = new Date();
+        if (preset === 'today') {
+            const todayStr = format(today, 'yyyy-MM-dd');
+            setOverviewStartDate(todayStr);
+            setOverviewEndDate(todayStr);
+        } else if (preset === 'week') {
+            const now = new Date();
+            const day = now.getDay();
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(now.setDate(diff));
+            setOverviewStartDate(format(monday, 'yyyy-MM-dd'));
+            setOverviewEndDate(format(today, 'yyyy-MM-dd'));
+        } else if (preset === 'month') {
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            setOverviewStartDate(format(firstDay, 'yyyy-MM-dd'));
+            setOverviewEndDate(format(today, 'yyyy-MM-dd'));
+        } else {
+            setOverviewStartDate('');
+            setOverviewEndDate('');
+        }
+    };
+
+    const fetchDeptMetrics = async (sDate = overviewStartDate, eDate = overviewEndDate, searchStr = overviewSearch) => {
         setDeptLoading(true);
         try {
-            const res = await api.get('/reports/dashboard/department-metrics');
+            const params = {};
+            if (sDate) params.startDate = sDate;
+            if (eDate) params.endDate = eDate;
+            if (searchStr) params.search = searchStr;
+            const res = await api.get('/reports/dashboard/department-metrics', { params });
             setDeptData(res.data.data);
         } catch (err) {
             console.error('Failed to load department metrics', err);
@@ -63,11 +100,16 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
-        fetchDeptMetrics();
+        fetchDeptMetrics(overviewStartDate, overviewEndDate, overviewSearch);
+    }, [overviewStartDate, overviewEndDate]);
+
+    useEffect(() => {
         // Auto-refresh department metrics every 60 seconds
-        const interval = setInterval(fetchDeptMetrics, 60000);
+        const interval = setInterval(() => {
+            fetchDeptMetrics(overviewStartDate, overviewEndDate, overviewSearch);
+        }, 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [overviewStartDate, overviewEndDate, overviewSearch]);
 
     useEffect(() => {
         if (socket) {
@@ -131,6 +173,68 @@ export default function DashboardPage() {
         input.click();
     };
 
+    const q = overviewSearch.trim().toLowerCase();
+
+    // 1. General tab filtered data
+    const filteredRecentOrders = (deptData?.general?.recentOrders || []).filter(order => {
+        if (!q) return true;
+        const customer = order.customerId?.displayName || 'Walk-in';
+        const num = order.orderNumber || '';
+        const amt = order.grandTotal ? String(order.grandTotal) : '';
+        return customer.toLowerCase().includes(q) || num.toLowerCase().includes(q) || amt.includes(q);
+    });
+
+    const filteredRecentGrns = (deptData?.general?.recentGrns || []).filter(grn => {
+        if (!q) return true;
+        const supp = grn.supplierName || '';
+        const num = grn.grnNumber || '';
+        const amt = grn.totalAcceptedValue ? String(grn.totalAcceptedValue) : '';
+        return supp.toLowerCase().includes(q) || num.toLowerCase().includes(q) || amt.includes(q);
+    });
+
+    // 2. Operations tab filtered data
+    const filteredRecentBatches = (deptData?.general?.recentBatches || []).filter(b => {
+        if (!q) return true;
+        const bNo = b.batchNo || '';
+        const prod = b.product || '';
+        return bNo.toLowerCase().includes(q) || prod.toLowerCase().includes(q);
+    });
+
+    const filteredLowestStock = (deptData?.operations?.lowestStock || []).filter(item => {
+        if (!q) return true;
+        const name = item.name || '';
+        const code = item.productCode || '';
+        return name.toLowerCase().includes(q) || code.toLowerCase().includes(q);
+    });
+
+    // 3. Finance tab filtered data
+    const filteredBankSummary = (deptData?.finance?.bankSummary || []).filter(bank => {
+        if (!q) return true;
+        const bName = bank.bankName || '';
+        const acc = bank.accountNumber || '';
+        return bName.toLowerCase().includes(q) || acc.toLowerCase().includes(q);
+    });
+
+    const filteredPettyCategories = (deptData?.finance?.pettyCategories || []).filter(item => {
+        if (!q) return true;
+        return (item.category || '').toLowerCase().includes(q);
+    });
+
+    // 4. Sales tab filtered data
+    const filteredTopProducts = (deptData?.sales?.topProducts || []).filter(prod => {
+        if (!q) return true;
+        return (prod.productName || '').toLowerCase().includes(q);
+    });
+
+    const tabLabels = {
+        general: 'General Management',
+        operations: 'Operations & Plant',
+        finance: 'Finance & Accounts',
+        sales: 'CRM & Export Sales',
+        hr: 'Human Resources',
+        advances: 'Employee Master & Advances'
+    };
+
     if (kpisLoading || !k) return <div className="py-16 text-center text-gray-500 font-sans">Loading dashboard...</div>;
 
     return (
@@ -143,36 +247,160 @@ export default function DashboardPage() {
                 </button>
             </div>
 
-            {/* Quick Access Panel */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white border border-gray-150 p-3.5 rounded-2xl shadow-sm">
-                <button onClick={() => navigate('/finance/petty-cash')} className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 transition text-left">
-                    <span className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><Wallet size={16} /></span>
-                    <div>
-                        <span className="text-[9px] text-gray-400 block font-semibold uppercase">Finance</span>
-                        <span className="text-xs font-bold text-gray-850">Petty Cash Ledger</span>
-                    </div>
-                </button>
-                <button onClick={() => navigate('/stock')} className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 transition text-left">
-                    <span className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Package size={16} /></span>
-                    <div>
-                        <span className="text-[9px] text-gray-400 block font-semibold uppercase">Inventory</span>
-                        <span className="text-xs font-bold text-gray-850">Stock Overview</span>
-                    </div>
-                </button>
-                <button onClick={() => navigate('/crm/quotations')} className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 transition text-left">
-                    <span className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><FileText size={16} /></span>
-                    <div>
-                        <span className="text-[9px] text-gray-400 block font-semibold uppercase">Sales & CRM</span>
-                        <span className="text-xs font-bold text-gray-850">Quotations</span>
-                    </div>
-                </button>
-                <button onClick={() => navigate('/settings')} className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 transition text-left">
-                    <span className="p-2 bg-violet-50 text-violet-600 rounded-lg"><Settings size={16} /></span>
-                    <div>
-                        <span className="text-[9px] text-gray-400 block font-semibold uppercase">Configuration</span>
-                        <span className="text-xs font-bold text-gray-850">System Settings</span>
-                    </div>
-                </button>
+            {/* ── QUICK NAVIGATION SHORTCUTS (Invoice / Quotation / Estimate / Employer / Stock In/Out / Stock Overview) ── */}
+            <div className="space-y-2.5">
+                <div className="flex items-center justify-between px-1">
+                    <span className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+                        <Layers size={15} className="text-blue-600" /> Module Shortcuts &amp; Quick Access (ප්‍රධාන පිටු වෙත කෙටිමං)
+                    </span>
+                    <span className="text-[11px] text-gray-500 font-semibold hidden sm:inline">Direct 1-Click Access</span>
+                </div>
+
+                {/* 6 Primary Requested Module Shortcuts */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    {/* 1. Invoice */}
+                    <button 
+                        onClick={() => navigate('/invoices')} 
+                        className="group flex flex-col justify-between p-3.5 rounded-2xl border border-emerald-200 bg-white hover:bg-emerald-50/50 hover:border-emerald-400 hover:shadow-md transition-all text-left shadow-xs"
+                    >
+                        <div className="flex items-center justify-between mb-2.5">
+                            <span className="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-xs">
+                                <Receipt size={18} />
+                            </span>
+                            <ArrowRight size={14} className="text-emerald-400 group-hover:translate-x-1 transition-transform opacity-0 group-hover:opacity-100" />
+                        </div>
+                        <div>
+                            <span className="text-[10px] text-emerald-600 block font-bold uppercase tracking-wider">Billing &amp; Sales</span>
+                            <span className="text-sm font-black text-gray-900 group-hover:text-emerald-700 transition-colors">Invoice</span>
+                            <span className="text-[10px] text-gray-400 block mt-0.5">ඉන්වොයිසි</span>
+                        </div>
+                    </button>
+
+                    {/* 2. Quotation */}
+                    <button 
+                        onClick={() => navigate('/crm/quotations?type=quotation')} 
+                        className="group flex flex-col justify-between p-3.5 rounded-2xl border border-indigo-200 bg-white hover:bg-indigo-50/50 hover:border-indigo-400 hover:shadow-md transition-all text-left shadow-xs"
+                    >
+                        <div className="flex items-center justify-between mb-2.5">
+                            <span className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xs">
+                                <FileText size={18} />
+                            </span>
+                            <ArrowRight size={14} className="text-indigo-400 group-hover:translate-x-1 transition-transform opacity-0 group-hover:opacity-100" />
+                        </div>
+                        <div>
+                            <span className="text-[10px] text-indigo-600 block font-bold uppercase tracking-wider">CRM &amp; Pricing</span>
+                            <span className="text-sm font-black text-gray-900 group-hover:text-indigo-700 transition-colors">Quotation</span>
+                            <span className="text-[10px] text-gray-400 block mt-0.5">මිල ගණන්</span>
+                        </div>
+                    </button>
+
+                    {/* 3. Estimate */}
+                    <button 
+                        onClick={() => navigate('/crm/quotations?type=estimate')} 
+                        className="group flex flex-col justify-between p-3.5 rounded-2xl border border-amber-200 bg-white hover:bg-amber-50/50 hover:border-amber-400 hover:shadow-md transition-all text-left shadow-xs"
+                    >
+                        <div className="flex items-center justify-between mb-2.5">
+                            <span className="p-2.5 bg-amber-100 text-amber-700 rounded-xl group-hover:scale-110 group-hover:bg-amber-600 group-hover:text-white transition-all shadow-xs">
+                                <Calculator size={18} />
+                            </span>
+                            <ArrowRight size={14} className="text-amber-400 group-hover:translate-x-1 transition-transform opacity-0 group-hover:opacity-100" />
+                        </div>
+                        <div>
+                            <span className="text-[10px] text-amber-600 block font-bold uppercase tracking-wider">Vehicle Repair</span>
+                            <span className="text-sm font-black text-gray-900 group-hover:text-amber-700 transition-colors">Estimate</span>
+                            <span className="text-[10px] text-gray-400 block mt-0.5">ඇස්තමේන්තු</span>
+                        </div>
+                    </button>
+
+                    {/* 4. Employee Master */}
+                    <button 
+                        onClick={() => {
+                            setActiveTab('advances');
+                            setTimeout(() => {
+                                const el = document.getElementById('employee-master-section');
+                                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                            }, 100);
+                        }} 
+                        className="group flex flex-col justify-between p-3.5 rounded-2xl border border-purple-200 bg-white hover:bg-purple-50/50 hover:border-purple-400 hover:shadow-md transition-all text-left shadow-xs"
+                    >
+                        <div className="flex items-center justify-between mb-2.5">
+                            <span className="p-2.5 bg-purple-100 text-purple-700 rounded-xl group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-xs">
+                                <Users size={18} />
+                            </span>
+                            <ArrowRight size={14} className="text-purple-400 group-hover:translate-x-1 transition-transform opacity-0 group-hover:opacity-100" />
+                        </div>
+                        <div>
+                            <span className="text-[10px] text-purple-600 block font-bold uppercase tracking-wider">Human Resources</span>
+                            <span className="text-sm font-black text-gray-900 group-hover:text-purple-700 transition-colors">Employee Master</span>
+                            <span className="text-[10px] text-gray-400 block mt-0.5">සේවක Master &amp; Advances</span>
+                        </div>
+                    </button>
+
+                    {/* 5. Stock (In / Out) */}
+                    <button 
+                        onClick={() => navigate('/stock-movements')} 
+                        className="group flex flex-col justify-between p-3.5 rounded-2xl border border-rose-200 bg-white hover:bg-rose-50/50 hover:border-rose-400 hover:shadow-md transition-all text-left shadow-xs"
+                    >
+                        <div className="flex items-center justify-between mb-2.5">
+                            <span className="p-2.5 bg-rose-100 text-rose-700 rounded-xl group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all shadow-xs">
+                                <ArrowDownUp size={18} />
+                            </span>
+                            <ArrowRight size={14} className="text-rose-400 group-hover:translate-x-1 transition-transform opacity-0 group-hover:opacity-100" />
+                        </div>
+                        <div>
+                            <span className="text-[10px] text-rose-600 block font-bold uppercase tracking-wider">Warehouse Movements</span>
+                            <span className="text-sm font-black text-gray-900 group-hover:text-rose-700 transition-colors">Stock (In / Out)</span>
+                            <span className="text-[10px] text-gray-400 block mt-0.5">තොග හුවමාරු</span>
+                        </div>
+                    </button>
+
+                    {/* 6. Stock Overview */}
+                    <button 
+                        onClick={() => navigate('/stock')} 
+                        className="group flex flex-col justify-between p-3.5 rounded-2xl border border-sky-200 bg-white hover:bg-sky-50/50 hover:border-sky-400 hover:shadow-md transition-all text-left shadow-xs"
+                    >
+                        <div className="flex items-center justify-between mb-2.5">
+                            <span className="p-2.5 bg-sky-100 text-sky-700 rounded-lg group-hover:scale-110 group-hover:bg-sky-600 group-hover:text-white transition-all shadow-xs">
+                                <Package size={18} />
+                            </span>
+                            <ArrowRight size={14} className="text-sky-400 group-hover:translate-x-1 transition-transform opacity-0 group-hover:opacity-100" />
+                        </div>
+                        <div>
+                            <span className="text-[10px] text-sky-600 block font-bold uppercase tracking-wider">Inventory Levels</span>
+                            <span className="text-sm font-black text-gray-900 group-hover:text-sky-700 transition-colors">Stock Overview</span>
+                            <span className="text-[10px] text-gray-400 block mt-0.5">තොග ශේෂයන්</span>
+                        </div>
+                    </button>
+                </div>
+
+                {/* Secondary Auxiliary Shortcuts (Petty Cash, Advances, Settings) */}
+                <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none text-xs">
+                    <button onClick={() => navigate('/finance/petty-cash')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 transition whitespace-nowrap shadow-xs">
+                        <Wallet size={14} className="text-emerald-600" />
+                        <span className="font-semibold">Petty Cash Ledger</span>
+                    </button>
+                    <button 
+                        onClick={() => {
+                            setActiveTab('advances');
+                            setTimeout(() => {
+                                const el = document.getElementById('employee-master-section');
+                                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                            }, 100);
+                        }} 
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50/80 border border-purple-200 hover:bg-purple-100 text-purple-900 transition whitespace-nowrap shadow-xs"
+                    >
+                        <Users size={14} className="text-purple-600" />
+                        <span className="font-bold">Employee Master (සේවක Master &amp; Advances)</span>
+                    </button>
+                    <button onClick={() => navigate('/employees')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 transition whitespace-nowrap shadow-xs">
+                        <Users size={14} className="text-gray-500" />
+                        <span className="font-semibold">All Employees List</span>
+                    </button>
+                    <button onClick={() => navigate('/settings')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 transition whitespace-nowrap shadow-xs">
+                        <Settings size={14} className="text-violet-600" />
+                        <span className="font-semibold">System Settings &amp; Seals</span>
+                    </button>
+                </div>
             </div>
 
             {realtimeAlerts.length > 0 && (
@@ -233,7 +461,8 @@ export default function DashboardPage() {
                         { id: 'operations', label: 'Operations & Plant',     icon: Factory },
                         { id: 'finance',    label: 'Finance & Accounts',     icon: Wallet },
                         { id: 'sales',      label: 'CRM & Export Sales',     icon: TrendingUp },
-                        { id: 'hr',         label: 'Human Resources',        icon: Users }
+                        { id: 'hr',         label: 'Human Resources',        icon: Users },
+                        { id: 'advances',   label: 'Employee Master & Advances (සේවක Master)', icon: Users }
                     ].map(tab => {
                         const Icon = tab.icon;
                         const active = activeTab === tab.id;
@@ -252,6 +481,98 @@ export default function DashboardPage() {
                             </button>
                         );
                     })}
+                </div>
+
+                {/* ── OVERVIEW COMMAND TOOLBAR (Search bar + Date Range Filter + Quick Presets) ── */}
+                <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-3">
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                        {/* Search Bar for current overview tab */}
+                        <div className="relative flex-1 min-w-[240px]">
+                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder={`Search in ${tabLabels[activeTab] || 'Overview'} (orders, products, batches, accounts)...`}
+                                value={overviewSearch}
+                                onChange={(e) => setOverviewSearch(e.target.value)}
+                                className="w-full pl-10 pr-9 py-2 bg-gray-50/70 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition shadow-2xs"
+                            />
+                            {overviewSearch && (
+                                <button
+                                    onClick={() => setOverviewSearch('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+                                    title="Clear search"
+                                >
+                                    <X size={15} />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Date Range Filter with quick presets */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Quick Presets */}
+                            <div className="flex items-center bg-gray-100 p-1 rounded-xl gap-1 text-xs">
+                                {[
+                                    { id: 'today', label: 'Today' },
+                                    { id: 'week', label: 'This Week' },
+                                    { id: 'month', label: 'This Month' },
+                                    { id: 'all', label: 'All Time' },
+                                ].map(preset => (
+                                    <button
+                                        key={preset.id}
+                                        type="button"
+                                        onClick={() => handlePreset(preset.id)}
+                                        className={`px-2.5 py-1 rounded-lg font-bold transition-all text-xs ${
+                                            activePreset === preset.id && (!overviewStartDate || preset.id !== 'all')
+                                                ? 'bg-white text-gray-900 shadow-xs'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        {preset.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Date Range Filter */}
+                            <DateRangeFilter
+                                startDate={overviewStartDate}
+                                endDate={overviewEndDate}
+                                onStartDateChange={(val) => {
+                                    setOverviewStartDate(val);
+                                    setActivePreset('custom');
+                                }}
+                                onEndDateChange={(val) => {
+                                    setOverviewEndDate(val);
+                                    setActivePreset('custom');
+                                }}
+                                onClear={() => handlePreset('all')}
+                                fromLabel="From"
+                                toLabel="To"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Active search or date filter status indicator */}
+                    {(overviewSearch || overviewStartDate || overviewEndDate) && (
+                        <div className="flex flex-wrap items-center justify-between text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl font-medium gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {overviewSearch && (
+                                    <span>Filtered by query: <strong className="text-indigo-900">"{overviewSearch}"</strong></span>
+                                )}
+                                {(overviewStartDate || overviewEndDate) && (
+                                    <span>Date range: <strong className="text-indigo-900">{overviewStartDate || 'Earliest'} to {overviewEndDate || 'Latest'}</strong></span>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setOverviewSearch('');
+                                    handlePreset('all');
+                                }}
+                                className="text-indigo-600 hover:text-indigo-800 text-[11px] font-bold hover:underline"
+                            >
+                                Reset Filters
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Tab content rendering */}
@@ -306,30 +627,38 @@ export default function DashboardPage() {
                                     <Card className="p-5">
                                         <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1.5"><ShoppingCart size={16} className="text-blue-600" /> Recent Sales Orders</h3>
                                         <div className="divide-y divide-gray-100 text-xs">
-                                            {deptData?.general?.recentOrders?.map(order => (
-                                                <div key={order._id} className="py-2.5 flex justify-between">
-                                                    <div>
-                                                        <p className="font-bold text-gray-900">{order.customerId?.displayName || 'Walk-in'}</p>
-                                                        <p className="text-[10px] text-gray-400 font-mono">{order.orderNumber} · {format(new Date(order.orderDate), 'yyyy-MM-dd')}</p>
+                                            {filteredRecentOrders.length === 0 ? (
+                                                <p className="text-center py-6 text-gray-400 italic">No sales orders found{overviewSearch ? ` matching "${overviewSearch}"` : ''}</p>
+                                            ) : (
+                                                filteredRecentOrders.map(order => (
+                                                    <div key={order._id} className="py-2.5 flex justify-between">
+                                                        <div>
+                                                            <p className="font-bold text-gray-900">{order.customerId?.displayName || 'Walk-in'}</p>
+                                                            <p className="text-[10px] text-gray-400 font-mono">{order.orderNumber} · {format(new Date(order.orderDate), 'yyyy-MM-dd')}</p>
+                                                        </div>
+                                                        <span className="font-bold text-gray-700 text-right">{fmt(order.grandTotal)}</span>
                                                     </div>
-                                                    <span className="font-bold text-gray-700 text-right">{fmt(order.grandTotal)}</span>
-                                                </div>
-                                            ))}
+                                                ))
+                                            )}
                                         </div>
                                     </Card>
 
                                     <Card className="p-5">
                                         <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1.5"><Package size={16} className="text-emerald-600" /> Recent Goods Receipts (GRN)</h3>
                                         <div className="divide-y divide-gray-100 text-xs">
-                                            {deptData?.general?.recentGrns?.map(grn => (
-                                                <div key={grn._id} className="py-2.5 flex justify-between">
-                                                    <div>
-                                                        <p className="font-bold text-gray-900">{grn.supplierName}</p>
-                                                        <p className="text-[10px] text-gray-400 font-mono">{grn.grnNumber} · {format(new Date(grn.receiptDate), 'yyyy-MM-dd')}</p>
+                                            {filteredRecentGrns.length === 0 ? (
+                                                <p className="text-center py-6 text-gray-400 italic">No goods receipts found{overviewSearch ? ` matching "${overviewSearch}"` : ''}</p>
+                                            ) : (
+                                                filteredRecentGrns.map(grn => (
+                                                    <div key={grn._id} className="py-2.5 flex justify-between">
+                                                        <div>
+                                                            <p className="font-bold text-gray-900">{grn.supplierName}</p>
+                                                            <p className="text-[10px] text-gray-400 font-mono">{grn.grnNumber} · {format(new Date(grn.receiptDate), 'yyyy-MM-dd')}</p>
+                                                        </div>
+                                                        <span className="font-bold text-emerald-700 text-right">+{fmt(grn.totalAcceptedValue)}</span>
                                                     </div>
-                                                    <span className="font-bold text-emerald-700 text-right">+{fmt(grn.totalAcceptedValue)}</span>
-                                                </div>
-                                            ))}
+                                                ))
+                                            )}
                                         </div>
                                     </Card>
                                 </div>
@@ -380,18 +709,22 @@ export default function DashboardPage() {
                                     <div className="space-y-3 pt-2">
                                         <h4 className="text-xs font-bold text-gray-400 uppercase">Recent Custom Fabrications</h4>
                                         <div className="border border-gray-100 rounded-xl overflow-hidden text-xs">
-                                            {deptData?.general?.recentBatches?.map(b => (
-                                                <div key={b._id} className="flex justify-between items-center p-3 border-b bg-gray-50/25 last:border-0 hover:bg-gray-50 transition">
-                                                    <div>
-                                                        <p className="font-bold text-gray-900">{b.batchNo}</p>
-                                                        <p className="text-[10px] text-gray-500 mt-0.5">{b.product} · {format(new Date(b.date), 'MMM dd, yyyy')}</p>
+                                            {filteredRecentBatches.length === 0 ? (
+                                                <p className="text-center py-6 text-gray-400 italic">No batches found{overviewSearch ? ` matching "${overviewSearch}"` : ''}</p>
+                                            ) : (
+                                                filteredRecentBatches.map(b => (
+                                                    <div key={b._id} className="flex justify-between items-center p-3 border-b bg-gray-50/25 last:border-0 hover:bg-gray-50 transition">
+                                                        <div>
+                                                            <p className="font-bold text-gray-900">{b.batchNo}</p>
+                                                            <p className="text-[10px] text-gray-500 mt-0.5">{b.product} · {format(new Date(b.date), 'MMM dd, yyyy')}</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="font-semibold">{b.outputWeight_total || 0} Units Built</p>
+                                                            <p className="text-[10px] text-gray-400">{(b.efficiencyPercentage || 0).toFixed(1)}% efficiency</p>
+                                                        </div>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <p className="font-semibold">{b.outputWeight_total || 0} Units Built</p>
-                                                        <p className="text-[10px] text-gray-400">{(b.efficiencyPercentage || 0).toFixed(1)}% efficiency</p>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                ))
+                                            )}
                                         </div>
                                     </div>
                                 </Card>
@@ -399,17 +732,21 @@ export default function DashboardPage() {
                                 <Card className="p-6 space-y-4">
                                     <h3 className="text-sm font-bold text-gray-700 flex items-center gap-1.5"><AlertTriangle className="text-amber-500" /> Lowest Inventory Levels</h3>
                                     <div className="space-y-3">
-                                        {deptData?.operations?.lowestStock?.map(item => (
-                                            <div key={item._id} className="p-3 border border-gray-100 rounded-lg bg-gray-50/25 flex justify-between items-center text-xs">
-                                                <div>
-                                                    <p className="font-bold text-gray-900">{item.name}</p>
-                                                    <p className="text-[10px] text-gray-400 font-mono mt-0.5">{item.productCode}</p>
+                                        {filteredLowestStock.length === 0 ? (
+                                            <p className="text-center py-6 text-gray-400 italic">No inventory items found{overviewSearch ? ` matching "${overviewSearch}"` : ''}</p>
+                                        ) : (
+                                            filteredLowestStock.map(item => (
+                                                <div key={item._id} className="p-3 border border-gray-100 rounded-lg bg-gray-50/25 flex justify-between items-center text-xs">
+                                                    <div>
+                                                        <p className="font-bold text-gray-900">{item.name}</p>
+                                                        <p className="text-[10px] text-gray-400 font-mono mt-0.5">{item.productCode}</p>
+                                                    </div>
+                                                    <Badge variant={item.available <= 50 ? 'danger' : 'warning'}>
+                                                        {item.available.toLocaleString()} {item.unit || 'kg'}
+                                                    </Badge>
                                                 </div>
-                                                <Badge variant={item.available <= 50 ? 'danger' : 'warning'}>
-                                                    {item.available.toLocaleString()} {item.unit || 'kg'}
-                                                </Badge>
-                                            </div>
-                                        ))}
+                                            ))
+                                        )}
                                     </div>
                                 </Card>
                             </div>
@@ -487,15 +824,19 @@ export default function DashboardPage() {
                                     <div className="space-y-3 pt-2">
                                         <h4 className="text-xs font-bold text-gray-400 uppercase">Registered Bank Accounts</h4>
                                         <div className="divide-y border border-gray-100 rounded-xl overflow-hidden bg-white text-xs">
-                                            {deptData?.finance?.bankSummary?.map((bank, i) => (
-                                                <div key={i} className="flex justify-between items-center p-3 hover:bg-gray-50 transition">
-                                                    <div>
-                                                        <p className="font-bold text-gray-900">{bank.bankName}</p>
-                                                        <p className="text-[10px] text-gray-400 mt-0.5">{bank.accountNumber}</p>
+                                            {filteredBankSummary.length === 0 ? (
+                                                <p className="text-center py-6 text-gray-400 italic">No bank accounts found{overviewSearch ? ` matching "${overviewSearch}"` : ''}</p>
+                                            ) : (
+                                                filteredBankSummary.map((bank, i) => (
+                                                    <div key={i} className="flex justify-between items-center p-3 hover:bg-gray-50 transition">
+                                                        <div>
+                                                            <p className="font-bold text-gray-900">{bank.bankName}</p>
+                                                            <p className="text-[10px] text-gray-400 mt-0.5">{bank.accountNumber}</p>
+                                                        </div>
+                                                        <span className="font-bold text-gray-800">{fmt(bank.balance)}</span>
                                                     </div>
-                                                    <span className="font-bold text-gray-800">{fmt(bank.balance)}</span>
-                                                </div>
-                                            ))}
+                                                ))
+                                            )}
                                         </div>
                                     </div>
                                 </Card>
@@ -525,10 +866,10 @@ export default function DashboardPage() {
                                 <Card className="p-6 space-y-4">
                                     <h3 className="text-sm font-bold text-gray-700 flex items-center gap-1.5"><Wallet className="text-emerald-600" /> Petty Cash Expenses by Category (Month)</h3>
                                     <div className="space-y-2.5 pt-2">
-                                        {(!deptData?.finance?.pettyCategories || deptData.finance.pettyCategories.length === 0) ? (
-                                            <p className="text-gray-400 text-xs italic text-center py-4">No petty cash expenses recorded this month.</p>
+                                        {filteredPettyCategories.length === 0 ? (
+                                            <p className="text-gray-400 text-xs italic text-center py-4">No petty cash expense categories found{overviewSearch ? ` matching "${overviewSearch}"` : ''}.</p>
                                         ) : (
-                                            deptData.finance.pettyCategories.map((item, idx) => (
+                                            filteredPettyCategories.map((item, idx) => (
                                                 <div key={idx} className="flex justify-between items-center p-2.5 border border-gray-100 rounded-xl bg-gray-50/25 text-xs hover:bg-gray-50 transition">
                                                     <span className="font-semibold text-gray-800">{item.category}</span>
                                                     <span className="font-bold text-gray-900">{fmt(item.amount)}</span>
@@ -546,7 +887,7 @@ export default function DashboardPage() {
                                 <Card className="p-6 space-y-4 max-w-4xl mx-auto w-full">
                                     <h3 className="text-base font-bold text-gray-700">Top Selling Products</h3>
                                     <div className="space-y-3 divide-y divide-gray-100">
-                                        {deptData?.sales?.topProducts?.map(prod => (
+                                        {filteredTopProducts.map(prod => (
                                             <div key={prod._id} className="flex justify-between items-center py-3 text-sm">
                                                 <div>
                                                     <p className="font-bold text-gray-900">{prod.productName}</p>
@@ -555,8 +896,8 @@ export default function DashboardPage() {
                                                 <span className="font-bold text-gray-700">{fmt(prod.revenue)}</span>
                                             </div>
                                         ))}
-                                        {(!deptData?.sales?.topProducts || deptData.sales.topProducts.length === 0) && (
-                                            <p className="text-center py-6 text-xs text-gray-400 italic">No sales performance data available</p>
+                                        {filteredTopProducts.length === 0 && (
+                                            <p className="text-center py-6 text-xs text-gray-400 italic">No sales performance data found{overviewSearch ? ` matching "${overviewSearch}"` : ''}</p>
                                         )}
                                     </div>
                                 </Card>
@@ -619,6 +960,11 @@ export default function DashboardPage() {
                                     </div>
                                 </Card>
                             </div>
+                        )}
+
+                        {/* 6. EMPLOYEE ADVANCES TAB */}
+                        {activeTab === 'advances' && (
+                            <EmployeeAdvanceHub initialSearch={overviewSearch} />
                         )}
                     </>
                 )}

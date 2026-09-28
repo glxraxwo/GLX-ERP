@@ -9,6 +9,7 @@ import { useSettings, useUpdateSettings } from '../features/settings/useSettings
 import ProtectedView from '../components/security/ProtectedView';
 import SendPaymentSheetSmsModal from '../components/SendPaymentSheetSmsModal';
 import { useEmployee } from '../features/hr/useHr';
+import { getDocTranslation } from '../utils/documentTranslations';
 
 export default function EmployeePaymentSheetPage() {
     const { id } = useParams();
@@ -20,6 +21,10 @@ export default function EmployeePaymentSheetPage() {
     const systemSettings = settingsData?.data || {};
     const employee = employeeData?.data;
 
+    // Language state
+    const [lang, setLang] = useState('en');
+    const t = getDocTranslation(lang);
+
     // Default to last 30 days
     const today = new Date();
     const thirtyDaysAgo = new Date();
@@ -30,7 +35,7 @@ export default function EmployeePaymentSheetPage() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Toggle: Hide Logo & Boss Signature on Download/Print
+    // Toggle: Hide Logo & Boss Signature on Download/Print (With/Without Header)
     const [hideHeaderAndSignature, setHideHeaderAndSignature] = useState(false);
     // Signature management modal/input state
     const [showSignatureModal, setShowSignatureModal] = useState(false);
@@ -149,16 +154,45 @@ export default function EmployeePaymentSheetPage() {
 
                 {/* Signature & Print Mode Options Bar */}
                 <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    {/* Toggle Checkbox: Hide Logo & Boss Signature */}
-                    <label className="flex items-center gap-2 cursor-pointer select-none font-semibold text-gray-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg transition">
-                        <input
-                            type="checkbox"
-                            checked={hideHeaderAndSignature}
-                            onChange={(e) => setHideHeaderAndSignature(e.target.checked)}
-                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
-                        />
-                        <span>Download / Print WITHOUT Logo &amp; Boss Signature (ලෝගෝ හා අත්සන නොමැතිව)</span>
-                    </label>
+                    {/* Header and Language Controls */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* With Header / Without Header Mode Selector */}
+                        <div className="flex items-center rounded-lg border border-gray-300 bg-white p-0.5 font-semibold shadow-xs">
+                            <button
+                                type="button"
+                                onClick={() => setHideHeaderAndSignature(false)}
+                                className={`px-3 py-1 rounded-md transition-all flex items-center gap-1 ${!hideHeaderAndSignature ? 'bg-blue-600 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                                title="Print / Download with company letterhead header"
+                            >
+                                With Header
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setHideHeaderAndSignature(true)}
+                                className={`px-3 py-1 rounded-md transition-all flex items-center gap-1 ${hideHeaderAndSignature ? 'bg-amber-600 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                                title="Print / Download without header (For pre-printed letterhead paper)"
+                            >
+                                Without Header
+                            </button>
+                        </div>
+
+                        {/* Language switcher */}
+                        <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-gray-500">Language:</span>
+                            <div className="inline-flex border border-gray-300 rounded-lg bg-white overflow-hidden text-xs font-semibold">
+                                {['en', 'si', 'ta'].map(l => (
+                                    <button
+                                        key={l}
+                                        type="button"
+                                        onClick={() => setLang(l)}
+                                        className={`px-2.5 py-1 ${lang === l ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+                                    >
+                                        {l === 'en' ? 'English' : l === 'si' ? 'සිංහල' : 'தமிழ்'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Boss Signature Quick Config Button */}
                     <button
@@ -236,14 +270,14 @@ export default function EmployeePaymentSheetPage() {
                                     <img src={systemSettings.companyLogo || "/logo.jpg"} alt="GLX Logo" className="h-12 w-12 object-contain filter grayscale" />
                                 </div>
                                 <h1 className="text-xl font-bold uppercase tracking-wider">{systemSettings.companyName || 'GLX INDUSTRIES'}</h1>
-                                <h2 className="text-[11px] font-bold uppercase tracking-widest text-gray-700 border-b pb-2 max-w-[320px] mx-auto border-gray-400 mt-0.5">
-                                    EMPLOYEE PAYMENT SHEET
+                                <h2 className="text-[11px] font-bold uppercase tracking-widest text-gray-700 border-b pb-2 max-w-[340px] mx-auto border-gray-400 mt-0.5">
+                                    {t.paySheetTitle || 'EMPLOYEE PAYMENT SHEET'}
                                 </h2>
                             </div>
                         ) : (
                             <div className="text-center mb-6 pt-2">
-                                <h2 className="text-xs font-bold uppercase tracking-widest text-gray-800 border-b pb-2 max-w-[320px] mx-auto border-gray-400">
-                                    EMPLOYEE PAYMENT SHEET
+                                <h2 className="text-xs font-bold uppercase tracking-widest text-gray-800 border-b pb-2 max-w-[340px] mx-auto border-gray-400">
+                                    {t.paySheetTitle || 'EMPLOYEE PAYMENT SHEET'}
                                 </h2>
                             </div>
                         )}
@@ -251,19 +285,19 @@ export default function EmployeePaymentSheetPage() {
                         {/* Metadata Section */}
                         <div className="grid grid-cols-2 gap-y-2 gap-x-6 text-[13px] border-b pb-4 mb-4 border-gray-300 font-calibri">
                             <div className="flex gap-2">
-                                <span className="font-semibold text-gray-600 w-28">Name :</span>
+                                <span className="font-semibold text-gray-600 min-w-[120px]">{t.employeeName || 'Name'} :</span>
                                 <span className="font-bold text-gray-950">{data.employee.name}</span>
                             </div>
                             <div className="flex gap-2">
-                                <span className="font-semibold text-gray-600 w-28">Salary Per Hour :</span>
+                                <span className="font-semibold text-gray-600 min-w-[120px]">{t.hourlyRate || 'Salary Per Hour'} :</span>
                                 <span className="font-bold font-mono">{formatCurrency(data.employee.hourlyRate)}</span>
                             </div>
                             <div className="flex gap-2">
-                                <span className="font-semibold text-gray-600 w-28">Date From :</span>
+                                <span className="font-semibold text-gray-600 min-w-[120px]">{t.dateFrom || 'Date From'} :</span>
                                 <span>{data.startDate}</span>
                             </div>
                             <div className="flex gap-2">
-                                <span className="font-semibold text-gray-600 w-28">Date To :</span>
+                                <span className="font-semibold text-gray-600 min-w-[120px]">{t.dateTo || 'Date To'} :</span>
                                 <span>{data.endDate}</span>
                             </div>
                         </div>
@@ -272,12 +306,12 @@ export default function EmployeePaymentSheetPage() {
                         <table className="w-full text-xs text-left border-collapse font-calibri mb-6">
                             <thead>
                                 <tr className="border-b-2 border-t border-gray-400 uppercase text-[10px] text-gray-800 font-bold">
-                                    <th className="py-2.5 px-3">Date</th>
-                                    <th className="py-2.5 px-3 text-center">IN</th>
-                                    <th className="py-2.5 px-3 text-center">OUT</th>
-                                    <th className="py-2.5 px-3 text-center">HOURS</th>
-                                    <th className="py-2.5 px-3 text-right">DAY SALARY</th>
-                                    <th className="py-2.5 px-3 text-right">ADVANCE</th>
+                                    <th className="py-2.5 px-3">{t.colDate || 'Date'}</th>
+                                    <th className="py-2.5 px-3 text-center">{t.colIn || 'IN'}</th>
+                                    <th className="py-2.5 px-3 text-center">{t.colOut || 'OUT'}</th>
+                                    <th className="py-2.5 px-3 text-center">{t.colHours || 'HOURS'}</th>
+                                    <th className="py-2.5 px-3 text-right">{t.colDaySalary || 'DAY SALARY'}</th>
+                                    <th className="py-2.5 px-3 text-right">{t.colAdvance || 'ADVANCE'}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
@@ -300,17 +334,17 @@ export default function EmployeePaymentSheetPage() {
 
                         {/* Totals Summary */}
                         <div className="flex justify-end pt-2 border-t-2 border-gray-400 font-calibri">
-                            <div className="w-64 text-xs space-y-2">
+                            <div className="w-72 text-xs space-y-2">
                                 <div className="flex justify-between font-semibold text-gray-700">
-                                    <span>Total Salary :</span>
+                                    <span>{t.totalSalary || 'Total Salary'} :</span>
                                     <span className="font-mono">{formatCurrency(data.totalSalary)}</span>
                                 </div>
                                 <div className="flex justify-between font-semibold text-red-600">
-                                    <span>Total Advances :</span>
+                                    <span>{t.totalAdvances || 'Total Advances'} :</span>
                                     <span className="font-mono">-{formatCurrency(data.totalAdvances)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm font-black text-gray-900 pt-2 border-t border-gray-300">
-                                    <span>Net Salary :</span>
+                                    <span>{t.netSalary || 'Net Salary'} :</span>
                                     <span className="font-mono text-blue-900 border-b-4 border-double border-gray-900 pb-0.5">
                                         {formatCurrency(data.netSalary)}
                                     </span>
@@ -321,14 +355,14 @@ export default function EmployeePaymentSheetPage() {
                         {/* Signatures & Approval Footer Section */}
                         <div className="mt-12 pt-6 border-t border-dashed border-gray-300 flex justify-between items-end text-xs font-calibri">
                             <div>
-                                <p className="font-semibold text-gray-600 mb-8">Employee Signature:</p>
+                                <p className="font-semibold text-gray-600 mb-8">{t.employeeSignature || 'Employee Signature'}:</p>
                                 <div className="border-t border-gray-400 w-44"></div>
                                 <p className="text-[11px] font-medium text-gray-700 mt-1">{data.employee.name}</p>
                             </div>
 
                             {!hideHeaderAndSignature && (
                                 <div className="text-right flex flex-col items-end">
-                                    <p className="font-semibold text-gray-600 mb-1">Approved &amp; Authorized By:</p>
+                                    <p className="font-semibold text-gray-600 mb-1">{t.approvedBy || 'Approved & Authorized By'}:</p>
                                     {bossSignatureUrl ? (
                                         <img src={bossSignatureUrl} alt="Boss Signature" className="h-12 max-w-[180px] object-contain mb-1" />
                                     ) : (

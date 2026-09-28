@@ -224,7 +224,7 @@ function useIsCategoryActive(items) {
 }
 
 // ── Approval accordion sub-category component ────────────────────────────────
-function ApprovalCategory({ category, hasPermission, hasAnyPermission, isAdmin, searchQuery, onNavClick }) {
+function ApprovalCategory({ category, hasPermission, hasAnyPermission, isAdmin, searchQuery, onNavClick, isNarrow }) {
     const visibleItems = category.items.filter((item) => {
         const isPermitted = isAdmin ||
             (!item.permission && !item.anyPermission) ||
@@ -253,6 +253,27 @@ function ApprovalCategory({ category, hasPermission, hasAnyPermission, isAdmin, 
     if (visibleItems.length === 0) return null;
 
     const Icon = category.icon;
+
+    if (isNarrow) {
+        // Narrow mode: Direct icon link to first item, NO sub-tabs
+        const primaryPath = visibleItems[0]?.path || '/purchase-orders';
+        return (
+            <div className="mb-2 flex justify-center">
+                <NavLink
+                    to={primaryPath}
+                    onClick={onNavClick}
+                    title={category.label}
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${
+                        isActive
+                            ? 'bg-amber-600 text-white shadow-md shadow-amber-950/40 ring-2 ring-amber-400/40'
+                            : 'text-slate-400 hover:bg-slate-900 hover:text-slate-100'
+                    }`}
+                >
+                    <Icon size={18} />
+                </NavLink>
+            </div>
+        );
+    }
 
     return (
         <div className="mb-0.5">
@@ -312,7 +333,7 @@ function ApprovalCategory({ category, hasPermission, hasAnyPermission, isAdmin, 
 }
 
 // ── Regular menu group accordion component ────────────────────────────────────
-function MenuGroup({ group, searchQuery, onNavClick }) {
+function MenuGroup({ group, searchQuery, onNavClick, isNarrow }) {
     const visibleItems = group.items;
     const isActive = useIsCategoryActive(visibleItems);
     const [isOpen, setIsOpen] = useState(isActive);
@@ -329,6 +350,28 @@ function MenuGroup({ group, searchQuery, onNavClick }) {
     if (visibleItems.length === 0) return null;
 
     const Icon = group.icon;
+
+    if (isNarrow) {
+        // NARROW MODE: NO SUB-TABS!
+        // Direct icon button linking to first accessible item
+        const primaryPath = visibleItems[0]?.path || '/dashboard';
+        return (
+            <div className="mb-2 flex justify-center">
+                <NavLink
+                    to={primaryPath}
+                    onClick={onNavClick}
+                    title={group.label}
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${
+                        isActive
+                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40 ring-2 ring-emerald-400/40'
+                            : 'text-slate-400 hover:bg-slate-900 hover:text-slate-100'
+                    }`}
+                >
+                    {Icon && <Icon size={20} />}
+                </NavLink>
+            </div>
+        );
+    }
 
     return (
         <div className="mb-1.5">
@@ -527,13 +570,13 @@ export default function Sidebar({ isOpen, onClose }) {
             <aside
                 ref={sidebarRef}
                 className={`no-print fixed lg:static inset-y-0 left-0 h-screen bg-[#0B192C] border-r border-slate-900 flex flex-col z-40 text-slate-100 transition-all duration-300 ease-in-out ${
-                    isOpen ? 'translate-x-0 w-64 min-w-[256px]' : '-translate-x-full lg:translate-x-0 lg:w-64 lg:min-w-[256px] w-0 min-w-0 overflow-hidden'
+                    isOpen ? 'translate-x-0 w-64 min-w-[256px]' : '-translate-x-full lg:translate-x-0 lg:w-20 lg:min-w-[80px] w-0 min-w-0 overflow-hidden'
                 }`}
             >
-                <div className="w-64 flex flex-col h-full">
+                <div className={`${isOpen ? 'w-64' : 'w-20'} flex flex-col h-full transition-all duration-300`}>
 
                     {/* ── Logo / Brand ── */}
-                    <div className="p-5 border-b border-slate-900 flex items-center justify-between flex-shrink-0">
+                    <div className={`p-4 border-b border-slate-900 flex items-center ${isOpen ? 'justify-between' : 'justify-center'} flex-shrink-0`}>
                         <div className="flex items-center gap-3">
                             {settings?.companyLogo ? (
                                 <img
@@ -548,105 +591,112 @@ export default function Sidebar({ isOpen, onClose }) {
                                     alt="Logo"
                                 />
                             )}
-                            <div>
-                                <h2 className="font-extrabold text-white leading-none truncate max-w-[145px]" title={settings?.companyName || 'GLX Industries'}>
-                                    {settings?.companyName || 'GLX Industries'}
-                                </h2>
-                                <p className="text-[10px] text-slate-500 mt-1 truncate max-w-[145px]" title="TRUCK BODY ENGINEERS">
-                                    TRUCK BODY ENGINEERS
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-800 hover:text-slate-350 transition lg:hidden"
-                            aria-label="Close sidebar"
-                        >
-                            <X size={16} />
-                        </button>
-                    </div>
-
-                    {/* ── Search and Date Filter Controls ── */}
-                    <div className="px-5 py-4 border-b border-slate-900 space-y-4 flex-shrink-0">
-                        {/* Search Menu Input */}
-                        <div className="relative">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                            <input
-                                type="text"
-                                placeholder="Search menu..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-850 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-100 placeholder-slate-500"
-                            />
-                            {searchQuery && (
-                                <button
-                                    onClick={() => setSearchQuery('')}
-                                    className="absolute right-2.5 top-2.5 text-slate-500 hover:text-slate-300"
-                                >
-                                    <X size={14} />
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Date Filter */}
-                        <div className="space-y-2 bg-slate-900/40 p-3 rounded-lg border border-slate-850">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Date Filter</span>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={dateFilterEnabled}
-                                        onChange={handleDateFilterToggle}
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-7 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
-                                </label>
-                            </div>
-
-                            {dateFilterEnabled && (
-                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                    <select
-                                        value={filterMonth}
-                                        onChange={handleMonthChange}
-                                        className="px-2 py-1.5 border border-slate-800 rounded-md text-[11px] focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-900 font-semibold text-slate-300 cursor-pointer"
-                                    >
-                                        <option value="1">January</option>
-                                        <option value="2">February</option>
-                                        <option value="3">March</option>
-                                        <option value="4">April</option>
-                                        <option value="5">May</option>
-                                        <option value="6">June</option>
-                                        <option value="7">July</option>
-                                        <option value="8">August</option>
-                                        <option value="9">September</option>
-                                        <option value="10">October</option>
-                                        <option value="11">November</option>
-                                        <option value="12">December</option>
-                                    </select>
-                                    <select
-                                        value={filterYear}
-                                        onChange={handleYearChange}
-                                        className="px-2 py-1.5 border border-slate-800 rounded-md text-[11px] focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-900 font-semibold text-slate-300 cursor-pointer"
-                                    >
-                                        <option value="2024">2024</option>
-                                        <option value="2025">2025</option>
-                                        <option value="2026">2026</option>
-                                        <option value="2027">2027</option>
-                                    </select>
+                            {isOpen && (
+                                <div>
+                                    <h2 className="font-extrabold text-white leading-none truncate max-w-[145px]" title={settings?.companyName || 'GLX Industries'}>
+                                        {settings?.companyName || 'GLX Industries'}
+                                    </h2>
+                                    <p className="text-[10px] text-slate-500 mt-1 truncate max-w-[145px]" title="TRUCK BODY ENGINEERS">
+                                        TRUCK BODY ENGINEERS
+                                    </p>
                                 </div>
                             )}
                         </div>
+                        {isOpen && (
+                            <button
+                                onClick={onClose}
+                                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-800 hover:text-slate-350 transition lg:hidden"
+                                aria-label="Close sidebar"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
                     </div>
 
-                    {/* ── Scrollable nav ── */}
-                    <nav className="flex-1 overflow-y-auto no-scrollbar py-3 px-3 space-y-4">
+                    {/* ── Search and Date Filter Controls (Only when sidebar expanded) ── */}
+                    {isOpen && (
+                        <div className="px-5 py-4 border-b border-slate-900 space-y-4 flex-shrink-0">
+                            {/* Search Menu Input */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                                <input
+                                    type="text"
+                                    placeholder="Search menu..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-850 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-100 placeholder-slate-500"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-2.5 top-2.5 text-slate-500 hover:text-slate-300"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
 
-                        {/* ── Regular menu groups ── */}
+                            {/* Date Filter */}
+                            <div className="space-y-2 bg-slate-900/40 p-3 rounded-lg border border-slate-850">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Date Filter</span>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={dateFilterEnabled}
+                                            onChange={handleDateFilterToggle}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-7 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                                    </label>
+                                </div>
+
+                                {dateFilterEnabled && (
+                                    <div className="grid grid-cols-2 gap-2 pt-1">
+                                        <select
+                                            value={filterMonth}
+                                            onChange={handleMonthChange}
+                                            className="px-2 py-1.5 border border-slate-800 rounded-md text-[11px] focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-900 font-semibold text-slate-300 cursor-pointer"
+                                        >
+                                            <option value="1">January</option>
+                                            <option value="2">February</option>
+                                            <option value="3">March</option>
+                                            <option value="4">April</option>
+                                            <option value="5">May</option>
+                                            <option value="6">June</option>
+                                            <option value="7">July</option>
+                                            <option value="8">August</option>
+                                            <option value="9">September</option>
+                                            <option value="10">October</option>
+                                            <option value="11">November</option>
+                                            <option value="12">December</option>
+                                        </select>
+                                        <select
+                                            value={filterYear}
+                                            onChange={handleYearChange}
+                                            className="px-2 py-1.5 border border-slate-800 rounded-md text-[11px] focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-900 font-semibold text-slate-300 cursor-pointer"
+                                        >
+                                            <option value="2024">2024</option>
+                                            <option value="2025">2025</option>
+                                            <option value="2026">2026</option>
+                                            <option value="2027">2027</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Scrollable nav ── */}
+                    <nav className={`flex-1 overflow-y-auto no-scrollbar py-3 ${isOpen ? 'px-3 space-y-4' : 'px-2 space-y-2'}`}>
+
+                        {/* ── Regular menu groups (When narrow: NO subtabs!) ── */}
                         {visibleGroups.map((group) => (
                             <MenuGroup
                                 key={group.label}
                                 group={group}
                                 searchQuery={searchQuery}
+                                isNarrow={!isOpen}
                                 onNavClick={() => { if (window.innerWidth < 1024) onClose(); }}
                             />
                         ))}
@@ -654,39 +704,43 @@ export default function Sidebar({ isOpen, onClose }) {
                         {/* ── Employee Self-Service Section ── */}
                         {user?.role === 'employee' && (
                             <div>
-                                <div className="flex items-center gap-2 px-3 mb-2">
-                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 select-none">
-                                        My Services
-                                    </p>
-                                </div>
-                                <div className="space-y-0.5">
+                                {isOpen && (
+                                    <div className="flex items-center gap-2 px-3 mb-2">
+                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 select-none">
+                                            My Services
+                                        </p>
+                                    </div>
+                                )}
+                                <div className="space-y-1">
                                     <NavLink
                                         to="/my-advances"
+                                        title="My Salary Advances"
                                         onClick={() => { if (window.innerWidth < 1024) onClose(); }}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                            `flex items-center ${isOpen ? 'gap-2.5 px-3 py-2 rounded-lg text-sm' : 'justify-center w-11 h-11 mx-auto rounded-xl'} font-medium transition-colors ${
                                                 isActive
-                                                    ? 'bg-primary-50 text-primary-700'
-                                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                                    ? 'bg-emerald-600 text-white'
+                                                    : 'text-slate-400 hover:bg-slate-900 hover:text-slate-100'
                                             }`
                                         }
                                     >
-                                        <Wallet size={15} className="flex-shrink-0" />
-                                        <span className="truncate">My Salary Advances</span>
+                                        <Wallet size={16} className="flex-shrink-0" />
+                                        {isOpen && <span className="truncate">My Salary Advances</span>}
                                     </NavLink>
                                     <NavLink
                                         to="/request-advance"
+                                        title="Request Advance"
                                         onClick={() => { if (window.innerWidth < 1024) onClose(); }}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                            `flex items-center ${isOpen ? 'gap-2.5 px-3 py-2 rounded-lg text-sm' : 'justify-center w-11 h-11 mx-auto rounded-xl'} font-medium transition-colors ${
                                                 isActive
-                                                    ? 'bg-primary-50 text-primary-700'
-                                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                                    ? 'bg-emerald-600 text-white'
+                                                    : 'text-slate-400 hover:bg-slate-900 hover:text-slate-100'
                                             }`
                                         }
                                     >
-                                        <BadgeCheck size={15} className="flex-shrink-0" />
-                                        <span className="truncate">Request Advance</span>
+                                        <BadgeCheck size={16} className="flex-shrink-0" />
+                                        {isOpen && <span className="truncate">Request Advance</span>}
                                     </NavLink>
                                 </div>
                             </div>
@@ -695,16 +749,17 @@ export default function Sidebar({ isOpen, onClose }) {
                         {/* ── Approvals Section ── */}
                         {user?.role !== 'employee' && (
                             <div>
-                                {/* Section heading with badge */}
-                                <div className="flex items-center gap-2 px-3 mb-2">
-                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 select-none">
-                                        Approvals
-                                    </p>
-                                    <div className="flex items-center gap-1 bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5">
-                                        <BadgeCheck size={9} />
-                                        <span className="text-[9px] font-bold uppercase tracking-wide">Hub</span>
+                                {isOpen && (
+                                    <div className="flex items-center gap-2 px-3 mb-2">
+                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 select-none">
+                                            Approvals
+                                        </p>
+                                        <div className="flex items-center gap-1 bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5">
+                                            <BadgeCheck size={9} />
+                                            <span className="text-[9px] font-bold uppercase tracking-wide">Hub</span>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Accordion categories */}
                                 <div className="space-y-0.5">
@@ -716,6 +771,7 @@ export default function Sidebar({ isOpen, onClose }) {
                                             hasAnyPermission={hasAnyPermission}
                                             isAdmin={isAdmin}
                                             searchQuery={searchQuery}
+                                            isNarrow={!isOpen}
                                             onNavClick={() => { if (window.innerWidth < 1024) onClose(); }}
                                         />
                                     ))}
@@ -726,35 +782,43 @@ export default function Sidebar({ isOpen, onClose }) {
                     </nav>
 
                     {/* ── Footer ── */}
-                    <div className="p-4 border-t border-slate-900 flex-shrink-0 space-y-3">
+                    <div className={`p-3 border-t border-slate-900 flex-shrink-0 space-y-2.5`}>
                         {user && (
-                            <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-8 h-8 rounded-full bg-slate-800 text-emerald-400 border border-slate-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                            <div className={`flex items-center ${isOpen ? 'gap-2.5' : 'justify-center'} min-w-0`}>
+                                <div 
+                                    className="w-8 h-8 rounded-full bg-slate-800 text-emerald-400 border border-slate-700 flex items-center justify-center font-bold text-xs flex-shrink-0"
+                                    title={`${user?.fullName || user?.firstName || 'User'} (${user?.role || 'Member'})`}
+                                >
                                     {(user?.fullName || user?.firstName || 'U').charAt(0).toUpperCase()}
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-semibold text-slate-200 truncate">
-                                        {user?.fullName || user?.firstName || 'User'}
-                                    </p>
-                                    <p className="text-[10px] text-slate-400 truncate capitalize">
-                                        {user?.role?.replace('_', ' ') || 'Member'}
-                                    </p>
-                                </div>
+                                {isOpen && (
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-semibold text-slate-200 truncate">
+                                            {user?.fullName || user?.firstName || 'User'}
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 truncate capitalize">
+                                            {user?.role?.replace('_', ' ') || 'Member'}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
 
                         <button
                             onClick={handleLogout}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/30 rounded-lg text-xs font-semibold transition cursor-pointer"
+                            title="Logout"
+                            className={`w-full flex items-center justify-center ${isOpen ? 'gap-2 px-3 py-2' : 'p-2'} bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/30 rounded-lg text-xs font-semibold transition cursor-pointer`}
                         >
                             <LogOut size={15} />
-                            <span>Logout</span>
+                            {isOpen && <span>Logout</span>}
                         </button>
 
-                        <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                            <span>GLX ERP</span>
-                            <span>v1.0.0 · MVP</span>
-                        </div>
+                        {isOpen && (
+                            <div className="flex items-center justify-between text-[10px] text-slate-500 pt-0.5">
+                                <span>GLX ERP</span>
+                                <span>v1.0.0 · MVP</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </aside>

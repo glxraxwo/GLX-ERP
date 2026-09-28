@@ -218,11 +218,13 @@ export const exportDocumentToPDF = async (docData, documentType = 'invoice') => 
     doc.line(10, 37, pageWidth - 10, 37);
     
     // Determine title
-    const isEstimate = docData.documentType === 'estimate' || (docData.quoteNumber && docData.quoteNumber.startsWith('EST'));
-    const isInvoice = !!docData.invoiceNumber || docData.documentType === 'invoice';
+    const isProforma = docData.invoiceType === 'proforma' || docData.documentType === 'proforma' || (docData.invoiceNumber && docData.invoiceNumber.startsWith('PI'));
+    const isEstimate = !isProforma && (docData.documentType === 'estimate' || (docData.quoteNumber && docData.quoteNumber.startsWith('EST')));
+    const isInvoice = !isProforma && !isEstimate && (!!docData.invoiceNumber || docData.documentType === 'invoice');
     let title = 'QUOTATION';
     if (isEstimate) title = 'ESTIMATE';
-    if (isInvoice) title = 'INVOICE';
+    if (isInvoice) title = 'COMMERCIAL INVOICE';
+    if (isProforma) title = 'PROFORMA INVOICE';
     
     // 3. Metadata Section inside a rounded box
     doc.setFont('helvetica', 'normal');

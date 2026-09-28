@@ -527,7 +527,8 @@ export const bulkMarkAttendance = asyncHandler(async (req, res) => {
         res.status(400); throw new Error('date and records array required');
     }
 
-    const attendanceDate = new Date(date);
+    const dateStr = typeof date === 'string' ? date.slice(0, 10) : new Date(date).toISOString().slice(0, 10);
+    const attendanceDate = new Date(dateStr);
     attendanceDate.setHours(0, 0, 0, 0);
 
     const results = [];
@@ -541,29 +542,60 @@ export const bulkMarkAttendance = asyncHandler(async (req, res) => {
             att = new Attendance({
                 employeeId: emp._id,
                 employeeCode: emp.employeeCode,
-                employeeName: emp.fullName,
+                employeeName: emp.fullName || `${emp.firstName} ${emp.lastName}`,
                 date: attendanceDate,
                 markedBy: req.user._id,
             });
         }
         att.status = r.status || 'present';
-        const checkIn = (r.checkInTime && r.checkInTime !== "") ? new Date(r.checkInTime) : null;
-        const checkOut = (r.checkOutTime && r.checkOutTime !== "") ? new Date(r.checkOutTime) : null;
-        att.checkInTime = (checkIn && !isNaN(checkIn.getTime())) ? checkIn : null;
-        att.checkOutTime = (checkOut && !isNaN(checkOut.getTime())) ? checkOut : null;
-        att.lateMinutes = r.lateMinutes || 0;
-        att.overtimeMinutes = r.overtimeMinutes || 0;
-        att.notes = r.notes;
 
-        if (att.checkInTime && att.checkOutTime) {
-            const diff = (new Date(att.checkOutTime) - new Date(att.checkInTime)) / 60000;
-            att.totalWorkedMinutes = Math.max(0, Math.floor(diff));
-            const rate = emp.hourlyRate || emp.basicWageRate || 260;
-            att.earnedSalary = Number(((att.totalWorkedMinutes / 60) * rate).toFixed(2));
-        } else {
+        // Check if marked absent or on leave
+        if (['absent', 'leave'].includes(att.status)) {
+            att.checkInTime = null;
+            att.checkOutTime = null;
             att.totalWorkedMinutes = 0;
             att.overtimeMinutes = 0;
             att.earnedSalary = 0;
+            att.lateMinutes = 0;
+            att.latePenaltyHours = 0;
+            att.latePenaltyAmount = 0;
+            att.waivedLatePenalty = false;
+        } else {
+            // Helper to parse time whether given as "HH:mm" or full ISO/Date
+            const parseTime = (val) => {
+                if (!val || val === '') return null;
+                if (typeof val === 'string' && val.length === 5 && val.includes(':')) {
+                    return new Date(`${dateStr}T${val}:00`);
+                }
+                const d = new Date(val);
+                return !isNaN(d.getTime()) ? d : null;
+            };
+
+            const checkIn = parseTime(r.checkInTime);
+            const checkOut = parseTime(r.checkOutTime);
+
+            att.checkInTime = checkIn;
+            att.checkOutTime = checkOut;
+            att.lateMinutes = r.lateMinutes || 0;
+            att.overtimeMinutes = r.overtimeMinutes || 0;
+            att.notes = r.notes;
+
+            const rate = emp.hourlyRate || emp.basicWageRate || 260;
+
+            if (att.checkInTime && att.checkOutTime) {
+                const diff = (new Date(att.checkOutTime) - new Date(att.checkInTime)) / 60000;
+                att.totalWorkedMinutes = Math.max(0, Math.floor(diff));
+                att.overtimeMinutes = Math.max(0, att.totalWorkedMinutes - 480);
+                att.earnedSalary = Number(((att.totalWorkedMinutes / 60) * rate).toFixed(2));
+            } else if (att.status === 'half_day') {
+                att.totalWorkedMinutes = 240; // 4 hours
+                att.overtimeMinutes = 0;
+                att.earnedSalary = Number((4 * rate).toFixed(2));
+            } else {
+                att.totalWorkedMinutes = 0;
+                att.overtimeMinutes = 0;
+                att.earnedSalary = 0;
+            }
         }
         await att.save();
         results.push(att);
@@ -1168,7 +1200,7 @@ export const importFingerprintAttendance = asyncHandler(async (req, res) => {
 // ============================================================
 
 export const createSalaryAdvance = asyncHandler(async (req, res) => {
-    let { employeeId, date, amount, advanceType, requestedPercentage, reason } = req.body;
+    let { employeeId, date, amount, advanceType, requestedPercentage, reason, numberOfInstallments } = req.body;
 
     if (req.user?.role === 'employee' || !employeeId) {
         const linkedEmp = await Employee.findOne({ userId: req.user._id });
@@ -1193,6 +1225,9 @@ export const createSalaryAdvance = asyncHandler(async (req, res) => {
         if (calcAmount > 0) finalAmount = calcAmount;
     }
 
+    const numInstallments = Math.max(1, Number(numberOfInstallments) || 1);
+    const installmentAmt = Number((finalAmount / numInstallments).toFixed(2));
+
     const isDirectAdmin = req.user?.role === 'admin' || req.user?.role === 'superadmin' || req.user?.role === 'hr_manager';
 
     const advance = await SalaryAdvance.create({
@@ -1202,6 +1237,11 @@ export const createSalaryAdvance = asyncHandler(async (req, res) => {
         requestedPercentage: Number(requestedPercentage) || 0,
         calculatedAmount: calcAmount,
         amount: finalAmount,
+        numberOfInstallments: numInstallments,
+        installmentAmount: installmentAmt,
+        installmentsPaid: 0,
+        amountPaid: 0,
+        remainingBalance: finalAmount,
         reason: reason || '',
         status: isDirectAdmin ? 'approved' : 'pending',
         approvedBy: isDirectAdmin ? req.user._id : undefined,
@@ -1243,6 +1283,61 @@ export const declineSalaryAdvance = asyncHandler(async (req, res) => {
     res.json({ success: true, data: advance });
 });
 
+export const recordAdvanceRepayment = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { amount, notes, date } = req.body;
+
+    const advance = await SalaryAdvance.findById(id);
+    if (!advance) {
+        res.status(404);
+        throw new Error('Salary advance request not found');
+    }
+
+    if (advance.status !== 'approved') {
+        res.status(400);
+        throw new Error('Can only record repayment for approved advances');
+    }
+
+    const currentRemaining = advance.remainingBalance !== undefined 
+        ? advance.remainingBalance 
+        : Math.max(0, advance.amount - (advance.amountPaid || 0));
+
+    if (currentRemaining <= 0) {
+        res.status(400);
+        throw new Error('This advance is already fully repaid');
+    }
+
+    const repayAmt = Number(amount) || advance.installmentAmount || currentRemaining;
+    if (repayAmt <= 0) {
+        res.status(400);
+        throw new Error('Invalid repayment amount');
+    }
+
+    const actualRepaid = Math.min(repayAmt, currentRemaining);
+    const newAmountPaid = (advance.amountPaid || 0) + actualRepaid;
+    const nextInstallmentNum = (advance.installmentsPaid || 0) + 1;
+
+    advance.amountPaid = +newAmountPaid.toFixed(2);
+    advance.installmentsPaid = nextInstallmentNum;
+    advance.remainingBalance = Math.max(0, +(advance.amount - advance.amountPaid).toFixed(2));
+    if (advance.remainingBalance === 0) {
+        advance.isDeducted = true;
+    }
+
+    advance.repayments = advance.repayments || [];
+    advance.repayments.push({
+        date: date ? new Date(date) : new Date(),
+        amount: actualRepaid,
+        installmentNumber: nextInstallmentNum,
+        notes: notes || `Installment ${nextInstallmentNum} repayment`,
+        recordedBy: req.user._id,
+    });
+
+    await advance.save();
+
+    res.json({ success: true, data: advance });
+});
+
 export const getSalaryAdvances = asyncHandler(async (req, res) => {
     const { employeeId } = req.params;
     const filter = {};
@@ -1259,13 +1354,121 @@ export const getSalaryAdvances = asyncHandler(async (req, res) => {
     }
     if (req.query.status) filter.status = req.query.status;
 
-    const advances = await SalaryAdvance.find(filter)
+    const rawAdvances = await SalaryAdvance.find(filter)
         .populate('employeeId', 'firstName lastName employeeCode departmentId basicSalary labourRate paymentType')
         .populate('approvedBy', 'firstName lastName')
         .populate('rejectedBy', 'firstName lastName')
         .sort({ date: -1 });
 
+    const advances = rawAdvances.map(adv => {
+        const doc = adv.toObject();
+        const numInstallments = Math.max(1, doc.numberOfInstallments || 1);
+        const installmentAmt = doc.installmentAmount || Number((doc.amount / numInstallments).toFixed(2));
+        const amountPaid = doc.amountPaid !== undefined ? doc.amountPaid : (doc.isDeducted ? doc.amount : 0);
+        const installmentsPaid = doc.installmentsPaid !== undefined ? doc.installmentsPaid : (doc.isDeducted ? numInstallments : 0);
+        const remainingBalance = doc.remainingBalance !== undefined ? doc.remainingBalance : Math.max(0, doc.amount - amountPaid);
+        return {
+            ...doc,
+            numberOfInstallments: numInstallments,
+            installmentAmount: installmentAmt,
+            installmentsPaid,
+            amountPaid,
+            remainingBalance,
+            repayments: doc.repayments || []
+        };
+    });
+
     res.json({ success: true, data: advances });
+});
+
+/**
+ * @desc    Get detailed advance summary for an employee (total advances, available advance, % of salary, and history)
+ * @route   GET /api/hr/employees/:id/advance-summary
+ * @access  Private (hr.employees.view)
+ */
+export const getEmployeeAdvanceSummary = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const employee = await Employee.findById(id).populate('departmentId', 'name');
+    if (!employee) {
+        res.status(404);
+        throw new Error('Employee not found');
+    }
+
+    // Determine estimated base monthly salary
+    let baseMonthlySalary = 0;
+    if (employee.basicSalary && employee.basicSalary > 0) {
+        baseMonthlySalary = employee.basicSalary;
+    } else if (employee.labourRate && employee.labourRate > 0) {
+        baseMonthlySalary = employee.paymentType === 'per_day' ? employee.labourRate * 26 : employee.labourRate * 200;
+    } else if (employee.hourlyRate && employee.hourlyRate > 0) {
+        baseMonthlySalary = employee.hourlyRate * 200;
+    } else {
+        baseMonthlySalary = 50000; // standard baseline
+    }
+
+    // Fetch all advances for this employee
+    const rawHistory = await SalaryAdvance.find({ employeeId: id })
+        .populate('approvedBy', 'firstName lastName')
+        .populate('rejectedBy', 'firstName lastName')
+        .sort({ date: -1, createdAt: -1 });
+
+    const history = rawHistory.map(adv => {
+        const doc = adv.toObject();
+        const numInstallments = Math.max(1, doc.numberOfInstallments || 1);
+        const installmentAmt = doc.installmentAmount || Number((doc.amount / numInstallments).toFixed(2));
+        const amountPaid = doc.amountPaid !== undefined ? doc.amountPaid : (doc.isDeducted ? doc.amount : 0);
+        const installmentsPaid = doc.installmentsPaid !== undefined ? doc.installmentsPaid : (doc.isDeducted ? numInstallments : 0);
+        const remainingBalance = doc.remainingBalance !== undefined ? doc.remainingBalance : Math.max(0, doc.amount - amountPaid);
+        return {
+            ...doc,
+            numberOfInstallments: numInstallments,
+            installmentAmount: installmentAmt,
+            installmentsPaid,
+            amountPaid,
+            remainingBalance,
+            repayments: doc.repayments || []
+        };
+    });
+
+    // Active advances: approved, with remaining balance > 0
+    const activeAdvances = history.filter(a => a.status === 'approved' && (!a.isDeducted || a.remainingBalance > 0));
+    const totalApprovedAdvance = activeAdvances.reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
+    const totalRemainingBalance = activeAdvances.reduce((sum, a) => sum + (Number(a.remainingBalance) || 0), 0);
+    const totalRepaidAmount = history.filter(a => a.status === 'approved').reduce((sum, a) => sum + (Number(a.amountPaid) || 0), 0);
+    const totalAllAdvancesTaken = history.filter(a => a.status === 'approved').reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
+    const pendingAdvanceAmount = history.filter(a => a.status === 'pending').reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
+
+    // Limit is 50% of monthly base salary
+    const maxAdvanceLimit = +(baseMonthlySalary * 0.50).toFixed(2);
+    const advancePercentage = baseMonthlySalary > 0 ? +((totalRemainingBalance / baseMonthlySalary) * 100).toFixed(1) : 0;
+    const availableAdvance = Math.max(0, +(maxAdvanceLimit - totalRemainingBalance).toFixed(2));
+
+    res.json({
+        success: true,
+        data: {
+            employee: {
+                _id: employee._id,
+                fullName: employee.fullName || `${employee.firstName} ${employee.lastName}`,
+                employeeCode: employee.employeeCode,
+                department: employee.departmentId?.name || '',
+                basicSalary: employee.basicSalary || 0,
+                hourlyRate: employee.hourlyRate || employee.basicWageRate || 260,
+                baseMonthlySalary: +baseMonthlySalary.toFixed(2),
+            },
+            baseMonthlySalary: +baseMonthlySalary.toFixed(2),
+            maxAdvanceLimit,
+            maxAdvancePercentage: 50,
+            totalApprovedAdvance: +totalApprovedAdvance.toFixed(2),
+            totalAllAdvancesTaken: +totalAllAdvancesTaken.toFixed(2),
+            totalRepaidAmount: +totalRepaidAmount.toFixed(2),
+            totalRemainingBalance: +totalRemainingBalance.toFixed(2),
+            pendingAdvanceAmount: +pendingAdvanceAmount.toFixed(2),
+            advancePercentage,
+            availableAdvance,
+            history
+        }
+    });
 });
 
 export const paySalaryAdvance = asyncHandler(async (req, res) => {

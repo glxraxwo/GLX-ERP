@@ -17,6 +17,7 @@ import { generateJulianBatchCode } from '../utils/julianDate.js';
 export const getStockItems = asyncHandler(async (req, res) => {
     const {
         search, productId, warehouseId, lowStock,
+        startDate, endDate,
         page = 1, limit = 50,
         stockType,
     } = req.query;
@@ -29,6 +30,16 @@ export const getStockItems = asyncHandler(async (req, res) => {
             { productCode: { $regex: search, $options: 'i' } },
             { productName: { $regex: search, $options: 'i' } },
         ];
+    }
+
+    if (startDate || endDate) {
+        filter.updatedAt = {};
+        if (startDate) filter.updatedAt.$gte = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.updatedAt.$lte = end;
+        }
     }
 
     if (stockType === 'open') {
@@ -94,7 +105,7 @@ export const getStockByProduct = asyncHandler(async (req, res) => {
 export const getStockMovements = asyncHandler(async (req, res) => {
     const {
         productId, warehouseId, movementType,
-        startDate, endDate,
+        startDate, endDate, search,
         page = 1, limit = 50,
     } = req.query;
 
@@ -116,6 +127,29 @@ export const getStockMovements = asyncHandler(async (req, res) => {
             const end = new Date(endDate);
             end.setHours(23, 59, 59, 999);
             filter.timestamp.$lte = end;
+        }
+    }
+
+    if (search && search.trim()) {
+        const s = search.trim();
+        const searchRegex = { $regex: s, $options: 'i' };
+        const searchConditions = [
+            { movementNumber: searchRegex },
+            { productName: searchRegex },
+            { productCode: searchRegex },
+            { batchNumber: searchRegex },
+            { 'sourceDocument.number': searchRegex },
+            { notes: searchRegex },
+            { reason: searchRegex },
+        ];
+        if (filter.$or) {
+            filter.$and = [
+                { $or: filter.$or },
+                { $or: searchConditions }
+            ];
+            delete filter.$or;
+        } else {
+            filter.$or = searchConditions;
         }
     }
 

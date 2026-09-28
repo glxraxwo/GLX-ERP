@@ -75,6 +75,7 @@ const QuotationsPage = () => {
     const [viewMode, setViewMode] = useState('table');
     const [activeTab, setActiveTab] = useState('all');
     const [useSinhalaLanguage, setUseSinhalaLanguage] = useState(false);
+    const [previewIncludeHeader, setPreviewIncludeHeader] = useState(true);
 
     const printRef = useRef();
 
@@ -96,6 +97,7 @@ const QuotationsPage = () => {
         branch: 'JA-ELA',
         numberPlateImage: '',
         lorryBodyImage: '',
+        photos: [],
         bodyDimensions: { length: '8 Feet 5 Inch', width: '67 Inch', height: '5 Feet 6 Inch' },
         specifications: ['Non Rivet White Color Body', 'Japan Model Original Corner Set Bar', 'Rear 2 Doors (Waterproof Board)', 'Rear Gutter & Footboard'],
         warrantyInfo: '10 Years For Body Structure, 10 Years Full Body Waterproofing, 03 Years For All Doors.',
@@ -292,6 +294,30 @@ const QuotationsPage = () => {
         reader.readAsDataURL(file);
     };
 
+    const handleMultiplePhotosUpload = (files) => {
+        if (!files || files.length === 0) return;
+        const fileList = Array.from(files);
+        fileList.forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                if (reader.result) {
+                    setFormData(prev => ({
+                        ...prev,
+                        photos: [...(prev.photos || []), reader.result]
+                    }));
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const removePhoto = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            photos: (prev.photos || []).filter((_, i) => i !== index)
+        }));
+    };
+
     const addItem = () => {
         setFormData({ ...formData, items: [...formData.items, { product: '', productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, discount: 0, subtotal: 0 }] });
     };
@@ -349,6 +375,7 @@ const QuotationsPage = () => {
                 branch: quote.branch || 'JA-ELA',
                 numberPlateImage: quote.numberPlateImage || '',
                 lorryBodyImage: quote.lorryBodyImage || '',
+                photos: Array.isArray(quote.photos) ? quote.photos : [],
                 bodyDimensions: quote.bodyDimensions || { length: '8 Feet 5 Inch', width: '67 Inch', height: '5 Feet 6 Inch' },
                 specifications: quote.specifications?.length > 0 ? quote.specifications : ['Non Rivet White Color Body', 'Japan Model Original Corner Set Bar', 'Rear 2 Doors (Waterproof Board)', 'Rear Gutter & Footboard'],
                 warrantyInfo: quote.warrantyInfo || '10 Years For Body Structure, 10 Years Full Body Waterproofing, 03 Years For All Doors.',
@@ -404,6 +431,7 @@ const QuotationsPage = () => {
                 branch: 'JA-ELA',
                 numberPlateImage: '',
                 lorryBodyImage: '',
+                photos: [],
                 bodyDimensions: { length: '8 Feet 5 Inch', width: '67 Inch', height: '5 Feet 6 Inch' },
                 specifications: ['Non Rivet White Color Body', 'Japan Model Original Corner Set Bar', 'Rear 2 Doors (Waterproof Board)', 'Rear Gutter & Footboard'],
                 warrantyInfo: '10 Years For Body Structure, 10 Years Full Body Waterproofing, 03 Years For All Doors.',
@@ -1112,13 +1140,18 @@ const QuotationsPage = () => {
                                         </div>
 
                                         {/* Thumbnail Indicators for photos */}
-                                        <div className="flex gap-2 pt-2">
+                                        <div className="flex gap-2 pt-2 flex-wrap">
                                             <div className={`px-2 py-0.5 rounded text-[10px] border flex items-center gap-1 ${quote.numberPlateImage ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
-                                                <ImageIcon size={12} /> Plate Photo {quote.numberPlateImage ? '✓' : ''}
+                                                <ImageIcon size={12} /> Plate {quote.numberPlateImage ? '✓' : ''}
                                             </div>
                                             <div className={`px-2 py-0.5 rounded text-[10px] border flex items-center gap-1 ${quote.lorryBodyImage ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
-                                                <ImageIcon size={12} /> Body Photo {quote.lorryBodyImage ? '✓' : ''}
+                                                <ImageIcon size={12} /> Body {quote.lorryBodyImage ? '✓' : ''}
                                             </div>
+                                            {quote.photos?.length > 0 && (
+                                                <div className="px-2 py-0.5 rounded text-[10px] border flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200 font-semibold">
+                                                    <ImageIcon size={12} /> +{quote.photos.length} Photos ✓
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -1333,11 +1366,18 @@ const QuotationsPage = () => {
                         </div>
                     </div>
 
-                    {/* Photo Uploads (Number Plate & Lorry Body) - Key Requirement */}
+                    {/* Photo Uploads (Number Plate, Lorry Body & Multiple Additional Photos) */}
                     <div className="bg-blue-50/60 p-4 rounded-xl border border-blue-200 space-y-3">
-                        <span className="text-xs font-black text-blue-900 uppercase tracking-wide flex items-center gap-1.5">
-                            <ImageIcon size={16} /> Photo Attachments (Displayed on Print & PDF)
-                        </span>
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-black text-blue-900 uppercase tracking-wide flex items-center gap-1.5">
+                                <ImageIcon size={16} /> Photo Attachments (Displayed on Print & PDF)
+                            </span>
+                            {((formData.numberPlateImage ? 1 : 0) + (formData.lorryBodyImage ? 1 : 0) + (formData.photos?.length || 0)) > 0 && (
+                                <span className="bg-blue-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">
+                                    {(formData.numberPlateImage ? 1 : 0) + (formData.lorryBodyImage ? 1 : 0) + (formData.photos?.length || 0)} Total Photos Attached
+                                </span>
+                            )}
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Number Plate Photo */}
@@ -1346,13 +1386,13 @@ const QuotationsPage = () => {
                                 <input 
                                     type="file" 
                                     accept="image/*"
-                                    className="text-xs text-gray-500 w-full file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
+                                    className="text-xs text-gray-500 w-full file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
                                     onChange={(e) => handleImageUpload('numberPlateImage', e.target.files[0])}
                                 />
                                 {formData.numberPlateImage ? (
                                     <div className="relative border rounded p-1 bg-gray-50">
                                         <img src={formData.numberPlateImage} alt="Number Plate Preview" className="h-24 object-contain mx-auto" />
-                                        <button type="button" onClick={() => handleFormChange('numberPlateImage', '')} className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5"><X size={12} /></button>
+                                        <button type="button" onClick={() => handleFormChange('numberPlateImage', '')} className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 hover:bg-red-700 shadow"><X size={12} /></button>
                                     </div>
                                 ) : (
                                     <input 
@@ -1371,13 +1411,13 @@ const QuotationsPage = () => {
                                 <input 
                                     type="file" 
                                     accept="image/*"
-                                    className="text-xs text-gray-500 w-full file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
+                                    className="text-xs text-gray-500 w-full file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
                                     onChange={(e) => handleImageUpload('lorryBodyImage', e.target.files[0])}
                                 />
                                 {formData.lorryBodyImage ? (
                                     <div className="relative border rounded p-1 bg-gray-50">
                                         <img src={formData.lorryBodyImage} alt="Lorry Body Preview" className="h-24 object-contain mx-auto" />
-                                        <button type="button" onClick={() => handleFormChange('lorryBodyImage', '')} className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5"><X size={12} /></button>
+                                        <button type="button" onClick={() => handleFormChange('lorryBodyImage', '')} className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 hover:bg-red-700 shadow"><X size={12} /></button>
                                     </div>
                                 ) : (
                                     <input 
@@ -1389,6 +1429,69 @@ const QuotationsPage = () => {
                                     />
                                 )}
                             </div>
+                        </div>
+
+                        {/* Additional Inspection Photos (Multiple Upload Allowed) */}
+                        <div className="bg-white p-3.5 rounded-lg border border-blue-200 space-y-2.5">
+                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-1">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-800 uppercase">
+                                        Additional Vehicle &amp; Damage Photos (Upload Multiple)
+                                    </label>
+                                    <span className="text-[11px] text-gray-500">
+                                        Select multiple files at once to attach damage inspection, chassis, or repair progress photos.
+                                    </span>
+                                </div>
+                                <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded border border-blue-100 self-start sm:self-auto">
+                                    {(formData.photos?.length || 0)} photo{(formData.photos?.length || 0) === 1 ? '' : 's'} added
+                                </span>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <input 
+                                    type="file" 
+                                    multiple 
+                                    accept="image/*"
+                                    className="text-xs text-gray-600 w-full file:mr-3 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+                                    onChange={(e) => {
+                                        handleMultiplePhotosUpload(e.target.files);
+                                        e.target.value = ''; // Reset input to allow selecting more
+                                    }}
+                                />
+                                {formData.photos?.length > 0 && (
+                                    <button 
+                                        type="button" 
+                                        onClick={() => handleFormChange('photos', [])}
+                                        className="text-[11px] text-red-600 hover:text-red-800 font-bold whitespace-nowrap px-2 py-1 bg-red-50 hover:bg-red-100 rounded border border-red-200"
+                                    >
+                                        Clear All ({formData.photos.length})
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Gallery Preview of Additional Photos */}
+                            {formData.photos && formData.photos.length > 0 && (
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5 pt-2 border-t border-gray-100">
+                                    {formData.photos.map((src, idx) => (
+                                        <div key={idx} className="relative group border border-gray-200 rounded-lg overflow-hidden bg-gray-50 h-24 flex items-center justify-center shadow-xs">
+                                            <img src={src} alt={`Inspection Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => removePhoto(idx)} 
+                                                    className="bg-red-600 text-white rounded-full p-1.5 shadow hover:bg-red-700 transition"
+                                                    title="Remove Photo"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                            <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                                #{idx + 1}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -1718,21 +1821,47 @@ const QuotationsPage = () => {
             <Modal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} title={`${previewQuote?.documentType === 'estimate' ? 'Estimate' : 'Quotation'} Printable View & QR Code`} size="xl">
                 {previewQuote && (
                     <div className="p-3 sm:p-6 space-y-6">
-                        {/* Language Toggle */}
-                        <div className="flex items-center justify-end bg-gray-50 p-3 rounded-lg border border-gray-200">
-                            <label className="flex items-center space-x-2 cursor-pointer">
+                        {/* Language & Header Controls */}
+                        <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200 flex-wrap gap-3">
+                            {/* With Header / Without Header Mode Selector */}
+                            <div className="flex items-center rounded-lg border border-gray-300 bg-white p-0.5 text-xs font-semibold shadow-xs">
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewIncludeHeader(true)}
+                                    className={`px-3 py-1 rounded-md transition-all flex items-center gap-1 ${previewIncludeHeader ? 'bg-blue-600 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                                    title="Print / Download with company letterhead header"
+                                >
+                                    With Header
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewIncludeHeader(false)}
+                                    className={`px-3 py-1 rounded-md transition-all flex items-center gap-1 ${!previewIncludeHeader ? 'bg-amber-600 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                                    title="Print / Download without header (For pre-printed letterhead paper)"
+                                >
+                                    Without Header
+                                </button>
+                            </div>
+
+                            <label className="flex items-center space-x-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-xs">
                                 <input
                                     type="checkbox"
                                     checked={useSinhalaLanguage}
                                     onChange={(e) => setUseSinhalaLanguage(e.target.checked)}
                                     className="rounded text-primary-600 border-gray-300 w-4 h-4"
                                 />
-                                <span className="text-sm font-semibold text-gray-700">Show in Sinhala / සිංහලෙන් පෙන්වන්න</span>
+                                <span className="font-semibold text-gray-700">Show in Sinhala / සිංහලෙන් පෙන්වන්න</span>
                             </label>
                         </div>
 
                         <div className="max-h-[75vh] overflow-y-auto p-2 bg-gray-100 rounded-xl">
-                            <DocumentPrintView ref={printRef} document={previewQuote} companyInfo={settings} useSinhalaLanguage={useSinhalaLanguage} />
+                            <DocumentPrintView 
+                                ref={printRef} 
+                                document={previewQuote} 
+                                companyInfo={settings} 
+                                useSinhalaLanguage={useSinhalaLanguage}
+                                hideLetterheadHeader={!previewIncludeHeader}
+                            />
                         </div>
 
                         {/* Professional Action Toolbar */}
@@ -1752,11 +1881,11 @@ const QuotationsPage = () => {
                                 <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl p-1">
                                     <button
                                         onClick={handlePrintDocument}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 rounded-lg hover:bg-white hover:shadow-sm hover:text-gray-900 transition-all duration-150"
-                                        title="Print Document"
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg hover:shadow-sm transition-all duration-150 ${!previewIncludeHeader ? 'bg-amber-50 text-amber-800 border border-amber-200 font-bold' : 'text-gray-700 hover:bg-white hover:text-gray-900'}`}
+                                        title={previewIncludeHeader ? 'Print with Header' : 'Print without Header (Pre-printed Paper)'}
                                     >
                                         <Printer size={14} />
-                                        Print
+                                        Print {!previewIncludeHeader && <span className="text-[10px] text-amber-600 font-bold">(No Header)</span>}
                                     </button>
                                     <div className="w-px h-5 bg-gray-200" />
                                     <button
@@ -1769,12 +1898,12 @@ const QuotationsPage = () => {
                                     </button>
                                     <div className="w-px h-5 bg-gray-200" />
                                     <button
-                                        onClick={() => exportElementToPDF(printRef.current, `${previewQuote.documentType || 'quotation'}_${(previewQuote.quoteNumber || previewQuote.quotationCode || 'document').replace(/[\/\\:]/g, '_')}.pdf`)}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 rounded-lg hover:bg-emerald-50 hover:shadow-sm transition-all duration-150"
-                                        title="Download as PDF"
+                                        onClick={() => exportElementToPDF(printRef.current, `${previewQuote.documentType || 'quotation'}_${(previewQuote.quoteNumber || previewQuote.quotationCode || 'document').replace(/[\/\\:]/g, '_')}${!previewIncludeHeader ? '_no_header' : ''}.pdf`)}
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg hover:shadow-sm transition-all duration-150 ${!previewIncludeHeader ? 'bg-amber-50 text-amber-800 border border-amber-200 font-bold' : 'text-emerald-700 hover:bg-emerald-50'}`}
+                                        title={previewIncludeHeader ? 'Download PDF with Header' : 'Download PDF without Header'}
                                     >
                                         <Download size={14} />
-                                        Download PDF
+                                        Download PDF {!previewIncludeHeader && <span className="text-[10px] text-amber-600 font-bold">(No Header)</span>}
                                     </button>
                                 </div>
 

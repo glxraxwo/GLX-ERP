@@ -50,6 +50,7 @@ const invoiceSchema = new mongoose.Schema({
     },
 
     // ── Proforma tracking fields ──────────────────────────────────────────────
+    proformaNumber:         { type: String, trim: true, uppercase: true },
     proformaExpiryDate:     { type: Date },
     convertedToCommercial:  { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice' },
     convertedProjectId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
@@ -201,9 +202,14 @@ invoiceSchema.index({ agingBucket: 1 });
 
 invoiceSchema.pre('save', async function () {
     if (this.isNew && !this.invoiceNumber) {
-        const seq = await getNextSequence('invoice');
-        const prefix = this.invoiceType === 'proforma' ? 'PI' : 'INV';
-        this.invoiceNumber = `${prefix}-${seq}`;
+        const isProforma = this.invoiceType === 'proforma';
+        const seq = await getNextSequence(isProforma ? 'proforma_invoice' : 'invoice');
+        const prefix = isProforma ? 'PI' : 'INV';
+        const num = `${prefix}-${seq}`;
+        this.invoiceNumber = num;
+        if (isProforma) {
+            this.proformaNumber = num;
+        }
     }
 
     // Line totals

@@ -14,6 +14,7 @@ import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import DateRangeFilter from '../components/ui/DateRangeFilter';
 
 import { useStockItems, useReleaseStock, useUpdateStockItem, useDeleteStockItem } from '../features/stock/useStock';
 import { useWarehouses } from '../features/warehouses/useWarehouses';
@@ -31,6 +32,7 @@ export default function StockPage() {
     const [filters, setFilters] = useState({
         search: '', warehouseId: '', lowStock: '',
         stockType: '', // 'open' or 'balance' or ''
+        startDate: '', endDate: '',
         page: 1, limit: 20,
     });
 
@@ -279,6 +281,13 @@ export default function StockPage() {
                             onChange={(e) => setFilters((f) => ({ ...f, lowStock: e.target.value, page: 1 }))}
                         />
                     </div>
+                    <DateRangeFilter
+                        startDate={filters.startDate}
+                        endDate={filters.endDate}
+                        onStartDateChange={(val) => setFilters((f) => ({ ...f, startDate: val, page: 1 }))}
+                        onEndDateChange={(val) => setFilters((f) => ({ ...f, endDate: val, page: 1 }))}
+                        onClear={() => setFilters((f) => ({ ...f, startDate: '', endDate: '', page: 1 }))}
+                    />
                 </div>
 
                 {isLoading ? (

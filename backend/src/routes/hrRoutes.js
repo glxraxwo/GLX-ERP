@@ -10,7 +10,7 @@ import {
     createSalaryStructure, getSalaryStructures, updateSalaryStructure, deleteSalaryStructure,
     createLeaveStructure, getLeaveStructures, updateLeaveStructure, deleteLeaveStructure, getMyEmployeeProfile,
     createAttendancePolicy, getAttendancePolicies, updateAttendancePolicy, deleteAttendancePolicy, importFingerprintAttendance,
-    getEmployeePaymentSheet, sendPaymentSheetLinkSms, createSalaryAdvance, getSalaryAdvances, approveSalaryAdvance, declineSalaryAdvance, paySalaryAdvance, getMyAdvanceLedger, getOngoingSalaryPeriodInfo,
+    getEmployeePaymentSheet, sendPaymentSheetLinkSms, createSalaryAdvance, getSalaryAdvances, getEmployeeAdvanceSummary, approveSalaryAdvance, declineSalaryAdvance, paySalaryAdvance, recordAdvanceRepayment, getMyAdvanceLedger, getOngoingSalaryPeriodInfo,
     uploadEmployeeDocument, getEmployeeDocuments, deleteEmployeeDocument, getPublicPayslip,
 } from '../controllers/hrController.js';
 import { protect } from '../middleware/authMiddleware.js';
@@ -208,6 +208,7 @@ router.route('/advances')
 router.patch('/advances/:id/approve', requirePermission('hr.employees.manage'), approveSalaryAdvance);
 router.patch('/advances/:id/decline', requirePermission('hr.employees.manage'), declineSalaryAdvance);
 router.post('/advances/:id/pay', requirePermission('hr.employees.manage'), paySalaryAdvance);
+router.post('/advances/:id/repay', requirePermission('hr.employees.manage'), recordAdvanceRepayment);
 
 router.route('/employees/:id/payment-sheet')
     .get(requirePermission('hr.employees.view'), getEmployeePaymentSheet);
@@ -217,6 +218,8 @@ router.post('/employees/:id/payment-sheet/send-sms', requirePermission('hr.emplo
 router.route('/employees/:id/advances')
     .get(getSalaryAdvances)
     .post(createSalaryAdvance);
+
+router.get('/employees/:id/advance-summary', requirePermission('hr.employees.view'), getEmployeeAdvanceSummary);
 
 // ── Employee Documents ────────────────────────────────────────────────────────
 router.post('/employees/:id/documents', protect, requirePermission('hr.employees.manage'), uploadDoc, uploadEmployeeDocument);
