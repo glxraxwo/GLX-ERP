@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Eye, Receipt, TrendingUp, DollarSign, RefreshCw, X, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
@@ -16,6 +17,7 @@ import DynamicForm from '../components/ui/DynamicForm';
 
 export default function BankAccountsPage() {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [accounts, setAccounts] = useState([]);
     const [selectedAccount, setSelectedAccount] = useState(null);
     const [ledger, setLedger] = useState([]);
@@ -115,6 +117,7 @@ export default function BankAccountsPage() {
                 balance: 0,
             });
             fetchAccounts();
+            queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to register account');
         } finally {

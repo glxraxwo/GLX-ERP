@@ -764,15 +764,16 @@ export const getDailyPayrollSummary = asyncHandler(async (req, res) => {
     // Get active daily and hourly workers
     const employees = await Employee.find({
         status: { $in: ['active', 'probation', 'on_leave'] }
-    }).populate('salaryStructureId');
+    }).populate('salaryStructureId').populate('designationId', 'name');
 
-    // Filter daily/hourly wage earners or any employee with basicWageRate > 0 or daily frequency
+    // Filter daily/hourly wage earners or any employee with basicWageRate > 0, labourRate > 0, or daily/hourly frequency/paymentType
     const dailyWorkers = employees.filter((emp) => {
         const isDailyFreq = emp.salaryStructureId?.frequency === 'daily';
         const isHourlyFreq = emp.salaryStructureId?.frequency === 'hourly';
-        const hasHourlyRate = (emp.basicWageRate || 0) > 0;
+        const isDailyOrHourlyType = emp.paymentType === 'per_day' || emp.paymentType === 'per_hour';
+        const hasHourlyRate = (emp.basicWageRate || 0) > 0 || (emp.labourRate || 0) > 0;
         const hasDailyRate = (emp.basicSalary || 0) > 0 && isDailyFreq;
-        return isDailyFreq || isHourlyFreq || hasHourlyRate || hasDailyRate;
+        return isDailyFreq || isHourlyFreq || isDailyOrHourlyType || hasHourlyRate || hasDailyRate;
     });
 
     // Get attendance for target date
@@ -796,8 +797,8 @@ export const getDailyPayrollSummary = asyncHandler(async (req, res) => {
         const att = attendanceMap.get(emp._id.toString());
         const existingPay = paymentMap.get(emp._id.toString());
 
-        const isHourly = emp.salaryStructureId?.frequency === 'hourly' || (!emp.basicSalary && (emp.basicWageRate || 0) > 0);
-        const rate = isHourly ? (emp.basicWageRate || 0) : (emp.basicSalary || 0);
+        const isHourly = emp.paymentType === 'per_hour' || emp.salaryStructureId?.frequency === 'hourly' || (!emp.basicSalary && ((emp.labourRate || 0) > 0 || (emp.basicWageRate || 0) > 0));
+        const rate = emp.labourRate || emp.basicWageRate || (isHourly ? emp.hourlyRate : emp.basicSalary) || 0;
 
         let units = 0;
         let attStatus = 'absent';
@@ -806,8 +807,11 @@ export const getDailyPayrollSummary = asyncHandler(async (req, res) => {
 
         if (att) {
             attStatus = att.status || 'absent';
-            workedHours = att.totalWorkedHours || 0;
-            otHours = +( (att.overtimeMinutes || 0) / 60 ).toFixed(2);
+            const rawWorkedHours = att.totalWorkedHours !== undefined && att.totalWorkedHours !== null
+                ? att.totalWorkedHours
+                : (att.totalWorkedMinutes ? +(att.totalWorkedMinutes / 60).toFixed(2) : (attStatus === 'present' || attStatus === 'late' ? 8 : (attStatus === 'half_day' ? 4 : 0)));
+            workedHours = Math.max(0, rawWorkedHours);
+            otHours = Math.max(0, +( (att.overtimeMinutes || 0) / 60 ).toFixed(2));
             if (isHourly) {
                 units = workedHours;
             } else {
@@ -815,12 +819,14 @@ export const getDailyPayrollSummary = asyncHandler(async (req, res) => {
             }
         }
 
-        const baseWage = +(rate * units).toFixed(2);
+        const baseWage = att?.earnedSalary && att.earnedSalary > 0
+            ? att.earnedSalary
+            : Math.max(0, +(rate * units).toFixed(2));
 
         return {
             employeeId: emp._id,
             employeeCode: emp.employeeCode,
-            employeeName: emp.fullName,
+            employeeName: emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.displayName,
             designation: emp.designationId?.name || emp.jobTitle || 'Daily Worker',
             payType: isHourly ? 'hourly' : 'daily',
             rate,
