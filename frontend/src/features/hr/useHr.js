@@ -25,7 +25,21 @@ export const useEmployees = (filters = {}) => useQuery({ queryKey: ['employees',
 export const useEmployee = (id) => useQuery({ queryKey: ['employee', id], queryFn: () => employeesApi.getById(id), enabled: !!id });
 export const useCreateEmployee = () => { const qc = useQueryClient(); return useMutation({ mutationFn: employeesApi.create, onSuccess: () => { invalidate(qc, ['employees'])(); toast.success('Employee added'); }, onError: onErr }); };
 export const useUpdateEmployee = () => { const qc = useQueryClient(); return useMutation({ mutationFn: ({ id, data }) => employeesApi.update(id, data), onSuccess: () => { invalidate(qc, ['employees', 'employee'])(); toast.success('Updated'); }, onError: onErr }); };
-export const useDeleteEmployee = () => { const qc = useQueryClient(); return useMutation({ mutationFn: employeesApi.delete, onSuccess: () => { invalidate(qc, ['employees'])(); toast.success('Terminated'); }, onError: onErr }); };
+export const useDeleteEmployee = () => { 
+    const qc = useQueryClient(); 
+    return useMutation({ 
+        mutationFn: (arg) => {
+            const id = typeof arg === 'object' ? arg.id : arg;
+            const params = typeof arg === 'object' && arg.permanent ? { permanent: true } : {};
+            return employeesApi.delete(id, params);
+        }, 
+        onSuccess: () => { 
+            invalidate(qc, ['employees', 'employee'])(); 
+            toast.success('Employee deleted successfully'); 
+        }, 
+        onError: onErr 
+    }); 
+};
 
 // Shifts
 export const useShifts = () => useQuery({ queryKey: ['shifts'], queryFn: shiftsApi.list });

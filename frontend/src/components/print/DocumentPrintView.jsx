@@ -523,25 +523,21 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
                             paddingBottom: 2
                         }}>
                             <span 
-                                title={`Document Revision: ${revisionCode}`}
+                                title={`Document Revision: [${revisionCode}]`}
                                 style={{
                                     fontFamily: "'Consolas', 'Segoe UI Mono', monospace",
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: 700,
-                                    color: editNum > 0 ? '#b91c1c' : '#475569',
-                                    background: editNum > 0 ? '#fef2f2' : '#f8fafc',
-                                    border: `1px solid ${editNum > 0 ? '#fecaca' : '#e2e8f0'}`,
-                                    padding: '1px 6px',
-                                    borderRadius: 4,
+                                    color: '#dc2626',
                                     letterSpacing: 0.5
                                 }}
                             >
-                                {revisionCode}
+                                [{revisionCode}]
                             </span>
                             <span style={{ 
                                 fontFamily: "'Consolas', 'Segoe UI Mono', monospace", 
-                                fontSize: 10.5, 
-                                color: '#64748b' 
+                                fontSize: 11, 
+                                color: '#475569' 
                             }}>
                                 {printTimestamp}
                             </span>
@@ -608,16 +604,32 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
                                     (item.discountPercent ? (grossAmt * item.discountPercent / 100) : 0));
                             const effDiscRate = discRate > 0 ? discRate : (qty > 0 ? +(discAmt / qty).toFixed(2) : 0);
 
-                            const title = lang !== 'en'
-                                ? (item.productTranslation || item.productName || item.description || 'Line Item')
-                                : (item.productName || item.description || 'Line Item');
-                            const descExtra = item.description && item.description !== title ? item.description : '';
+                            const mainName = item.productName || item.description || 'Line Item';
+                            const sinhalaName = item.productTranslation || item.sinhalaName || '';
+                            const title = lang === 'si'
+                                ? (sinhalaName || mainName)
+                                : mainName;
+                            const subtitle = lang === 'si'
+                                ? (sinhalaName && mainName !== sinhalaName ? mainName : '')
+                                : (sinhalaName && sinhalaName !== mainName ? sinhalaName : '');
+                            const descExtra = item.description && item.description !== mainName && item.description !== sinhalaName ? item.description : '';
 
                             return (
                                 <React.Fragment key={idx}>
                                     <tr style={{ verticalAlign: 'top' }}>
                                         <td style={{ padding: '5px 4px 2px 0', lineHeight: 1.45 }}>
-                                            <div style={{ fontWeight: 500 }}>{title}</div>
+                                            <div style={{ fontWeight: 500, display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 6 }}>
+                                                <span>{title}</span>
+                                                {subtitle && (
+                                                    <span style={{ 
+                                                        color: lang === 'si' ? '#475569' : '#047857', 
+                                                        fontWeight: 600, 
+                                                        fontSize: 12 
+                                                    }}>
+                                                        ({subtitle})
+                                                    </span>
+                                                )}
+                                            </div>
                                             {descExtra && (
                                                 <div style={{ whiteSpace: 'pre-wrap', fontSize: 11.5, color: '#4b5563', marginTop: 1 }}>
                                                     {descExtra}

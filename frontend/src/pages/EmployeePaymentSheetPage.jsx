@@ -143,7 +143,7 @@ export default function EmployeePaymentSheetPage() {
                         <Button variant="primary" size="sm" onClick={loadSheet} loading={loading}>
                             <RefreshCw size={14} className="mr-1" /> Load
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => window.print()}>
+                        <Button variant="outline" size="sm" onClick={() => { toast.dismiss(); window.print(); }}>
                             <Printer size={14} className="mr-1" /> Print Report
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => setSmsModalOpen(true)}>

@@ -37,7 +37,7 @@ const salaryAdvanceSchema = new mongoose.Schema({
     ]
 }, { timestamps: true });
 
-salaryAdvanceSchema.pre('save', function (next) {
+salaryAdvanceSchema.pre('save', function () {
     const totalAmt = Number(this.amount) || 0;
     const count = Number(this.numberOfInstallments) || 1;
     if (totalAmt > 0 && (!this.installmentAmount || this.installmentAmount <= 0)) {
@@ -48,7 +48,6 @@ salaryAdvanceSchema.pre('save', function (next) {
     if (this.remainingBalance === 0 && paid > 0) {
         this.isDeducted = true;
     }
-    next();
 });
 
 const SalaryAdvance = mongoose.model('SalaryAdvance', salaryAdvanceSchema);

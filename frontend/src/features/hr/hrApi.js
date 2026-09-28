@@ -20,7 +20,7 @@ export const employeesApi = {
     getMyProfile: async () => (await api.get('/hr/employees/me')).data,
     create: async (data) => (await api.post('/hr/employees', data)).data,
     update: async (id, data) => (await api.put(`/hr/employees/${id}`, data)).data,
-    delete: async (id) => (await api.delete(`/hr/employees/${id}`)).data,
+    delete: async (id, params = {}) => (await api.delete(`/hr/employees/${id}`, { params })).data,
     getDocuments: async (id) => (await api.get(`/hr/employees/${id}/documents`)).data,
     uploadDocument: async (id, formData) => (await api.post(`/hr/employees/${id}/documents`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }

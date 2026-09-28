@@ -710,3 +710,93 @@ export const revertQuotationConversion = asyncHandler(async (req, res) => {
 
     res.json({ success: true, message: 'Quotation conversion reverted back to Draft successfully', data: quotation });
 });
+
+/**
+ * @desc    Cancel a quotation
+ * @route   PATCH /api/crm/quotations/:id/cancel
+ * @access  Private (sales.edit)
+ */
+export const cancelQuotation = asyncHandler(async (req, res) => {
+    const { reason, cancelLinkedProject } = req.body;
+    const quotation = await Quotation.findById(req.params.id);
+    if (!quotation) {
+        res.status(404);
+        throw new Error('Quotation not found');
+    }
+
+    quotation.status = 'cancelled';
+    quotation.cancellationReason = reason || 'Quotation cancelled by user';
+    quotation.cancelledBy = req.user._id;
+    quotation.cancelledAt = new Date();
+
+    if (cancelLinkedProject && quotation.convertedProjectId) {
+        const Project = mongoose.model('Project');
+        const project = await Project.findById(quotation.convertedProjectId);
+        if (project) {
+            project.status = 'cancelled';
+            project.cancellationReason = reason || `Project cancelled alongside Quotation ${quotation.quoteNumber}`;
+            project.updatedBy = req.user._id;
+            await project.save();
+        }
+    }
+
+    await quotation.save();
+
+    createAuditLog({
+        action: 'update',
+        module: 'crm',
+        documentId: quotation._id,
+        documentCode: quotation.quoteNumber,
+        description: `Cancelled quotation ${quotation.quoteNumber}: ${quotation.cancellationReason}`,
+        req
+    });
+
+    res.json({ success: true, message: 'Quotation cancelled successfully', data: quotation });
+});
+
+/**
+ * @desc    Cancel only the converted Project linked to a quotation and revert quotation to Draft
+ * @route   PATCH /api/crm/quotations/:id/cancel-project
+ * @access  Private (sales.edit)
+ */
+export const cancelConvertedProject = asyncHandler(async (req, res) => {
+    const { reason } = req.body;
+    const quotation = await Quotation.findById(req.params.id);
+    if (!quotation) {
+        res.status(404);
+        throw new Error('Quotation not found');
+    }
+
+    let projectNumber = '';
+    if (quotation.convertedProjectId) {
+        const Project = mongoose.model('Project');
+        const project = await Project.findById(quotation.convertedProjectId);
+        if (project) {
+            projectNumber = project.projectNumber || '';
+            project.status = 'cancelled';
+            project.cancellationReason = reason || `Project cancelled from Quotation ${quotation.quoteNumber}`;
+            project.updatedBy = req.user._id;
+            await project.save();
+        }
+    }
+
+    quotation.status = 'draft';
+    quotation.convertedProjectId = undefined;
+    await quotation.save();
+
+    createAuditLog({
+        action: 'update',
+        module: 'crm',
+        documentId: quotation._id,
+        documentCode: quotation.quoteNumber,
+        description: `Cancelled Project ${projectNumber} linked to Quotation ${quotation.quoteNumber}. Quotation reverted to Draft.`,
+        req
+    });
+
+    res.json({ 
+        success: true, 
+        message: `Project ${projectNumber ? `(${projectNumber}) ` : ''}cancelled successfully. Quotation has been returned to Draft.`, 
+        data: quotation 
+    });
+});
+

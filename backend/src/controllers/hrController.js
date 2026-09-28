@@ -318,10 +318,16 @@ export const updateEmployee = asyncHandler(async (req, res) => {
 export const deleteEmployee = asyncHandler(async (req, res) => {
     const emp = await Employee.findById(req.params.id);
     if (!emp) { res.status(404); throw new Error('Employee not found'); }
+    
+    if (req.query.permanent === 'true' || req.body?.permanent === true) {
+        await Employee.findByIdAndDelete(req.params.id);
+        return res.json({ success: true, message: 'Employee permanently deleted' });
+    }
+
     emp.deletedAt = new Date();
     emp.status = 'terminated';
     await emp.save();
-    res.json({ success: true, message: 'Employee terminated successfully' });
+    res.json({ success: true, message: 'Employee deleted successfully' });
 });
 
 export const createShift = asyncHandler(async (req, res) => {
@@ -1220,7 +1226,16 @@ export const createSalaryAdvance = asyncHandler(async (req, res) => {
     let finalAmount = Number(amount) || 0;
     let calcAmount = 0;
     if (advanceType === 'percentage' && requestedPercentage) {
-        const baseSalary = emp.basicSalary || (emp.labourRate ? (emp.paymentType === 'per_day' ? emp.labourRate * 26 : emp.labourRate * 200) : 0);
+        let baseSalary = 0;
+        if (emp.basicSalary && emp.basicSalary > 0) {
+            baseSalary = emp.basicSalary;
+        } else if (emp.hourlyRate && emp.hourlyRate > 0) {
+            baseSalary = emp.hourlyRate * 200;
+        } else if (emp.labourRate && emp.labourRate > 0) {
+            baseSalary = emp.paymentType === 'per_day' ? emp.labourRate * 26 : emp.labourRate * 200;
+        } else {
+            baseSalary = 50000;
+        }
         calcAmount = +((baseSalary * Number(requestedPercentage)) / 100).toFixed(2);
         if (calcAmount > 0) finalAmount = calcAmount;
     }
@@ -1228,7 +1243,11 @@ export const createSalaryAdvance = asyncHandler(async (req, res) => {
     const numInstallments = Math.max(1, Number(numberOfInstallments) || 1);
     const installmentAmt = Number((finalAmount / numInstallments).toFixed(2));
 
-    const isDirectAdmin = req.user?.role === 'admin' || req.user?.role === 'superadmin' || req.user?.role === 'hr_manager';
+    const isDirectAdmin = req.user?.role === 'admin' 
+        || req.user?.role === 'superadmin' 
+        || req.user?.role === 'hr_manager'
+        || req.user?.role === 'manager'
+        || req.user?.role === 'accountant';
 
     const advance = await SalaryAdvance.create({
         employeeId,
@@ -1399,10 +1418,10 @@ export const getEmployeeAdvanceSummary = asyncHandler(async (req, res) => {
     let baseMonthlySalary = 0;
     if (employee.basicSalary && employee.basicSalary > 0) {
         baseMonthlySalary = employee.basicSalary;
-    } else if (employee.labourRate && employee.labourRate > 0) {
-        baseMonthlySalary = employee.paymentType === 'per_day' ? employee.labourRate * 26 : employee.labourRate * 200;
     } else if (employee.hourlyRate && employee.hourlyRate > 0) {
         baseMonthlySalary = employee.hourlyRate * 200;
+    } else if (employee.labourRate && employee.labourRate > 0) {
+        baseMonthlySalary = employee.paymentType === 'per_day' ? employee.labourRate * 26 : employee.labourRate * 200;
     } else {
         baseMonthlySalary = 50000; // standard baseline
     }

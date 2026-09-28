@@ -60,6 +60,7 @@ const invoiceSchema = new mongoose.Schema({
     sourceDocumentType: { type: String, enum: ['quotation', 'estimate', 'sales_order', 'direct'] },
     sourceDocumentId: { type: mongoose.Schema.Types.ObjectId },
     sourceDocumentCode: { type: String },
+    editCount: { type: Number, default: 0 },
 
     // Vehicle & Body engineering metadata
     insuranceCompany: { type: String, default: '' },
@@ -203,9 +204,14 @@ invoiceSchema.index({ agingBucket: 1 });
 invoiceSchema.pre('save', async function () {
     if (this.isNew && !this.invoiceNumber) {
         const isProforma = this.invoiceType === 'proforma';
-        const seq = await getNextSequence(isProforma ? 'proforma_invoice' : 'invoice');
         const prefix = isProforma ? 'JA/PI' : 'JA/INV';
-        const num = `${prefix}/${seq}`;
+        const seqKey = isProforma ? 'proforma_invoice' : 'invoice';
+        let seq = await getNextSequence(seqKey);
+        let num = `${prefix}/${seq}`;
+        while (await mongoose.model('Invoice').findOne({ invoiceNumber: num })) {
+            seq = await getNextSequence(seqKey);
+            num = `${prefix}/${seq}`;
+        }
         this.invoiceNumber = num;
         if (isProforma) {
             this.proformaNumber = num;

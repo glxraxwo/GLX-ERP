@@ -92,11 +92,23 @@ quotationSchema.pre('validate', async function () {
         this.customerId = undefined;
     }
 
-    if (!this.quotationCode) {
+    if (!this.quotationCode && this.quoteNumber && this.quoteNumber.trim() !== '') {
+        this.quotationCode = this.quoteNumber.trim();
+    }
+
+    if (!this.quotationCode || this.quotationCode.trim() === '') {
         const isEstimate = this.documentType === 'estimate';
-        const seq = await getNextSequence(isEstimate ? 'estimate' : 'quotation');
         const prefix = isEstimate ? 'JA/EST' : 'JA/QT';
-        this.quotationCode = `${prefix}/${seq}`;
+        const seqKey = isEstimate ? 'estimate' : 'quotation';
+        let seq = await getNextSequence(seqKey);
+        let code = `${prefix}/${seq}`;
+        while (await mongoose.model('Quotation').findOne({ $or: [{ quotationCode: code }, { quoteNumber: code }] })) {
+            seq = await getNextSequence(seqKey);
+            code = `${prefix}/${seq}`;
+        }
+        this.quotationCode = code;
+        this.quoteNumber = this.quotationCode;
+    } else if (!this.quoteNumber || this.quoteNumber.trim() === '') {
         this.quoteNumber = this.quotationCode;
     }
     // Auto-calculate grand total & balance

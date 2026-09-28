@@ -87,7 +87,7 @@ export default function PayslipDetailPage({ isPublicView = false }) {
                                 <Button variant="outline" onClick={() => setSmsModalOpen(true)}>
                                     <MessageSquare size={16} className="mr-1.5" /> Send SMS
                                 </Button>
-                                <Button variant="primary" onClick={() => window.print()}>
+                                <Button variant="primary" onClick={() => { toast.dismiss(); window.print(); }}>
                                     <Printer size={16} className="mr-1.5" /> PDF / Print
                                 </Button>
                             </div>

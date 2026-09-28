@@ -525,8 +525,13 @@ export const convertProformaToCommercial = asyncHandler(async (req, res) => {
     invoice.invoiceType = 'standard';
     // If it was a PI- number, generate an official commercial invoice number
     if (invoice.invoiceNumber && (invoice.invoiceNumber.startsWith('PI-') || invoice.invoiceNumber.includes('PI/'))) {
-        const seq = await getNextSequence('invoice');
-        invoice.invoiceNumber = `JA/INV/${seq}`;
+        let seq = await getNextSequence('invoice');
+        let candidate = `JA/INV/${seq}`;
+        while (await Invoice.findOne({ invoiceNumber: candidate, _id: { $ne: invoice._id } })) {
+            seq = await getNextSequence('invoice');
+            candidate = `JA/INV/${seq}`;
+        }
+        invoice.invoiceNumber = candidate;
     }
     await invoice.save();
 
@@ -730,7 +735,6 @@ export const revertInvoiceConversion = asyncHandler(async (req, res) => {
 
     if (!quotation) {
         quotation = new Quotation({
-            quoteNumber: `QUT-REV-${Date.now().toString().slice(-6)}`,
             documentType: 'quotation',
             status: 'draft',
             customerName: invoice.customerSnapshot?.name || invoice.vehicleOwner || 'Customer',

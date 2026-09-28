@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Mail, Phone, MapPin, CreditCard, User, Briefcase, FileText, Receipt } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, Phone, MapPin, CreditCard, User, Briefcase, FileText, Receipt, Trash2 } from 'lucide-react';
 
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { useEmployee } from '../features/hr/useHr';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { useEmployee, useDeleteEmployee } from '../features/hr/useHr';
 
 const statusVariant = {
     active: 'success', on_leave: 'warning', probation: 'info',
@@ -15,11 +17,19 @@ const statusVariant = {
 export default function EmployeeDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const { data, isLoading } = useEmployee(id);
+    const deleteMutation = useDeleteEmployee();
     const emp = data?.data;
 
     const fmt = (n) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 2 }).format(n || 0);
     const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-LK') : '—';
+
+    const handleDelete = async () => {
+        await deleteMutation.mutateAsync({ id, permanent: true });
+        setIsConfirmOpen(false);
+        navigate('/employees');
+    };
 
     if (isLoading || !emp) return <div className="py-16 text-center text-gray-500">Loading...</div>;
 
@@ -38,6 +48,9 @@ export default function EmployeeDetailPage() {
                         </Button>
                         <Button variant="outline" onClick={() => navigate(`/employees/${id}/edit`)}>
                             <Edit size={16} className="mr-1.5" /> Edit
+                        </Button>
+                        <Button variant="danger" onClick={() => setIsConfirmOpen(true)}>
+                            <Trash2 size={16} className="mr-1.5" /> Delete
                         </Button>
                     </div>
                 } />
@@ -189,6 +202,17 @@ export default function EmployeeDetailPage() {
                     </Card>
                 </div>
             </div>
+
+            <ConfirmDialog
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={handleDelete}
+                title="Delete Employee"
+                message={`Are you sure you want to delete ${emp.firstName} ${emp.lastName} (${emp.employeeCode})? This action cannot be undone.`}
+                confirmText="Delete Employee"
+                variant="danger"
+                loading={deleteMutation.isPending}
+            />
         </div>
     );
 }

@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import {
     Plus, FileText, Trash2, Send,
     MapPin, Clock, X, ShoppingCart, Edit, Eye, Download, Search, Image as ImageIcon, Printer, CheckCircle, RotateCcw, Briefcase,
-    Calendar, LayoutList, LayoutGrid
+    Calendar, LayoutList, LayoutGrid, XCircle, Ban
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -147,8 +147,14 @@ const QuotationsPage = () => {
     const [convertInvoiceType, setConvertInvoiceType] = useState('commercial');
     const [convertInvoiceAdvanceAmount, setConvertInvoiceAdvanceAmount] = useState(0);
     const [convertInvoicePaymentMethod, setConvertInvoicePaymentMethod] = useState('cash');
-    const [convertInvoiceBankAccountId, setConvertInvoiceBankAccountId] = useState('');
     const [convertInvoiceReference, setConvertInvoiceReference] = useState('');
+
+    // Cancel Quotation / Project Modal State
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [cancelModalType, setCancelModalType] = useState('quotation'); // 'quotation' | 'project'
+    const [targetCancelQuote, setTargetCancelQuote] = useState(null);
+    const [cancelReason, setCancelReason] = useState('');
+    const [cancelling, setCancelling] = useState(false);
 
     const fetchQuotations = async () => {
         try {
@@ -175,7 +181,7 @@ const QuotationsPage = () => {
         quotations.forEach(q => {
             const val = Number(q.grandTotal || q.totalAmount || 0);
             totalVal += val;
-            const isEst = q.documentType === 'estimate' || q.quoteNumber?.startsWith('EST');
+            const isEst = q.documentType === 'estimate' || q.quoteNumber?.startsWith('EST') || q.quoteNumber?.includes('/EST/') || q.quotationCode?.includes('/EST/');
             if (isEst) {
                 estCount++;
                 estVal += val;
@@ -204,7 +210,7 @@ const QuotationsPage = () => {
             
             // Tab filtering
             let matchesTab = true;
-            const isEst = quote.documentType === 'estimate' || quote.quoteNumber?.startsWith('EST');
+            const isEst = quote.documentType === 'estimate' || quote.quoteNumber?.startsWith('EST') || quote.quoteNumber?.includes('/EST/') || quote.quotationCode?.includes('/EST/');
             if (activeTab === 'quotation') matchesTab = !isEst;
             else if (activeTab === 'estimate') matchesTab = isEst;
             else if (activeTab === 'converted') matchesTab = quote.status === 'converted';
@@ -622,11 +628,42 @@ const QuotationsPage = () => {
         }
     };
 
-    const handlePrintDocument = () => {
-        if (printRef.current) {
-            printElementAsPDF(printRef.current);
-        } else if (previewQuote) {
-            printDocumentAsPDF(previewQuote, previewQuote.documentType || 'quotation');
+    const handleOpenCancelModal = (quote, type = 'quotation') => {
+        setTargetCancelQuote(quote);
+        setCancelModalType(type);
+        setCancelReason('');
+        setCancelModalOpen(true);
+    };
+
+    const handleConfirmCancelSubmit = async (e) => {
+        e.preventDefault();
+        if (!targetCancelQuote) return;
+        setCancelling(true);
+        try {
+            if (cancelModalType === 'project') {
+                const { data } = await api.patch(`/crm/quotations/${targetCancelQuote._id}/cancel-project`, {
+                    reason: cancelReason
+                });
+                toast.success(data.message || 'Project cancelled successfully and Quotation returned to Draft.');
+            } else {
+                const { data } = await api.patch(`/crm/quotations/${targetCancelQuote._id}/cancel`, {
+                    reason: cancelReason,
+                    cancelLinkedProject: true
+                });
+                toast.success(data.message || 'Quotation cancelled successfully.');
+            }
+            setCancelModalOpen(false);
+            setTargetCancelQuote(null);
+            setCancelReason('');
+            if (previewQuote && targetCancelQuote._id === previewQuote._id) {
+                setIsPreviewOpen(false);
+                setPreviewQuote(null);
+            }
+            fetchQuotations();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to cancel');
+        } finally {
+            setCancelling(false);
         }
     };
 
@@ -637,7 +674,8 @@ const QuotationsPage = () => {
             accepted: 'text-emerald-600 bg-emerald-50 border-emerald-200',
             rejected: 'text-red-600 bg-red-50 border-red-200',
             expired: 'text-orange-600 bg-orange-50 border-orange-200',
-            converted: 'text-purple-600 bg-purple-50 border-purple-200 font-bold'
+            converted: 'text-purple-600 bg-purple-50 border-purple-200 font-bold',
+            cancelled: 'text-rose-700 bg-rose-50 border-rose-200 font-bold'
         };
         return colors[status] || 'text-gray-400 bg-gray-50';
     };
@@ -709,11 +747,11 @@ const QuotationsPage = () => {
             label: 'Ref / Code #',
             width: '140px',
             render: (r) => {
-                const isEst = r.documentType === 'estimate' || r.quoteNumber?.startsWith('EST');
+                const isEst = r.documentType === 'estimate' || r.quoteNumber?.startsWith('EST') || r.quoteNumber?.includes('/EST/') || r.quotationCode?.includes('/EST/');
                 return (
                     <div className="flex items-center gap-1.5">
                         <span className={`px-1.5 py-0.5 text-[10px] font-black rounded uppercase tracking-wider ${isEst ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {isEst ? 'EST' : 'QUT'}
+                            {isEst ? 'EST' : 'QT'}
                         </span>
                         <span className="font-mono font-bold text-xs text-gray-900">{r.quoteNumber || r.quotationCode}</span>
                     </div>
@@ -806,23 +844,41 @@ const QuotationsPage = () => {
                     )}
                     {r.status === 'converted' ? (
                         canEdit && (
-                            <button
-                                onClick={() => { setRevertQuote(r); setRevertAdminPassword(''); setIsRevertModalOpen(true); }}
-                                className="px-2 py-1 text-xs font-bold bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg transition flex items-center gap-1 border border-amber-200"
-                                title="Revert Conversion"
-                            >
-                                <RotateCcw size={12} /> Revert
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => handleOpenCancelModal(r, 'project')}
+                                    className="px-2 py-1 text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg transition flex items-center gap-1 border border-rose-200"
+                                    title="Cancel Project (Project Cancel කිරීම)"
+                                >
+                                    <Ban size={12} /> Cancel Project
+                                </button>
+                                <button
+                                    onClick={() => { setRevertQuote(r); setRevertAdminPassword(''); setIsRevertModalOpen(true); }}
+                                    className="px-2 py-1 text-xs font-bold bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg transition flex items-center gap-1 border border-amber-200"
+                                    title="Revert Conversion"
+                                >
+                                    <RotateCcw size={12} /> Revert
+                                </button>
+                            </div>
                         )
                     ) : (
-                        canEdit && (
-                            <button
-                                onClick={() => handleOpenConvertToInvoiceModal(r, 'commercial')}
-                                className="px-2 py-1 text-xs font-bold bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition flex items-center gap-1 shadow-xs"
-                                title="Convert to Commercial Invoice"
-                            >
-                                <ShoppingCart size={12} /> Invoice
-                            </button>
+                        canEdit && r.status !== 'cancelled' && (
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => handleOpenConvertToInvoiceModal(r, 'commercial')}
+                                    className="px-2 py-1 text-xs font-bold bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition flex items-center gap-1 shadow-xs"
+                                    title="Convert to Commercial Invoice"
+                                >
+                                    <ShoppingCart size={12} /> Invoice
+                                </button>
+                                <button
+                                    onClick={() => handleOpenCancelModal(r, 'quotation')}
+                                    className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition"
+                                    title="Cancel Quotation (Quotation Cancel කිරීම)"
+                                >
+                                    <XCircle size={15} />
+                                </button>
+                            </div>
                         )
                     )}
                     <button
@@ -861,10 +917,10 @@ const QuotationsPage = () => {
                 actions={canCreate && (
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" onClick={() => openForm(null, 'estimate')}>
-                            <Plus size={16} className="mr-1.5" /> New Estimate (EST)
+                            <Plus size={16} className="mr-1.5" /> New Estimate (JA/EST)
                         </Button>
                         <Button variant="primary" onClick={() => openForm(null, 'quotation')}>
-                            <Plus size={16} className="mr-1.5" /> New Quotation (QUT)
+                            <Plus size={16} className="mr-1.5" /> New Quotation (JA/QT)
                         </Button>
                     </div>
                 )}
@@ -882,14 +938,14 @@ const QuotationsPage = () => {
                     },
                     {
                         key: 'quotation',
-                        label: 'Quotations (QUT)',
+                        label: 'Quotations (JA/QT)',
                         count: summaryMetrics.qCount,
                         val: summaryMetrics.qVal,
                         color: 'bg-blue-50 text-blue-700 border-blue-200'
                     },
                     {
                         key: 'estimate',
-                        label: 'Estimates (EST)',
+                        label: 'Estimates (JA/EST)',
                         count: summaryMetrics.estCount,
                         val: summaryMetrics.estVal,
                         color: 'bg-amber-50 text-amber-700 border-amber-200'
@@ -938,7 +994,7 @@ const QuotationsPage = () => {
                                 : 'border-transparent text-gray-500 hover:text-slate-800 hover:bg-slate-50'
                         }`}
                     >
-                        Quotations (QUT)
+                        Quotations (JA/QT)
                     </button>
                     <button
                         onClick={() => setActiveTab('estimate')}
@@ -948,7 +1004,7 @@ const QuotationsPage = () => {
                                 : 'border-transparent text-gray-500 hover:text-slate-800 hover:bg-slate-50'
                         }`}
                     >
-                        Estimates (EST)
+                        Estimates (JA/EST)
                     </button>
                     <button
                         onClick={() => setActiveTab('converted')}
@@ -975,7 +1031,7 @@ const QuotationsPage = () => {
                             onKeyDown={async (e) => {
                                 if (e.key === 'Enter') {
                                     const searchVal = e.target.value.trim();
-                                    if (searchVal.toUpperCase().startsWith('QUT-') || searchVal.toUpperCase().startsWith('EST-')) {
+                                    if (searchVal.toUpperCase().startsWith('JA/QT') || searchVal.toUpperCase().startsWith('JA/EST') || searchVal.toUpperCase().startsWith('QUT-') || searchVal.toUpperCase().startsWith('EST-')) {
                                         const found = quotations.find(q => q.quoteNumber?.toUpperCase() === searchVal.toUpperCase() || q.quotationCode?.toUpperCase() === searchVal.toUpperCase());
                                         if (found) {
                                             setPreviewQuote(found);
@@ -1005,8 +1061,8 @@ const QuotationsPage = () => {
                             onChange={(e) => setDocumentTypeFilter(e.target.value)}
                         >
                             <option value="">All Document Types</option>
-                            <option value="quotation">Quotations (QUT)</option>
-                            <option value="estimate">Estimates (EST)</option>
+                            <option value="quotation">Quotations (JA/QT)</option>
+                            <option value="estimate">Estimates (JA/EST)</option>
                         </select>
                     </div>
 
@@ -1192,15 +1248,43 @@ const QuotationsPage = () => {
                                         </Button>
                                         {quote.status === 'converted' ? (
                                             canEdit && (
-                                                <Button variant="outline" size="sm" className="text-amber-700 border-amber-300 bg-amber-50 hover:bg-amber-100 font-bold" onClick={() => { setRevertQuote(quote); setRevertAdminPassword(''); setIsRevertModalOpen(true); }} title="Revert Conversion (Admin Password required)">
-                                                    <RotateCcw size={14} className="mr-1" /> Revert
-                                                </Button>
+                                                <>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="text-rose-700 border-rose-300 bg-rose-50 hover:bg-rose-100 font-bold" 
+                                                        onClick={() => handleOpenCancelModal(quote, 'project')} 
+                                                        title="Cancel Project (Project Cancel කිරීම)"
+                                                    >
+                                                        <Ban size={14} className="mr-1" /> Cancel Project
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="text-amber-700 border-amber-300 bg-amber-50 hover:bg-amber-100 font-bold" 
+                                                        onClick={() => { setRevertQuote(quote); setRevertAdminPassword(''); setIsRevertModalOpen(true); }} 
+                                                        title="Revert Conversion (Admin Password required)"
+                                                    >
+                                                        <RotateCcw size={14} className="mr-1" /> Revert
+                                                    </Button>
+                                                </>
                                             )
                                         ) : (
-                                            canEdit && (
-                                                <Button variant="primary" size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white" onClick={() => { setPreviewQuote(quote); setIsPreviewOpen(true); }}>
-                                                    <ShoppingCart size={14} className="mr-1" /> Convert
-                                                </Button>
+                                            canEdit && quote.status !== 'cancelled' && (
+                                                <>
+                                                    <Button variant="primary" size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white" onClick={() => { setPreviewQuote(quote); setIsPreviewOpen(true); }}>
+                                                        <ShoppingCart size={14} className="mr-1" /> Convert
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="text-rose-600 border-rose-200 hover:bg-rose-50" 
+                                                        onClick={() => handleOpenCancelModal(quote, 'quotation')} 
+                                                        title="Cancel Quotation (Quotation Cancel කිරීම)"
+                                                    >
+                                                        <XCircle size={14} />
+                                                    </Button>
+                                                </>
                                             )
                                         )}
                                         {canDelete && (
@@ -1217,7 +1301,7 @@ const QuotationsPage = () => {
             </Card>
 
             {/* Quotation / Estimate Form Modal */}
-            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editing ? `Edit ${formData.documentType === 'estimate' ? 'Estimate' : 'Quotation'}` : `New ${formData.documentType === 'estimate' ? 'Estimate (EST)' : 'Quotation (QUT)'}`} size="xl">
+            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editing ? `Edit ${formData.documentType === 'estimate' ? 'Estimate' : 'Quotation'}` : `New ${formData.documentType === 'estimate' ? 'Estimate (JA/EST)' : 'Quotation (JA/QT)'}`} size="xl">
                 <form onSubmit={handleSubmit} className="p-3 sm:p-6 space-y-6 max-h-[85vh] overflow-y-auto">
                     
                     {/* Document Type Selector & Ref */}
@@ -1228,14 +1312,14 @@ const QuotationsPage = () => {
                                 className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${formData.documentType === 'quotation' ? 'bg-blue-600 text-white shadow' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                                 onClick={() => setFormData(prev => ({ ...prev, documentType: 'quotation' }))}
                             >
-                                Quotation (QUT-...)
+                                Quotation (JA/QT/...)
                             </button>
                             <button
                                 type="button"
                                 className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${formData.documentType === 'estimate' ? 'bg-amber-600 text-white shadow' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                                 onClick={() => setFormData(prev => ({ ...prev, documentType: 'estimate' }))}
                             >
-                                Estimate (EST-...)
+                                Estimate (JA/EST/...)
                             </button>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1939,52 +2023,84 @@ const QuotationsPage = () => {
                                     </button>
                                 </div>
 
-                                {/* Conversion Actions Group */}
+                                {/* Conversion / Cancellation Actions Group */}
                                 {previewQuote.status === 'converted' ? (
-                                    <button
-                                        onClick={() => { setRevertQuote(previewQuote); setRevertAdminPassword(''); setIsRevertModalOpen(true); }}
-                                        className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 hover:border-amber-300 transition-all duration-150 shadow-sm"
-                                    >
-                                        <RotateCcw size={13} />
-                                        Revert Conversion
-                                    </button>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        <button
+                                            onClick={() => handleOpenCancelModal(previewQuote, 'project')}
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all duration-150 shadow-xs"
+                                            title="Cancel Converted Project (Project Cancel කිරීම)"
+                                        >
+                                            <Ban size={13} />
+                                            Cancel Project
+                                        </button>
+                                        <button
+                                            onClick={() => handleOpenCancelModal(previewQuote, 'quotation')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all duration-150 shadow-xs"
+                                            title="Cancel Quotation (Quotation Cancel කිරීම)"
+                                        >
+                                            <XCircle size={13} />
+                                            Cancel Quote
+                                        </button>
+                                        <button
+                                            onClick={() => { setRevertQuote(previewQuote); setRevertAdminPassword(''); setIsRevertModalOpen(true); }}
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 hover:border-amber-300 transition-all duration-150 shadow-xs"
+                                        >
+                                            <RotateCcw size={13} />
+                                            Revert
+                                        </button>
+                                    </div>
                                 ) : (
-                                    <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-100 rounded-xl p-1">
-                                        <button
-                                            onClick={() => handleOpenConvertToInvoiceModal(previewQuote, 'commercial')}
-                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-all duration-150 shadow-sm"
-                                            title="Convert to Commercial Invoice"
-                                        >
-                                            <FileText size={13} />
-                                            To Invoice
-                                        </button>
-                                        <div className="w-px h-5 bg-purple-200" />
-                                        <button
-                                            onClick={() => handleOpenConvertToInvoiceModal(previewQuote, 'proforma')}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-700 rounded-lg hover:bg-purple-100 transition-all duration-150"
-                                            title="Convert to Proforma Invoice"
-                                        >
-                                            <FileText size={13} />
-                                            To Proforma
-                                        </button>
-                                        <div className="w-px h-5 bg-purple-200" />
-                                        <button
-                                            onClick={() => {
-                                                setConvertProjectYard('');
-                                                setConvertProjectEmployees([]);
-                                                setIsProjectAdvanceChecked(false);
-                                                setProjectAdvanceAmount(0);
-                                                setProjectAdvanceMethod('cash');
-                                                setProjectAdvanceBankAccountId('');
-                                                setProjectAdvanceReference('');
-                                                setIsConvertToProjectOpen(true);
-                                            }}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 rounded-lg hover:bg-blue-100 transition-all duration-150"
-                                            title="Convert to Project"
-                                        >
-                                            <Briefcase size={13} />
-                                            To Project
-                                        </button>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        {previewQuote.status !== 'cancelled' && (
+                                            <button
+                                                onClick={() => handleOpenCancelModal(previewQuote, 'quotation')}
+                                                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all duration-150 shadow-xs"
+                                                title="Cancel Quotation (Quotation Cancel කිරීම)"
+                                            >
+                                                <XCircle size={13} />
+                                                Cancel Quote
+                                            </button>
+                                        )}
+                                        {previewQuote.status !== 'cancelled' && (
+                                            <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-100 rounded-xl p-1">
+                                                <button
+                                                    onClick={() => handleOpenConvertToInvoiceModal(previewQuote, 'commercial')}
+                                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-all duration-150 shadow-sm"
+                                                    title="Convert to Commercial Invoice"
+                                                >
+                                                    <FileText size={13} />
+                                                    To Invoice
+                                                </button>
+                                                <div className="w-px h-5 bg-purple-200" />
+                                                <button
+                                                    onClick={() => handleOpenConvertToInvoiceModal(previewQuote, 'proforma')}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-700 rounded-lg hover:bg-purple-100 transition-all duration-150"
+                                                    title="Convert to Proforma Invoice"
+                                                >
+                                                    <FileText size={13} />
+                                                    To Proforma
+                                                </button>
+                                                <div className="w-px h-5 bg-purple-200" />
+                                                <button
+                                                    onClick={() => {
+                                                        setConvertProjectYard('');
+                                                        setConvertProjectEmployees([]);
+                                                        setIsProjectAdvanceChecked(false);
+                                                        setProjectAdvanceAmount(0);
+                                                        setProjectAdvanceMethod('cash');
+                                                        setProjectAdvanceBankAccountId('');
+                                                        setProjectAdvanceReference('');
+                                                        setIsConvertToProjectOpen(true);
+                                                    }}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 rounded-lg hover:bg-blue-100 transition-all duration-150"
+                                                    title="Convert to Project"
+                                                >
+                                                    <Briefcase size={13} />
+                                                    To Project
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -2126,18 +2242,47 @@ const QuotationsPage = () => {
                         <div className="flex justify-between items-center pb-2 border-b">
                             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                 <RotateCcw className="w-5 h-5 text-amber-600" />
-                                Revert Conversion
+                                Revert / Cancel Options
                             </h3>
                             <button onClick={() => setIsRevertModalOpen(false)} className="text-gray-400 hover:text-slate-600 text-lg font-bold">×</button>
                         </div>
                         <p className="text-xs text-slate-600 leading-normal">
-                            Reverting <strong>{revertQuote.quoteNumber || revertQuote.quotationCode}</strong> will change its status back to <strong>Draft</strong> and soft-delete/cancel any linked Invoice or Project.
+                            Choose an action for <strong>{revertQuote.quoteNumber || revertQuote.quotationCode}</strong>:
                         </p>
+
+                        <div className="grid grid-cols-2 gap-2 pb-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const q = revertQuote;
+                                    setIsRevertModalOpen(false);
+                                    handleOpenCancelModal(q, 'project');
+                                }}
+                                className="p-2.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 text-xs font-bold text-left transition flex flex-col gap-1"
+                            >
+                                <span className="flex items-center gap-1.5"><Ban size={14} className="text-rose-600" /> Cancel Project Only</span>
+                                <span className="text-[10px] font-normal text-rose-700">Project එක Cancel කර Quotation එක Draft තත්වයට පත් කරයි.</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const q = revertQuote;
+                                    setIsRevertModalOpen(false);
+                                    handleOpenCancelModal(q, 'quotation');
+                                }}
+                                className="p-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100 text-xs font-bold text-left transition flex flex-col gap-1"
+                            >
+                                <span className="flex items-center gap-1.5"><XCircle size={14} className="text-gray-600" /> Cancel Quotation</span>
+                                <span className="text-[10px] font-normal text-gray-600">Quotation එක සම්පූර්ණයෙන්ම Cancel කරයි.</span>
+                            </button>
+                        </div>
+
+                        <div className="pt-2 border-t text-xs font-bold text-slate-700">
+                            Or Revert to Draft with Admin Password:
+                        </div>
+
                         <form onSubmit={handleRevertConversionSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Admin Password Required:
-                                </label>
                                 <input
                                     type="password"
                                     value={revertAdminPassword}
@@ -2151,6 +2296,61 @@ const QuotationsPage = () => {
                                 <Button variant="outline" type="button" onClick={() => setIsRevertModalOpen(false)}>Cancel</Button>
                                 <Button variant="primary" type="submit" loading={reverting} className="bg-amber-600 hover:bg-amber-700 text-white font-bold">
                                     Confirm Revert
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel Quotation / Project Modal */}
+            {cancelModalOpen && targetCancelQuote && (
+                <div className="fixed inset-0 bg-black/45 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative space-y-4 animate-[slideUp_0.2s_ease-out]">
+                        <div className="flex justify-between items-center pb-2 border-b">
+                            <h3 className="text-lg font-bold text-rose-700 flex items-center gap-2">
+                                <XCircle className="w-5 h-5 text-rose-600" />
+                                {cancelModalType === 'project' ? 'Cancel Project (Project Cancel කිරීම)' : 'Cancel Quotation (Quotation Cancel කිරීම)'}
+                            </h3>
+                            <button onClick={() => setCancelModalOpen(false)} className="text-gray-400 hover:text-slate-600 text-lg font-bold">×</button>
+                        </div>
+                        
+                        <div className="p-3 bg-rose-50 rounded-xl border border-rose-200 text-xs text-rose-900 space-y-1">
+                            <p className="font-bold">
+                                Document: {targetCancelQuote.quoteNumber || targetCancelQuote.quotationCode}
+                            </p>
+                            <p>
+                                {cancelModalType === 'project'
+                                    ? 'මෙමගින් අදාළ Converted Project එක Cancel කර Quotation එක නැවත Draft තත්වයට පත් කරනු ලැබේ. ඔබට එය සංස්කරණය කිරීමට (Edit) හෝ අලුත් එකක් ලෙස භාවිතා කිරීමට හැකි වේ.'
+                                    : 'මෙම Quotation එක Cancel කරනු ලැබේ (Status: Cancelled).'}
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleConfirmCancelSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Reason for Cancellation / සටහන (Optional):
+                                </label>
+                                <textarea
+                                    rows={2}
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                    placeholder="e.g. Customer cancelled order / Project cancelled / Design changed"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs resize-none outline-none focus:ring-2 focus:ring-rose-500"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-2 border-t">
+                                <Button variant="outline" type="button" onClick={() => setCancelModalOpen(false)}>
+                                    No, Keep Active
+                                </Button>
+                                <Button 
+                                    variant="primary" 
+                                    type="submit" 
+                                    loading={cancelling} 
+                                    className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+                                >
+                                    {cancelModalType === 'project' ? 'Yes, Cancel Project' : 'Yes, Cancel Quotation'}
                                 </Button>
                             </div>
                         </form>

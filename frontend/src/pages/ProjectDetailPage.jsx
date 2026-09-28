@@ -387,8 +387,8 @@ export default function ProjectDetailPage() {
                                 <span className="font-bold text-slate-900 text-sm">
                                     Linked Quotation: {project.quotation.quoteNumber || project.quotation.quotationCode || 'N/A'}
                                 </span>
-                                <span className="px-2 py-0.5 text-xs font-mono font-bold bg-blue-100 text-blue-800 rounded-md border border-blue-200">
-                                    {`E${project.quotation.editCount || (project.quotation.version > 1 ? project.quotation.version - 1 : 0)}`}
+                                <span className="px-2 py-0.5 text-xs font-mono font-bold bg-red-50 text-red-700 rounded-md border border-red-200">
+                                    {`[E${project.quotation.editCount || (project.quotation.version > 1 ? project.quotation.version - 1 : 0)}]`}
                                 </span>
                                 <span className="px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-800 rounded-md capitalize">
                                     {project.quotation.status || 'Active'}

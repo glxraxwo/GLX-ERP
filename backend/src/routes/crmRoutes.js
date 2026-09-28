@@ -7,7 +7,9 @@ import {
     deleteQuotation,
     convertQuotationToInvoice,
     convertQuotationToProject,
-    revertQuotationConversion
+    revertQuotationConversion,
+    cancelQuotation,
+    cancelConvertedProject
 } from '../controllers/quotationController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { requirePermission } from '../middleware/permissionMiddleware.js';
@@ -25,5 +27,7 @@ router.delete('/quotations/:id', requirePermission('sales.delete'), deleteQuotat
 router.post('/quotations/:id/convert-to-invoice', requirePermission('sales.edit'), convertQuotationToInvoice);
 router.post('/quotations/:id/convert-to-project', requirePermission('sales.edit'), convertQuotationToProject);
 router.post('/quotations/:id/revert-conversion', requirePermission('sales.edit'), revertQuotationConversion);
+router.patch('/quotations/:id/cancel', requirePermission('sales.edit'), cancelQuotation);
+router.patch('/quotations/:id/cancel-project', requirePermission('sales.edit'), cancelConvertedProject);
 
 export default router;

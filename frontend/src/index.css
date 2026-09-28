@@ -75,7 +75,7 @@ textarea {
     overflow-x: hidden !important;
   }
 
-  /* Hide navigation, sidebar, headers, buttons, and app shell non-printable elements */
+  /* Hide navigation, sidebar, headers, buttons, toast notifications, popups and app shell non-printable elements */
   aside,
   nav,
   header,
@@ -90,10 +90,26 @@ textarea {
   .fixed.inset-0.z-40,
   .fixed.inset-0.z-30,
   .backdrop-blur-xl,
-  .pointer-events-none {
+  .pointer-events-none,
+  #_react-hot-toast,
+  [data-hot-toast],
+  .toaster,
+  .toast,
+  .react-hot-toast,
+  div[role="status"],
+  div[role="alert"],
+  div[aria-live="polite"],
+  div[aria-live="assertive"],
+  [data-radix-popper-content-wrapper],
+  [role="tooltip"] {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    max-height: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
   }
 
   /* Reset layout of all ancestor/parent containers to allow 100% full-width printing */

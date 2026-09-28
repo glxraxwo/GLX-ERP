@@ -223,6 +223,7 @@ export default function InvoiceDetailPage() {
     };
 
     const handlePrint = () => {
+        toast.dismiss();
         if (printRef.current) {
             printElementAsPDF(printRef.current);
         } else {

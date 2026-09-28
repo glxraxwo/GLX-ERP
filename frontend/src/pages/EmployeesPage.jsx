@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, Users, Mail, Phone, Receipt, Edit } from 'lucide-react';
+import { Plus, Search, Eye, Users, Mail, Phone, Receipt, Edit, Trash2 } from 'lucide-react';
 
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
@@ -10,7 +10,8 @@ import Table from '../components/ui/Table';
 import Badge from '../components/ui/Badge';
 import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
-import { useEmployees, useDepartments } from '../features/hr/useHr';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { useEmployees, useDepartments, useDeleteEmployee } from '../features/hr/useHr';
 
 const statusVariant = {
     active: 'success', on_leave: 'warning', probation: 'info',
@@ -20,13 +21,21 @@ const statusVariant = {
 export default function EmployeesPage() {
     const navigate = useNavigate();
     const [filters, setFilters] = useState({ search: '', departmentId: '', status: 'active', page: 1, limit: 20 });
+    const [deletingEmp, setDeletingEmp] = useState(null);
 
     const { data, isLoading } = useEmployees(filters);
     const { data: deptsData } = useDepartments();
+    const deleteMutation = useDeleteEmployee();
 
     const employees = data?.data || [];
     const depts = deptsData?.data || [];
     const deptOptions = depts.map((d) => ({ value: d._id, label: d.name }));
+
+    const handleDelete = async () => {
+        if (!deletingEmp) return;
+        await deleteMutation.mutateAsync({ id: deletingEmp._id, permanent: true });
+        setDeletingEmp(null);
+    };
 
     const columns = [
         { key: 'employeeCode', label: 'ID', width: '100px', render: (r) => <span className="font-mono text-xs">{r.employeeCode}</span> },
@@ -48,7 +57,7 @@ export default function EmployeesPage() {
         { key: 'dateOfJoining', label: 'Joined', render: (r) => r.dateOfJoining ? new Date(r.dateOfJoining).toLocaleDateString('en-LK') : '—' },
         { key: 'status', label: 'Status', render: (r) => <Badge variant={statusVariant[r.status]}>{r.status?.replace(/_/g, ' ')}</Badge> },
         {
-            key: 'actions', label: 'Actions', width: '170px', render: (r) => (
+            key: 'actions', label: 'Actions', width: '200px', render: (r) => (
                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                     <button
                         onClick={() => navigate(`/employees/${r._id}/payment-sheet`)}
@@ -70,6 +79,13 @@ export default function EmployeesPage() {
                         title="View Employee Profile"
                     >
                         <Eye size={16} />
+                    </button>
+                    <button
+                        onClick={() => setDeletingEmp(r)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition"
+                        title="Delete Employee"
+                    >
+                        <Trash2 size={15} />
                     </button>
                 </div>
             )
@@ -121,6 +137,17 @@ export default function EmployeesPage() {
                                 onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))} />
                         </>}
             </Card>
+
+            <ConfirmDialog
+                isOpen={!!deletingEmp}
+                onClose={() => setDeletingEmp(null)}
+                onConfirm={handleDelete}
+                title="Delete Employee"
+                message={`Are you sure you want to delete ${deletingEmp?.firstName} ${deletingEmp?.lastName} (${deletingEmp?.employeeCode})? This action cannot be undone.`}
+                confirmText="Delete Employee"
+                variant="danger"
+                loading={deleteMutation.isPending}
+            />
         </div>
     );
 }

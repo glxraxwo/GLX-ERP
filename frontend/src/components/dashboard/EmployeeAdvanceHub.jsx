@@ -128,6 +128,20 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
         }
     }, [selectedEmployeeId]);
 
+    const selectedEmp = employees.find(e => e._id === selectedEmployeeId);
+    const effectiveBaseSalary = summary?.baseMonthlySalary 
+        || summary?.employee?.baseMonthlySalary 
+        || (selectedEmp?.basicSalary > 0 
+            ? selectedEmp.basicSalary 
+            : (selectedEmp?.hourlyRate > 0 
+                ? selectedEmp.hourlyRate * 200 
+                : (selectedEmp?.labourRate > 0 
+                    ? (selectedEmp?.paymentType === 'per_day' ? selectedEmp.labourRate * 26 : selectedEmp.labourRate * 200) 
+                    : 50000)));
+    const effectiveLimit = summary?.availableAdvance !== undefined 
+        ? summary.availableAdvance 
+        : +(effectiveBaseSalary * 0.5).toFixed(2);
+
     // Handle submitting a new advance
     const handleSaveAdvance = async (e) => {
         e.preventDefault();
@@ -136,9 +150,10 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
             return;
         }
 
+        const calculatedFromPct = +((effectiveBaseSalary * Number(percentage)) / 100).toFixed(2);
         const numericAmount = advanceType === 'amount' 
             ? Number(amount) 
-            : +(((summary?.baseMonthlySalary || 50000) * Number(percentage)) / 100).toFixed(2);
+            : calculatedFromPct;
 
         if (!numericAmount || numericAmount <= 0) {
             toast.error('Please enter a valid advance amount or percentage');
@@ -219,8 +234,6 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
             setRepaying(false);
         }
     };
-
-    const selectedEmp = employees.find(e => e._id === selectedEmployeeId);
 
     // Percentage color
     const pct = summary?.advancePercentage || 0;
@@ -518,20 +531,26 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
             >
                 <form onSubmit={handleSaveAdvance} className="p-5 space-y-4">
                     {/* Employee info banner */}
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs flex justify-between items-center">
+                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs flex justify-between items-center">
                         <div>
-                            <p className="font-bold text-slate-800">{selectedEmp?.fullName}</p>
-                            <p className="text-slate-500 font-mono">{selectedEmp?.employeeCode} {selectedEmp?.departmentId?.name && `· ${selectedEmp.departmentId.name}`}</p>
+                            <p className="font-bold text-slate-800 text-sm">{selectedEmp?.fullName}</p>
+                            <div className="text-slate-500 font-mono mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <span>{selectedEmp?.employeeCode}</span>
+                                {selectedEmp?.departmentId?.name && <span>· {selectedEmp.departmentId.name}</span>}
+                                <span className="font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded text-[11px]">
+                                    Base Salary: {fmtCurrency(effectiveBaseSalary)}
+                                </span>
+                            </div>
                         </div>
                         <div className="text-right">
-                            <p className="text-slate-500">Available Limit</p>
-                            <p className="font-bold text-emerald-600 text-sm">{fmtCurrency(summary?.availableAdvance || 0)}</p>
+                            <p className="text-slate-500 font-medium">Available Limit</p>
+                            <p className="font-bold text-emerald-600 text-sm">{fmtCurrency(effectiveLimit)}</p>
                         </div>
                     </div>
 
                     {/* Mode Toggle */}
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Advance Type</label>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Advance Type (අත්තිකාරම් ආකාරය)</label>
                         <div className="grid grid-cols-2 gap-2">
                             <button
                                 type="button"
@@ -573,12 +592,46 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
                                 min="100"
                                 className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-mono font-bold"
                             />
+                            {amount && Number(amount) > 0 && effectiveBaseSalary > 0 && (
+                                <div className="mt-2 p-2.5 bg-indigo-50/90 border border-indigo-150 rounded-xl flex flex-wrap items-center justify-between text-xs gap-1.5">
+                                    <span className="font-bold text-indigo-700">
+                                        = {((Number(amount) / effectiveBaseSalary) * 100).toFixed(1)}% of Monthly Base ({fmtCurrency(effectiveBaseSalary)})
+                                    </span>
+                                    {effectiveLimit > 0 && (
+                                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${Number(amount) > effectiveLimit ? 'text-rose-700 bg-rose-100' : 'text-emerald-700 bg-emerald-100'}`}>
+                                            {((Number(amount) / effectiveLimit) * 100).toFixed(0)}% of Limit
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">
-                                Advance Percentage (%)
-                            </label>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="block text-xs font-bold text-slate-700">
+                                    Advance Percentage (%)
+                                </label>
+                                <span className="text-[11px] text-slate-500">Max recommended: 50%</span>
+                            </div>
+
+                            {/* Quick percentage buttons */}
+                            <div className="grid grid-cols-5 gap-1.5 mb-2">
+                                {[10, 20, 25, 30, 50].map((pctVal) => (
+                                    <button
+                                        key={pctVal}
+                                        type="button"
+                                        onClick={() => setPercentage(pctVal.toString())}
+                                        className={`py-1 text-xs font-bold rounded-lg border transition ${
+                                            Number(percentage) === pctVal
+                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                                                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-indigo-50 hover:text-indigo-600'
+                                        }`}
+                                    >
+                                        {pctVal}%
+                                    </button>
+                                ))}
+                            </div>
+
                             <input
                                 type="number"
                                 placeholder="e.g. 25"
@@ -586,13 +639,21 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
                                 onChange={(e) => setPercentage(e.target.value)}
                                 required
                                 min="1"
-                                max="50"
+                                max="100"
                                 className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-mono font-bold"
                             />
-                            {percentage && summary?.baseMonthlySalary && (
-                                <p className="text-xs text-indigo-600 font-semibold mt-1">
-                                    = {percentage}% of {fmtCurrency(summary.baseMonthlySalary)} = {fmtCurrency((summary.baseMonthlySalary * Number(percentage)) / 100)}
-                                </p>
+                            {percentage && Number(percentage) > 0 && (
+                                <div className="mt-2 p-2.5 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-900 space-y-1">
+                                    <div className="flex justify-between items-center font-bold">
+                                        <span>Calculated Advance ({percentage}%):</span>
+                                        <span className="text-sm font-mono text-indigo-700">
+                                            {fmtCurrency((effectiveBaseSalary * Number(percentage)) / 100)}
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-indigo-600">
+                                        Calculated on Monthly Base Salary of {fmtCurrency(effectiveBaseSalary)}
+                                    </p>
+                                </div>
                             )}
                         </div>
                     )}
@@ -615,9 +676,9 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
                             <option value={10}>10 Installments (10 Months / මාස 10 කින්)</option>
                             <option value={12}>12 Installments (12 Months / මාස 12 කින්)</option>
                         </select>
-                        {amount && Number(amount) > 0 && numberOfInstallments > 1 && (
+                        {(((advanceType === 'amount' ? Number(amount) : (effectiveBaseSalary * Number(percentage)) / 100) || 0) > 0) && numberOfInstallments > 1 && (
                             <p className="text-[11px] text-indigo-600 font-bold mt-1">
-                                ~ {fmtCurrency(Number(amount) / numberOfInstallments)} per installment / month
+                                ~ {fmtCurrency(((advanceType === 'amount' ? Number(amount) : (effectiveBaseSalary * Number(percentage)) / 100) || 0) / numberOfInstallments)} per installment / month
                             </p>
                         )}
                     </div>
