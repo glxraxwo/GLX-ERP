@@ -147,7 +147,7 @@ export const getQuotations = asyncHandler(async (req, res) => {
             .populate('introducer', 'firstName lastName callingName employeeCode designation')
             .populate('biller', 'firstName lastName')
             .populate('items.product', 'name productCode uom basePrice sku')
-            .populate('createdBy', 'firstName lastName')
+            .populate('createdBy', 'firstName lastName signature jobTitle')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(Number(limit)),
@@ -174,7 +174,7 @@ export const getQuotationById = asyncHandler(async (req, res) => {
         .populate('introducer', 'firstName lastName callingName employeeCode designation')
         .populate('biller', 'firstName lastName')
         .populate('items.product', 'name productCode uom basePrice sku')
-        .populate('createdBy', 'firstName lastName');
+        .populate('createdBy', 'firstName lastName signature jobTitle');
 
     if (!quotation) {
         res.status(404);
@@ -228,15 +228,26 @@ export const updateQuotation = asyncHandler(async (req, res) => {
         req.body.customerId = customer._id;
     }
 
-    const quotation = await Quotation.findByIdAndUpdate(
-        req.params.id,
-        { ...req.body, updatedBy: req.user._id },
-        { new: true, runValidators: true }
-    );
-
-    if (!quotation) {
+    const existing = await Quotation.findById(req.params.id);
+    if (!existing) {
         res.status(404);
         throw new Error('Quotation not found');
+    }
+
+    Object.assign(existing, req.body);
+    existing.editCount = (existing.editCount || 0) + 1;
+    existing.version = (existing.version || 1) + 1;
+    existing.updatedBy = req.user._id;
+
+    await existing.save();
+    const quotation = existing;
+
+    // If quotation is linked to a project, sync project financials
+    if (quotation.convertedProjectId) {
+        const { default: Project } = await import('../models/Project.js');
+        await Project.findByIdAndUpdate(quotation.convertedProjectId, {
+            quotedPrice: quotation.grandTotal
+        });
     }
 
     createAuditLog({
@@ -446,6 +457,11 @@ export const convertQuotationToInvoice = asyncHandler(async (req, res) => {
                 await bankAccount.save();
             }
         }
+    }
+
+    if (invoice.invoiceType !== 'proforma') {
+        const { deductStockForInvoice } = await import('./invoiceController.js');
+        await deductStockForInvoice(invoice, req.user._id);
     }
 
     await Quotation.updateOne(

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Calendar, CheckCircle2, User, Hammer, Package, Wallet, DollarSign, Award, Clock, Plus, BarChart2, RotateCcw } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, CheckCircle2, User, Hammer, Package, Wallet, DollarSign, Award, Clock, Plus, BarChart2, RotateCcw, FileText, Edit, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import PageHeader from '../components/ui/PageHeader';
@@ -374,6 +374,51 @@ export default function ProjectDetailPage() {
                     </Button>
                 }
             />
+
+            {/* Linked Quotation & Revision Options Banner */}
+            {project.quotation && (
+                <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-slate-50 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-blue-600 text-white rounded-xl shadow-xs">
+                            <FileText size={20} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-slate-900 text-sm">
+                                    Linked Quotation: {project.quotation.quoteNumber || project.quotation.quotationCode || 'N/A'}
+                                </span>
+                                <span className="px-2 py-0.5 text-xs font-mono font-bold bg-blue-100 text-blue-800 rounded-md border border-blue-200">
+                                    {`E${project.quotation.editCount || (project.quotation.version > 1 ? project.quotation.version - 1 : 0)}`}
+                                </span>
+                                <span className="px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-800 rounded-md capitalize">
+                                    {project.quotation.status || 'Active'}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-600 mt-0.5">
+                                Original Quoted Price: <strong>{fmt(project.quotation.grandTotal || project.quotedPrice)}</strong> · {project.quotation.items?.length || 0} line items
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => navigate(`/crm/quotations?edit=${project.quotation._id || project.quotation}`)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold flex-1 sm:flex-none justify-center shadow-xs"
+                        >
+                            <Edit size={14} className="mr-1.5" /> Edit / Revise Quotation
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/crm/quotations?preview=${project.quotation._id || project.quotation}`)}
+                            className="bg-white border-blue-300 text-blue-700 hover:bg-blue-50 font-semibold flex-1 sm:flex-none justify-center"
+                        >
+                            <Eye size={14} className="mr-1.5" /> View / Print
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             {/* Financial Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">

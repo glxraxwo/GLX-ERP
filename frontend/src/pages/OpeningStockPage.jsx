@@ -34,7 +34,7 @@ export default function OpeningStockPage() {
     }));
     const productOptions = (productsData?.data || []).map((p) => ({
         value: p._id,
-        label: `${p.name} — ${p.productCode}`,
+        label: p.sinhalaName ? `${p.name} (${p.sinhalaName}) — ${p.productCode}` : `${p.name} — ${p.productCode}`,
         unitOfMeasure: p.unitOfMeasure || '',
         lastPurchaseCost: p.costs?.lastPurchaseCost || 0,
         averageCost: p.costs?.averageCost || 0,

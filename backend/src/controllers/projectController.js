@@ -139,7 +139,9 @@ export const getProjectById = asyncHandler(async (req, res) => {
     const { id } = req.params;
     let project = await Project.findById(id)
         .populate('customer', 'displayName customerCode phone email billingAddress')
-        .populate('quotation', 'quotationCode grandTotal items')
+        .populate('quotation', 'quotationCode quoteNumber documentType grandTotal items status customerName vehicleNo editCount version date notes')
+        .populate('invoice', 'invoiceNumber invoiceType grandTotal items status')
+        .populate('invoiceId', 'invoiceNumber invoiceType grandTotal items status')
         .populate('assignedEmployees', 'firstName lastName displayName employeeCode basicWageRate basicSalary photoUrl')
         .populate('materialsIssued.product', 'name productCode unitOfMeasure')
         .populate('materialsIssued.issuedBy', 'firstName lastName employeeCode');
@@ -155,7 +157,9 @@ export const getProjectById = asyncHandler(async (req, res) => {
     // Reload with updated numbers
     project = await Project.findById(id)
         .populate('customer', 'displayName customerCode phone email billingAddress')
-        .populate('quotation', 'quotationCode grandTotal items')
+        .populate('quotation', 'quotationCode quoteNumber documentType grandTotal items status customerName vehicleNo editCount version date notes')
+        .populate('invoice', 'invoiceNumber invoiceType grandTotal items status')
+        .populate('invoiceId', 'invoiceNumber invoiceType grandTotal items status')
         .populate('assignedEmployees', 'firstName lastName displayName employeeCode basicWageRate basicSalary photoUrl')
         .populate('materialsIssued.product', 'name productCode unitOfMeasure')
         .populate('materialsIssued.issuedBy', 'firstName lastName employeeCode');

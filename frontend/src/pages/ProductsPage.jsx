@@ -104,6 +104,9 @@ export default function ProductsPage() {
             render: (row) => (
                 <div>
                     <p className="font-medium text-gray-900">{row.name}</p>
+                    {row.sinhalaName && (
+                        <p className="text-xs font-medium text-emerald-700">{row.sinhalaName}</p>
+                    )}
                     <div className="flex flex-wrap gap-2 text-xs text-gray-500 font-mono mt-0.5">
                         {row.sku && <span>SKU: {row.sku}</span>}
                         {row.barcode && <span className="text-indigo-600 font-bold bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">BC: {row.barcode}</span>}

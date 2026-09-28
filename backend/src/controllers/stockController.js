@@ -51,7 +51,7 @@ export const getStockItems = asyncHandler(async (req, res) => {
     const skip = (Number(page) - 1) * Number(limit);
 
     let items = await StockItem.find(filter)
-        .populate('productId', 'name productCode sku stockLevels type productType')
+        .populate('productId', 'name sinhalaName productCode sku stockLevels type productType')
         .populate('warehouseId', 'name warehouseCode')
         .sort({ productName: 1 })
         .skip(skip)
@@ -157,7 +157,7 @@ export const getStockMovements = asyncHandler(async (req, res) => {
 
     const [movements, total] = await Promise.all([
         StockMovement.find(filter)
-            .populate('productId', 'name productCode')
+            .populate('productId', 'name sinhalaName productCode')
             .populate('warehouseId', 'name warehouseCode')
             .populate('fromWarehouseId', 'name warehouseCode')
             .populate('toWarehouseId', 'name warehouseCode')

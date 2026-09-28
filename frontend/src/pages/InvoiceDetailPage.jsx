@@ -239,7 +239,7 @@ export default function InvoiceDetailPage() {
         email: 'info@yourcompany.lk',
     };
 
-    const isProforma = inv.invoiceType === 'proforma' || (inv.invoiceNumber && inv.invoiceNumber.startsWith('PI'));
+    const isProforma = inv.invoiceType === 'proforma' || (inv.invoiceNumber && (inv.invoiceNumber.startsWith('PI') || inv.invoiceNumber.includes('/PI/')));
 
     return (
         <div>

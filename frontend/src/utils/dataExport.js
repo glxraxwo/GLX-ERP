@@ -659,19 +659,24 @@ export const generateElementPDF = async (element) => {
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+        const marginX = 6.35; // 0.25 inch (0.5" total width reduction on A4)
+        const marginY = 6.35; // 0.25 inch (0.5" total height reduction on A4)
+        const printableWidth = pdfWidth - 12.7;
+        const printableHeight = pdfHeight - 12.7;
+
+        const imgHeight = (canvas.height * printableWidth) / canvas.width;
 
         let heightLeft = imgHeight;
         let position = 0;
 
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        pdf.addImage(imgData, 'JPEG', marginX, marginY + position, printableWidth, imgHeight);
+        heightLeft -= printableHeight;
 
         while (heightLeft > 5) {
             position = heightLeft - imgHeight;
             pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pdfHeight;
+            pdf.addImage(imgData, 'JPEG', marginX, marginY + position, printableWidth, imgHeight);
+            heightLeft -= printableHeight;
         }
     }
 

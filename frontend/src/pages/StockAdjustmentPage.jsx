@@ -58,10 +58,12 @@ export default function StockAdjustmentPage() {
             const onHand = s.quantities.onHand || 0;
 
             if (!productMap[pId]) {
+                const sName = s.productId?.sinhalaName || s.sinhalaName;
                 productMap[pId] = {
                     value: pId,
-                    label: s.productName,
+                    label: sName ? `${s.productName} (${sName})` : s.productName,
                     productName: s.productName,
+                    sinhalaName: sName,
                     productCode: s.productId.productCode || '—',
                     onHand: 0,
                 };
@@ -71,8 +73,13 @@ export default function StockAdjustmentPage() {
 
         return Object.values(productMap).map((p) => ({
             value: p.value,
-            label: `${p.productName} (${p.productCode}) — On hand: ${p.onHand.toFixed(2)}`,
+            label: p.sinhalaName 
+                ? `${p.productName} (${p.sinhalaName}) [${p.productCode}] — On hand: ${p.onHand.toFixed(2)}`
+                : `${p.productName} (${p.productCode}) — On hand: ${p.onHand.toFixed(2)}`,
             onHand: p.onHand,
+            productName: p.productName,
+            productCode: p.productCode,
+            sinhalaName: p.sinhalaName,
         }));
     }, [stockData]);
 

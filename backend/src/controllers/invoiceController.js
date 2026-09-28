@@ -8,7 +8,7 @@ import Warehouse from '../models/Warehouse.js';
 import { decreaseStock } from '../services/stockService.js';
 import { getNextSequence } from '../models/Counter.js';
 
-const deductStockForInvoice = async (invoice, userId) => {
+export const deductStockForInvoice = async (invoice, userId) => {
     if (invoice.invoiceType === 'proforma') return; // Proforma NEVER impacts stock
     if (invoice.stockDeducted) return;
 
@@ -20,12 +20,16 @@ const deductStockForInvoice = async (invoice, userId) => {
     if (!whId) return;
 
     for (const item of invoice.items) {
-        if (!item.productId) continue;
+        const prodId = item.productId || item.product;
+        if (!prodId) continue;
+        const qty = Number(item.quantity) || 0;
+        if (qty <= 0) continue;
+
         try {
             await decreaseStock({
-                productId: item.productId,
+                productId: prodId,
                 warehouseId: whId,
-                quantity: item.quantity,
+                quantity: qty,
                 movementType: 'sale_dispatch',
                 sourceDocument: {
                     type: 'invoice',
@@ -33,15 +37,62 @@ const deductStockForInvoice = async (invoice, userId) => {
                     number: invoice.invoiceNumber
                 },
                 reason: `Inventory deduction for Commercial Invoice ${invoice.invoiceNumber}`,
-                userId
+                notes: `Customer: ${invoice.customerSnapshot?.name || invoice.vehicleOwner || 'Customer'} (Vehicle: ${invoice.vehicleNo || 'N/A'})`,
+                userId,
+                allowNegative: true // Ensures stock movements are ALWAYS generated and inventory is tracked even without prior balance
             });
         } catch (err) {
-            console.warn(`[Invoice Stock Deduction] Failed for ${item.productName}:`, err.message);
+            console.warn(`[Invoice Stock Deduction] Failed for ${item.productName || prodId}:`, err.message);
         }
     }
 
     invoice.stockDeducted = true;
     invoice.warehouseId = whId;
+    await invoice.save();
+};
+
+export const restockStockForInvoice = async (invoice, userId) => {
+    // Only restock if stock was actually deducted
+    if (!invoice.stockDeducted) return;
+
+    let whId = invoice.warehouseId;
+    if (!whId) {
+        const wh = await Warehouse.findOne({ deletedAt: null });
+        whId = wh?._id;
+    }
+    if (!whId) return;
+
+    const { increaseStock } = await import('../services/stockService.js');
+
+    for (const item of invoice.items) {
+        const prodId = item.productId || item.product;
+        if (!prodId) continue;
+        const qty = Number(item.quantity) || 0;
+        if (qty <= 0) continue;
+
+        try {
+            await increaseStock({
+                productId: prodId,
+                warehouseId: whId,
+                quantity: qty,
+                costPerUnit: Number(item.unitPrice || 0),
+                movementType: 'cancellation_restock',
+                sourceDocument: {
+                    type: 'invoice',
+                    id: invoice._id,
+                    number: invoice.invoiceNumber
+                },
+                reason: `Restock due to cancelled Invoice ${invoice.invoiceNumber}`,
+                notes: `Cancellation Restock for ${invoice.customerSnapshot?.name || invoice.vehicleOwner || 'Customer'}: ${invoice.cancellationReason || 'Invoice Cancelled'}`,
+                userId,
+                openQuantity: qty // returns back to open stock
+            });
+        } catch (err) {
+            console.warn(`[Invoice Restock] Failed for ${item.productName || prodId}:`, err.message);
+        }
+    }
+
+    invoice.stockDeducted = false;
     await invoice.save();
 };
 
@@ -351,7 +402,7 @@ export const getInvoiceById = asyncHandler(async (req, res) => {
         .populate('biller', 'firstName lastName')
         .populate('salesOrderIds', 'orderNumber orderDate')
         .populate('salesRepId', 'firstName lastName')
-        .populate('createdBy', 'firstName lastName')
+        .populate('createdBy', 'firstName lastName signature jobTitle')
         .populate('cancelledBy', 'firstName lastName');
     if (!invoice) { res.status(404); throw new Error('Invoice not found'); }
     res.json({ success: true, data: invoice });
@@ -431,6 +482,7 @@ export const changeInvoiceStatus = asyncHandler(async (req, res) => {
         invoice.cancelledAt = new Date();
         invoice.cancellationReason = reason;
         invoice.paymentStatus = 'cancelled';
+        await restockStockForInvoice(invoice, req.user._id);
     }
 
     await invoice.save();
@@ -472,9 +524,9 @@ export const convertProformaToCommercial = asyncHandler(async (req, res) => {
 
     invoice.invoiceType = 'standard';
     // If it was a PI- number, generate an official commercial invoice number
-    if (invoice.invoiceNumber && invoice.invoiceNumber.startsWith('PI-')) {
+    if (invoice.invoiceNumber && (invoice.invoiceNumber.startsWith('PI-') || invoice.invoiceNumber.includes('PI/'))) {
         const seq = await getNextSequence('invoice');
-        invoice.invoiceNumber = `INV-${seq}`;
+        invoice.invoiceNumber = `JA/INV/${seq}`;
     }
     await invoice.save();
 
@@ -499,10 +551,10 @@ export const convertInvoiceToProforma = asyncHandler(async (req, res) => {
     }
 
     invoice.invoiceType = 'proforma';
-    // Generate a unique Proforma Invoice ID (PI-xxxx) if not already assigned
-    if (!invoice.proformaNumber || !invoice.invoiceNumber.startsWith('PI-')) {
+    // Generate a unique Proforma Invoice ID (JA/PI/xxxx) if not already assigned
+    if (!invoice.proformaNumber || (!invoice.invoiceNumber.startsWith('PI-') && !invoice.invoiceNumber.includes('PI/'))) {
         const seq = await getNextSequence('proforma_invoice');
-        const piNumber = `PI-${seq}`;
+        const piNumber = `JA/PI/${seq}`;
         invoice.proformaNumber = piNumber;
         invoice.invoiceNumber = piNumber;
     }
@@ -703,6 +755,7 @@ export const revertInvoiceConversion = asyncHandler(async (req, res) => {
         await quotation.save();
     }
 
+    await restockStockForInvoice(invoice, req.user._id);
     invoice.deletedAt = new Date();
     invoice.status = 'cancelled';
     invoice.cancellationReason = `Reverted to Quotation Draft by Admin (${req.user?.firstName || 'Admin'})`;

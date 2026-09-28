@@ -34,8 +34,13 @@ const productSchema = new mongoose.Schema(
             trim: true,
             maxlength: 200,
         },
-        productType: {
+        sinhalaName: {
             type: String,
+            trim: true,
+            maxlength: 200,
+            default: '',
+        },
+        productType: {
             type: String,
             default: 'finished_good',
         },

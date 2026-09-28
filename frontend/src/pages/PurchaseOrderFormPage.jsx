@@ -55,7 +55,10 @@ export default function PurchaseOrderFormPage() {
     const selectedSupplier = useMemo(() => suppliers.find((s) => s._id === supplierId), [supplierId, suppliers]);
 
     const supplierOptions = suppliers.map((s) => ({ value: s._id, label: `${s.displayName} (${s.supplierCode})` }));
-    const productOptions = products.map((p) => ({ value: p._id, label: `${p.name} — ${p.productCode}` }));
+    const productOptions = products.map((p) => ({ 
+        value: p._id, 
+        label: p.sinhalaName ? `${p.name} (${p.sinhalaName}) — ${p.productCode}` : `${p.name} — ${p.productCode}` 
+    }));
     const warehouseOptions = warehouses.map((w) => ({ value: w._id, label: `${w.name} (${w.warehouseCode})` }));
 
     const addItem = () => setItems([...items, { productId: '', orderedQuantity: 1, unitPrice: 0, discountPercent: 0, taxRate: 18, taxable: true }]);

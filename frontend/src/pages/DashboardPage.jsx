@@ -338,7 +338,7 @@ export default function DashboardPage() {
 
                     {/* 5. Stock (In / Out) */}
                     <button 
-                        onClick={() => navigate('/stock-movements')} 
+                        onClick={() => navigate('/stock/movements')} 
                         className="group flex flex-col justify-between p-3.5 rounded-2xl border border-rose-200 bg-white hover:bg-rose-50/50 hover:border-rose-400 hover:shadow-md transition-all text-left shadow-xs"
                     >
                         <div className="flex items-center justify-between mb-2.5">

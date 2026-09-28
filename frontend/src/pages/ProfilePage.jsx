@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { User, Lock, Save, DollarSign, ArrowRight } from 'lucide-react';
+import { User, Lock, Save, DollarSign, ArrowRight, FileSignature, Upload, Trash2, CheckCircle2 } from 'lucide-react';
 
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
@@ -19,6 +19,7 @@ export default function ProfilePage() {
     const { user, setUser } = useAuthStore();
     const navigate = useNavigate();
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [signatureUrl, setSignatureUrl] = useState(user?.signature || '');
     const updateMutation = useUpdateUser();
 
     const profileForm = useForm({
@@ -26,10 +27,32 @@ export default function ProfilePage() {
             firstName: user?.firstName || '',
             lastName: user?.lastName || '',
             phone: user?.phone || '',
+            jobTitle: user?.jobTitle || '',
         },
     });
 
     const passwordForm = useForm();
+
+    const handleSignatureUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                toast.error('Signature image file size must be less than 2MB');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setSignatureUrl(reader.result);
+                toast.success('Signature image loaded! Click Save to apply.');
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleClearSignature = () => {
+        setSignatureUrl('');
+        toast.success('Signature cleared. Remember to save changes.');
+    };
 
     const saveProfile = async (data) => {
         try {
@@ -39,11 +62,14 @@ export default function ProfilePage() {
                     firstName: data.firstName,
                     lastName: data.lastName,
                     phone: data.phone || undefined,
+                    jobTitle: data.jobTitle || undefined,
+                    signature: signatureUrl || '',
                     role: user.role,
                     isActive: true,
                 },
             });
             setUser({ ...user, ...result.data });
+            toast.success('Profile and signature updated successfully!');
         } catch { }
     };
 
@@ -88,14 +114,92 @@ export default function ProfilePage() {
                                 <Input label="First Name" required {...profileForm.register('firstName', { required: true })} />
                                 <Input label="Last Name" required {...profileForm.register('lastName', { required: true })} />
                             </div>
-                            <Input label="Email (read-only)" value={user?.email} disabled />
-                            <Input label="Phone" type="tel" {...profileForm.register('phone')} />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <Input label="Email (read-only)" value={user?.email} disabled />
+                                <Input label="Phone" type="tel" {...profileForm.register('phone')} />
+                            </div>
+                            <Input 
+                                label="Official Designation / Job Title" 
+                                placeholder="e.g. Branch Manager / Operations Manager / Managing Director" 
+                                {...profileForm.register('jobTitle')} 
+                            />
                             <div className="pt-4 border-t">
                                 <Button type="submit" variant="primary" loading={updateMutation.isPending}>
-                                    <Save size={14} className="mr-1.5" /> Save Profile
+                                    <Save size={14} className="mr-1.5" /> Save Profile & Signature
                                 </Button>
                             </div>
                         </form>
+                    </Card>
+
+                    {/* Official Manager Digital Signature Card */}
+                    <Card className="p-4 sm:p-6 border-indigo-100 bg-gradient-to-br from-white to-indigo-50/20">
+                        <div className="flex items-center gap-3 mb-4">
+                            <FileSignature size={22} className="text-indigo-600" />
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-900">Personal Manager Digital Signature</h3>
+                                <p className="text-xs text-gray-500">
+                                    When you log in, this signature will be applied to Quotations, Estimates, and Invoices.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-white flex flex-col items-center justify-center min-h-[140px] relative">
+                                {signatureUrl ? (
+                                    <div className="flex flex-col items-center space-y-2">
+                                        <div className="p-2 border rounded-lg bg-gray-50 shadow-inner">
+                                            <img
+                                                src={signatureUrl}
+                                                alt="My Signature"
+                                                className="h-20 max-w-[260px] object-contain"
+                                            />
+                                        </div>
+                                        <div className="text-center">
+                                            <span className="text-[11px] font-mono text-gray-400">
+                                                ............................................................
+                                            </span>
+                                            <p className="text-xs font-semibold text-gray-800">
+                                                {profileForm.watch('firstName')} {profileForm.watch('lastName')}
+                                                {profileForm.watch('jobTitle') ? ` (${profileForm.watch('jobTitle')})` : ''}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-gray-400 space-y-1">
+                                        <FileSignature size={32} className="mx-auto text-gray-300" />
+                                        <p className="text-xs font-medium">No signature uploaded yet</p>
+                                        <p className="text-[11px] text-gray-400">Company default seal & signature will be used as fallback</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                                <label className="inline-flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold cursor-pointer shadow-xs transition">
+                                    <Upload size={14} />
+                                    <span>{signatureUrl ? 'Change Signature' : 'Upload Signature'}</span>
+                                    <input
+                                        type="file"
+                                        accept="image/png, image/jpeg, image/webp"
+                                        className="hidden"
+                                        onChange={handleSignatureUpload}
+                                    />
+                                </label>
+
+                                {signatureUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={handleClearSignature}
+                                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 rounded-lg text-xs font-semibold cursor-pointer transition"
+                                    >
+                                        <Trash2 size={13} />
+                                        <span>Remove Signature</span>
+                                    </button>
+                                )}
+                            </div>
+                            <p className="text-[11px] text-gray-400">
+                                Recommendation: Transparent background PNG with dark ink signature (Max 2MB).
+                            </p>
+                        </div>
                     </Card>
 
                     <Card className="p-4 sm:p-6">

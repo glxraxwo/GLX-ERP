@@ -204,8 +204,8 @@ invoiceSchema.pre('save', async function () {
     if (this.isNew && !this.invoiceNumber) {
         const isProforma = this.invoiceType === 'proforma';
         const seq = await getNextSequence(isProforma ? 'proforma_invoice' : 'invoice');
-        const prefix = isProforma ? 'PI' : 'INV';
-        const num = `${prefix}-${seq}`;
+        const prefix = isProforma ? 'JA/PI' : 'JA/INV';
+        const num = `${prefix}/${seq}`;
         this.invoiceNumber = num;
         if (isProforma) {
             this.proformaNumber = num;

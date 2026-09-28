@@ -328,6 +328,9 @@ export default function StockPage() {
                                             <tr key={r._id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-5 py-3">
                                                     <p className="font-medium text-sm text-gray-800">{r.productName}</p>
+                                                    {(r.productId?.sinhalaName || r.sinhalaName) && (
+                                                        <p className="text-xs font-medium text-emerald-700">{r.productId?.sinhalaName || r.sinhalaName}</p>
+                                                    )}
                                                     <p className="text-xs font-mono text-gray-400">{r.productCode}</p>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -415,6 +418,9 @@ export default function StockPage() {
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="min-w-0 flex-1">
                                                 <p className="font-semibold text-sm text-gray-800 truncate">{r.productName}</p>
+                                                {(r.productId?.sinhalaName || r.sinhalaName) && (
+                                                    <p className="text-xs font-medium text-emerald-700 truncate">{r.productId?.sinhalaName || r.sinhalaName}</p>
+                                                )}
                                                 <p className="text-xs font-mono text-gray-400 mt-0.5">{r.productCode}</p>
                                             </div>
                                             <Badge variant={s.variant} className="ml-2 flex-shrink-0">{s.label}</Badge>

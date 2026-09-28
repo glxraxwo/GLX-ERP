@@ -6,6 +6,7 @@ export const productFormSchema = z.object({
     productCode: z.string().optional().or(z.literal('')),
     productShortCode: z.string().max(3, 'Max 3 characters').optional().or(z.literal('')),
     name: z.string().min(1, 'Product name is required').max(200),
+    sinhalaName: z.string().max(200).optional().or(z.literal('')),
     shortName: z.string().max(100).optional().or(z.literal('')),
     sku: z.string().max(50).optional().or(z.literal('')),
     barcode: z.string().max(50).optional().or(z.literal('')),

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 
+import { Sparkles } from 'lucide-react';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -11,6 +12,7 @@ import Textarea from '../../components/ui/Textarea';
 import { productFormSchema } from './productSchemas';
 import { useCategories, useBrands, useUoms, useCreateProduct, useUpdateProduct } from './useProducts';
 import { productsApi } from './productsApi';
+import { generateSinhalaProductName } from '../../utils/translationService';
 
 export default function ProductFormModal({ isOpen, onClose, product = null, forceProductType = null }) {
     const isEdit = !!product;
@@ -31,6 +33,8 @@ export default function ProductFormModal({ isOpen, onClose, product = null, forc
     } = useForm({
         resolver: zodResolver(productFormSchema),
         defaultValues: {
+            name: '',
+            sinhalaName: '',
             productCode: '',
             productShortCode: '',
             type: 'trading',
@@ -58,6 +62,7 @@ export default function ProductFormModal({ isOpen, onClose, product = null, forc
                 productCode: product.productCode || '',
                 productShortCode: product.productShortCode || '',
                 name: product.name || '',
+                sinhalaName: product.sinhalaName || '',
                 shortName: product.shortName || '',
                 sku: product.sku || '',
                 barcode: product.barcode || '',
@@ -152,6 +157,28 @@ export default function ProductFormModal({ isOpen, onClose, product = null, forc
         }
     };
 
+    const [isGeneratingSinhala, setIsGeneratingSinhala] = useState(false);
+    const watchName = watch('name');
+
+    const handleAutoGenerateSinhala = async () => {
+        if (!watchName || !watchName.trim()) {
+            toast.error('Please enter product name first');
+            return;
+        }
+        setIsGeneratingSinhala(true);
+        try {
+            const gen = await generateSinhalaProductName(watchName);
+            if (gen) {
+                setValue('sinhalaName', gen, { shouldValidate: true, shouldDirty: true });
+                toast.success(`Generated Sinhala name: ${gen}`);
+            }
+        } catch (err) {
+            toast.error('Failed to generate Sinhala name');
+        } finally {
+            setIsGeneratingSinhala(false);
+        }
+    };
+
     const onSubmit = async (data) => {
         const rawCat = forceProductType === 'raw_material' && categoriesData?.data
             ? categoriesData.data.find(c => c.code === 'RAW' || c.name === 'Raw Material')
@@ -170,6 +197,7 @@ export default function ProductFormModal({ isOpen, onClose, product = null, forc
             productCode: data.productCode || undefined,
             productShortCode: data.productShortCode || undefined,
             name: data.name,
+            sinhalaName: data.sinhalaName || '',
             shortName: data.name.substring(0, 100),
             sku: data.sku || undefined,
             barcode: data.barcode || undefined,
@@ -252,21 +280,48 @@ export default function ProductFormModal({ isOpen, onClose, product = null, forc
                 <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
-                            label="Product / Material Name *"
+                            label="Product / Material Name (English) *"
                             required
-                            placeholder="e.g. MS Channel 3'', Lorry Corner Bracket"
+                            placeholder="e.g. Plywood 12mm, Lorry Corner Bracket"
                             error={errors.name?.message}
                             {...register('name')}
                         />
-                        <Select
-                            label="Material Category *"
-                            required
-                            disabled={forceProductType === 'raw_material'}
-                            error={errors.categoryId?.message}
-                            options={categoryOptions}
-                            {...register('categoryId')}
-                        />
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                                <label className="block text-xs font-semibold text-gray-700">
+                                    Sinhala Name (සිංහල නම)
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={handleAutoGenerateSinhala}
+                                    disabled={isGeneratingSinhala}
+                                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1 transition cursor-pointer"
+                                    title="Auto-generate Sinhala name (උදා: Plywood -> ලෑලි)"
+                                >
+                                    <Sparkles size={12} className={isGeneratingSinhala ? 'animate-spin' : ''} />
+                                    <span>{isGeneratingSinhala ? 'Generating...' : 'Auto-Generate (සිංහලෙන් ජනනය)'}</span>
+                                </button>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="e.g. ලෑලි, ඇලුමිනියම් තහඩුව"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 font-sans"
+                                {...register('sinhalaName')}
+                            />
+                            {errors.sinhalaName && (
+                                <p className="text-xs text-red-500">{errors.sinhalaName.message}</p>
+                            )}
+                        </div>
                     </div>
+
+                    <Select
+                        label="Material Category *"
+                        required
+                        disabled={forceProductType === 'raw_material'}
+                        error={errors.categoryId?.message}
+                        options={categoryOptions}
+                        {...register('categoryId')}
+                    />
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Input

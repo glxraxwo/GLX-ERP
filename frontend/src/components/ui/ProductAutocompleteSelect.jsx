@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import { generateSinhalaProductName } from '../../utils/translationService';
 
 export default function ProductAutocompleteSelect({
     label,
@@ -55,6 +56,7 @@ export default function ProductAutocompleteSelect({
 
     const filtered = products.filter(p =>
         p.name?.toLowerCase().includes(inputValue.toLowerCase()) ||
+        p.sinhalaName?.toLowerCase().includes(inputValue.toLowerCase()) ||
         p.productCode?.toLowerCase().includes(inputValue.toLowerCase())
     );
 
@@ -95,8 +97,14 @@ export default function ProductAutocompleteSelect({
                 return;
             }
 
+            let sinhalaName = '';
+            try {
+                sinhalaName = await generateSinhalaProductName(nameToCreate.trim());
+            } catch (e) {}
+
             const payload = {
                 name: nameToCreate.trim(),
+                sinhalaName: sinhalaName || undefined,
                 productType: productType,
                 status: 'inactive',
                 categoryId: matchedCat._id,
@@ -169,8 +177,13 @@ export default function ProductAutocompleteSelect({
                             onMouseDown={() => handleSelectOption(p)}
                             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition flex items-center justify-between"
                         >
-                            <span className="font-medium text-gray-900">{p.name}</span>
-                            <span className="text-gray-400 text-xs font-mono">({p.productCode})</span>
+                            <div>
+                                <span className="font-medium text-gray-900">{p.name}</span>
+                                {p.sinhalaName && (
+                                    <span className="text-xs text-emerald-700 block font-medium">{p.sinhalaName}</span>
+                                )}
+                            </div>
+                            <span className="text-gray-400 text-xs font-mono ml-2">({p.productCode})</span>
                         </button>
                     ))}
                     {inputValue.trim() && !products.some(p => p.name.toLowerCase() === inputValue.trim().toLowerCase()) && (

@@ -44,8 +44,6 @@ const menuGroups = [
         icon: Boxes,
         items: [
             { label: 'Stock Overview', icon: Boxes, path: '/stock', permission: 'inventory.view' },
-            { label: 'Stock In (Receiving)', icon: ArrowDownToLine, path: '/stock/movements?direction=in', permission: 'inventory.view' },
-            { label: 'Stock Out (Dispatch)', icon: ArrowUpFromLine, path: '/stock/movements?direction=out', permission: 'inventory.view' },
             { label: 'Opening Stock', icon: Plus, path: '/stock/opening', permission: 'inventory.opening' },
             { label: 'Stock Transfer', icon: ArrowLeftRight, path: '/stock/transfer', permission: 'inventory.transfer' },
             { label: 'Stock Adjustment', icon: Sliders, path: '/stock/adjustment', permission: 'inventory.adjust' },
@@ -85,7 +83,6 @@ const menuGroups = [
         items: [
             { label: 'Customers', icon: UserCircle, path: '/customers', permission: 'customers.view' },
             { label: 'Quotations', icon: FileSpreadsheet, path: '/crm/quotations', permission: 'sales.view' },
-            { label: 'Vehicle Estimates', icon: Calculator, path: '/crm/quotations?type=estimate', permission: 'sales.view' },
             { label: 'Yard Projects', icon: Briefcase, path: '/crm/projects', permission: 'sales.view' },
             { label: 'Sales Orders', icon: ShoppingCart, path: '/sales-orders', permission: 'sales.view' },
             { label: 'POS', icon: Calculator, path: '/pos', permission: 'pos.access' },

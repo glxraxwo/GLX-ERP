@@ -456,6 +456,26 @@ const QuotationsPage = () => {
         setIsFormOpen(true);
     };
 
+    const editIdFromUrl = searchParams.get('edit') || '';
+    const previewIdFromUrl = searchParams.get('preview') || '';
+
+    useEffect(() => {
+        if (!loading && quotations.length > 0) {
+            if (editIdFromUrl) {
+                const target = quotations.find(q => q._id === editIdFromUrl || q.quotationCode === editIdFromUrl || q.quoteNumber === editIdFromUrl);
+                if (target) {
+                    openForm(target);
+                }
+            } else if (previewIdFromUrl) {
+                const target = quotations.find(q => q._id === previewIdFromUrl || q.quotationCode === previewIdFromUrl || q.quoteNumber === previewIdFromUrl);
+                if (target) {
+                    setPreviewQuote(target);
+                    setIsPreviewOpen(true);
+                }
+            }
+        }
+    }, [editIdFromUrl, previewIdFromUrl, loading, quotations]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.customerName && !formData.vehicleOwner) {
@@ -1536,12 +1556,14 @@ const QuotationsPage = () => {
                                                         const search = (item.productName || '').toLowerCase().trim();
                                                         if (!search) return true;
                                                         const name = (p.name || p.productName || p.title || '').toLowerCase();
+                                                        const sName = (p.sinhalaName || '').toLowerCase();
                                                         const code = (p.productCode || p.code || p.sku || '').toLowerCase();
-                                                        return name.includes(search) || code.includes(search);
+                                                        return name.includes(search) || sName.includes(search) || code.includes(search);
                                                     })
                                                     .slice(0, 10)
                                                     .map(p => {
                                                         const pName = p.name || p.productName || 'Item';
+                                                        const pSinhalaName = p.sinhalaName || '';
                                                         const pPrice = Number(p.basePrice || p.sellingPrice || p.retailPrice || p.costs?.lastPurchaseCost || p.costs?.averageCost || p.unitPrice || p.price || 0);
                                                         const pCode = p.productCode || p.code || 'NO-CODE';
                                                         return (
@@ -1554,6 +1576,9 @@ const QuotationsPage = () => {
                                                                     const disc = Number(newItems[index].discount || 0);
                                                                     newItems[index].product = p._id;
                                                                     newItems[index].productName = pName;
+                                                                    if (pSinhalaName) {
+                                                                        newItems[index].productTranslation = pSinhalaName;
+                                                                    }
                                                                     newItems[index].unitPrice = pPrice;
                                                                     newItems[index].quantity = qty;
                                                                     newItems[index].subtotal = (qty * pPrice) - (qty * disc);
@@ -1564,10 +1589,17 @@ const QuotationsPage = () => {
                                                                 }}
                                                                 className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 transition cursor-pointer"
                                                             >
-                                                                <div className="font-bold text-gray-800">{pName}</div>
-                                                                <div className="text-gray-500 flex justify-between text-[11px] mt-0.5">
-                                                                    <span>Code: {pCode}</span>
+                                                                <div className="font-bold text-gray-800 flex items-center justify-between">
+                                                                    <span>{pName}</span>
                                                                     <span className="font-mono text-blue-600 font-semibold">LKR {pPrice.toLocaleString()}</span>
+                                                                </div>
+                                                                {pSinhalaName && (
+                                                                    <div className="text-xs font-semibold text-emerald-700 mt-0.5">
+                                                                        {pSinhalaName}
+                                                                    </div>
+                                                                )}
+                                                                <div className="text-gray-500 text-[11px] mt-0.5">
+                                                                    <span>Code: {pCode}</span>
                                                                 </div>
                                                             </button>
                                                         );

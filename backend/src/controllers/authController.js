@@ -156,6 +156,8 @@ export const login = asyncHandler(async (req, res) => {
             fullName: user.fullName,
             email: user.email,
             role: user.role,
+            signature: user.signature || '',
+            jobTitle: user.jobTitle || '',
             lastLogin: user.lastLogin,
             token,
         },

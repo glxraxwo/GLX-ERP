@@ -26,6 +26,7 @@ const movementTypeLabels = {
     adjustment_in: 'Adjustment (+)',
     adjustment_out: 'Adjustment (−)',
     damage: 'Damage',
+    cancellation_restock: 'Restock (Cancelled Invoice)',
 };
 
 const directionVariant = {
@@ -75,6 +76,9 @@ export default function StockMovementsPage() {
             render: (r) => (
                 <div>
                     <p className="text-sm font-medium text-gray-900">{r.productName}</p>
+                    {(r.productId?.sinhalaName || r.sinhalaName) && (
+                        <p className="text-xs font-medium text-emerald-700">{r.productId?.sinhalaName || r.sinhalaName}</p>
+                    )}
                     <p className="text-xs text-gray-400 font-mono">{r.productCode}</p>
                 </div>
             ),
@@ -234,6 +238,9 @@ export default function StockMovementsPage() {
                             <div className="flex items-start justify-between">
                                 <div>
                                     <p className="font-bold text-sm text-gray-900">{selectedMovement.productName}</p>
+                                    {(selectedMovement.productId?.sinhalaName || selectedMovement.sinhalaName) && (
+                                        <p className="text-xs font-medium text-emerald-700">{selectedMovement.productId?.sinhalaName || selectedMovement.sinhalaName}</p>
+                                    )}
                                     <p className="font-mono text-xs text-indigo-700">{selectedMovement.productCode}</p>
                                 </div>
                                 <div className="text-right">

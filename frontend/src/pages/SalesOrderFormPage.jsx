@@ -110,7 +110,7 @@ export default function SalesOrderFormPage() {
         const lowStock = available > 0 && available <= (p.stockLevels?.reorderLevel || 0);
         return {
             value: p._id,
-            label: `${p.name} · ${p.productCode} · ${outOfStock
+            label: `${p.name}${p.sinhalaName ? ` (${p.sinhalaName})` : ''} · ${p.productCode} · ${outOfStock
                 ? '⚠ Out of stock'
                 : lowStock
                     ? `⚠ Only ${available} left`

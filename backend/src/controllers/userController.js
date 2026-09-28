@@ -70,10 +70,14 @@ export const getUserById = asyncHandler(async (req, res) => {
 });
 
 export const updateUser = asyncHandler(async (req, res) => {
-    const { firstName, lastName, phone, role, isActive, permissions } = req.body;
+    const { firstName, lastName, phone, role, isActive, permissions, signature, jobTitle } = req.body;
+    const updateData = { firstName, lastName, phone, role, isActive, permissions };
+    if (signature !== undefined) updateData.signature = signature;
+    if (jobTitle !== undefined) updateData.jobTitle = jobTitle;
+
     const user = await User.findByIdAndUpdate(
         req.params.id,
-        { firstName, lastName, phone, role, isActive, permissions },
+        updateData,
         { new: true, runValidators: true }
     );
     if (!user) { res.status(404); throw new Error('User not found'); }

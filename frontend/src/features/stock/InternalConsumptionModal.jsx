@@ -48,13 +48,19 @@ export default function InternalConsumptionModal({ isOpen, onClose }) {
 
     // Map stock items for select dropdown
     const productOptions = useMemo(() => {
-        return stockList.map(s => ({
-            value: s.productId?._id || s.productId,
-            label: `${s.productName} (${s.productCode}) — Stock: ${s.quantities?.openStock || 0} ${s.unitOfMeasure || 'units'} @ Rs ${s.costPerUnit || 0}`,
-            costPerUnit: s.costPerUnit || 0,
-            productName: s.productName,
-            availableStock: s.quantities?.openStock || 0,
-        }));
+        return stockList.map(s => {
+            const sName = s.productId?.sinhalaName || s.sinhalaName;
+            return {
+                value: s.productId?._id || s.productId,
+                label: sName
+                    ? `${s.productName} (${sName}) [${s.productCode}] — Stock: ${s.quantities?.openStock || 0} ${s.unitOfMeasure || 'units'} @ Rs ${s.costPerUnit || 0}`
+                    : `${s.productName} (${s.productCode}) — Stock: ${s.quantities?.openStock || 0} ${s.unitOfMeasure || 'units'} @ Rs ${s.costPerUnit || 0}`,
+                costPerUnit: s.costPerUnit || 0,
+                productName: s.productName,
+                sinhalaName: sName,
+                availableStock: s.quantities?.openStock || 0,
+            };
+        });
     }, [stockList]);
 
     const handleProductChange = (index, prodId) => {

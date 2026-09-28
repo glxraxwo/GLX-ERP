@@ -71,7 +71,10 @@ export default function InvoiceFormPage() {
     const productOptions = (productsData?.data || [])
         .filter((p) => p.canBeSold !== false)
         .map((p) => ({
-            value: p._id, label: `${p.name} — ${p.productCode}`,
+            value: p._id,
+            label: p.sinhalaName 
+                ? `${p.name} (${p.sinhalaName}) — ${p.productCode}`
+                : `${p.name} — ${p.productCode}`,
         }));
 
     const addItem = () => setItems([
@@ -86,6 +89,9 @@ export default function InvoiceFormPage() {
             const p = productsData?.data?.find((x) => x._id === value);
             if (p) {
                 newItems[idx].productName = p.name;
+                if (p.sinhalaName) {
+                    newItems[idx].productTranslation = p.sinhalaName;
+                }
                 newItems[idx].productCode = p.productCode;
                 newItems[idx].description = p.description || '';
                 newItems[idx].unitPrice = p.basePrice || p.costs?.lastPurchaseCost || p.costs?.averageCost || 0;

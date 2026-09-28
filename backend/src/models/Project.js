@@ -6,6 +6,8 @@ const projectSchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true },
     customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
     quotation: { type: mongoose.Schema.Types.ObjectId, ref: 'Quotation' },
+    invoice: { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice' },
+    invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice' },
     yard: { type: String, trim: true },
     details: { type: String, trim: true },
     assignedEmployees: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }],

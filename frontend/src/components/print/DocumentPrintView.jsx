@@ -1,6 +1,7 @@
 import React, { forwardRef, useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { getDocTranslation, translateCondition, defaultConditions } from '../../utils/documentTranslations';
+import { useAuthStore } from '../../store/authStore';
 
 /* ─── format helpers ─────────────────────────────────────────────────── */
 const fmt = (num, min = 2, max = 2) => {
@@ -44,6 +45,10 @@ const fmtPrintTs = (d = new Date()) => {
 const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLanguage = false, hideToolbar = false, hideLetterheadHeader = false }, ref) => {
     if (!doc) return null;
 
+    const { user: currentUser } = useAuthStore();
+    const [signatureScale, setSignatureScale] = useState('standard'); // 'standard' (72px) or 'large' (88px)
+    const [signerChoice, setSignerChoice] = useState('auto'); // 'auto', 'my', 'company'
+
     const [lang, setLang]                   = useState(useSinhalaLanguage ? 'si' : 'en');
     const [showLetterheadHeader, setShowLH] = useState(!hideLetterheadHeader);
     const [showPhotosInPrint, setShowPhotos] = useState(true);
@@ -62,11 +67,59 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
 
     const t = getDocTranslation(lang);
 
+    /* ── active signature & signer resolution ── */
+    let activeSignature = null;
+    let signerName = '';
+    let signerTitle = '';
+
+    if (signerChoice === 'company') {
+        activeSignature = companyInfo?.bossSignature || '';
+        signerName = '';
+        signerTitle = companyInfo?.bossTitle || 'Authorized Signature';
+    } else if (signerChoice === 'my' && currentUser?.signature) {
+        activeSignature = currentUser.signature;
+        signerName = currentUser.fullName || `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim();
+        signerTitle = currentUser.jobTitle || (currentUser.role === 'admin' ? 'Managing Director' : 'Manager');
+    } else {
+        // Auto: prioritize logged in manager's signature, then creator's signature, then document signature, then company default
+        if (currentUser?.signature) {
+            activeSignature = currentUser.signature;
+            signerName = currentUser.fullName || `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim();
+            signerTitle = currentUser.jobTitle || (currentUser.role === 'admin' ? 'Managing Director' : 'Manager');
+        } else if (doc.createdBy?.signature) {
+            activeSignature = doc.createdBy.signature;
+            signerName = `${doc.createdBy.firstName || ''} ${doc.createdBy.lastName || ''}`.trim();
+            signerTitle = doc.createdBy.jobTitle || 'Manager';
+        } else if (doc.signature) {
+            activeSignature = doc.signature;
+            signerName = doc.signerName || '';
+            signerTitle = doc.signerTitle || '';
+        } else {
+            activeSignature = companyInfo?.bossSignature || '';
+            signerName = '';
+            signerTitle = companyInfo?.bossTitle || 'Authorized Signature';
+        }
+    }
+
     /* ── doc-type flags ── */
-    const isProforma  = doc.invoiceType === 'proforma' || doc.documentType === 'proforma' || (doc.invoiceNumber && doc.invoiceNumber.startsWith('PI'));
-    const isEstimate  = !isProforma && (doc.documentType === 'estimate' || (doc.quoteNumber && doc.quoteNumber.startsWith('EST')));
+    const isProforma  = doc.invoiceType === 'proforma' || doc.documentType === 'proforma' || (doc.invoiceNumber && (doc.invoiceNumber.startsWith('PI') || doc.invoiceNumber.includes('/PI/')));
+    const isEstimate  = !isProforma && (doc.documentType === 'estimate' || (doc.quoteNumber && (doc.quoteNumber.startsWith('EST') || doc.quoteNumber.includes('/EST/'))));
     const isInvoice   = !isProforma && !isEstimate && (!!doc.invoiceNumber || doc.documentType === 'invoice');
     const isQuotation = !isProforma && !isEstimate && !isInvoice;
+
+    const leftHeaderTitle = isProforma 
+        ? (lang === 'si' ? 'PROFORMA QUOTATION / ප්‍රොෆෝමා මිල ගණන්' : lang === 'ta' ? 'PROFORMA QUOTATION / முன் விலைப்புள்ளி' : 'PROFORMA QUOTATION')
+        : isEstimate
+        ? (lang === 'si' ? 'ESTIMATE / ඇස්තමේන්තුව' : lang === 'ta' ? 'ESTIMATE / மதிப்பீடு' : 'ESTIMATE')
+        : isInvoice
+        ? (lang === 'si' ? 'INVOICE / ඉන්වොයිසිය' : lang === 'ta' ? 'INVOICE / விலைப்பட்டியல்' : 'INVOICE')
+        : (lang === 'si' ? 'QUOTATION / මිල ගණන් කැඳවීම' : lang === 'ta' ? 'QUOTATION / விலைப்புள்ளி' : 'QUOTATION');
+
+    const docNumberLabel = (isInvoice || isProforma)
+        ? (lang === 'si' ? 'ඉන්වොයිස් අංකය' : lang === 'ta' ? 'விலைப்பட்டியல் எண்' : 'Invoice No.')
+        : isEstimate
+        ? (lang === 'si' ? 'ඇස්තමේන්තු අංකය' : lang === 'ta' ? 'மதிப்பீடு எண்' : 'Estimate No.')
+        : (lang === 'si' ? 'මිල ගණන් අංකය' : lang === 'ta' ? 'விலைப்புள்ளி எண்' : 'Quotation No.');
 
     let docLabel = t.quotation;
     if (isEstimate)  docLabel = t.estimate;
@@ -167,20 +220,40 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
         grandTotal, branch: branchVal, sales: salesRepVal,
     });
 
+    const hasEdits = Object.keys(editedValues).length > 0;
+    const editNum = Number(doc.editCount || (doc.version > 1 ? doc.version - 1 : 0) || (hasEdits ? 1 : 0));
+    const revisionCode = editNum > 0 ? `E${editNum}` : 'E0';
+
     /* ── inline print styles ── */
     const printStyles = `
+        @page {
+            size: A4 portrait;
+            margin: 0.25in; /* 0.25in on all sides = 0.5in width & height reduction on A4 */
+        }
         @media print {
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
             .no-print { display: none !important; }
-            .print-container { padding: 0 !important; }
+            .print-container {
+                width: calc(210mm - 0.5in) !important;
+                max-width: calc(210mm - 0.5in) !important;
+                min-height: calc(297mm - 0.5in) !important;
+                padding: 10px 14px !important;
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+            }
             body { margin: 0; background: #fff !important; }
             input, textarea { border: none !important; background: transparent !important; box-shadow: none !important; resize: none !important; }
         }
     `;
 
-    const hasEdits = Object.keys(editedValues).length > 0;
-
     return (
-        <div style={{ fontFamily: "'Calibri', 'Segoe UI', Arial, Helvetica, sans-serif", color: '#222', background: '#fff', width: '100%', maxWidth: 860, margin: '0 auto', fontSize: 13 }}>
+        <div style={{ fontFamily: "'Calibri', 'Segoe UI', Arial, Helvetica, sans-serif", color: '#222', background: '#fff', width: '100%', maxWidth: 'calc(210mm - 0.5in)', margin: '0 auto', fontSize: 12.5 }}>
             <style>{printStyles}</style>
 
             {/* ── Toolbar (no-print) ── */}
@@ -268,6 +341,46 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
                         }}>
                             {!showLetterheadHeader ? '✓ Without Header (Pre-printed)' : 'With Header (Letterhead)'}
                         </button>
+
+                        {/* Signature Scale Button */}
+                        <button 
+                            type="button" 
+                            onClick={() => setSignatureScale(s => s === 'large' ? 'standard' : 'large')} 
+                            style={{
+                                padding: '4px 10px', 
+                                borderRadius: 7, 
+                                fontWeight: 600, 
+                                fontSize: 11, 
+                                cursor: 'pointer', 
+                                border: '1px solid #cbd5e1',
+                                background: signatureScale === 'large' ? '#e0f2fe' : '#fff',
+                                color: signatureScale === 'large' ? '#0369a1' : '#374151',
+                            }}
+                            title="Toggle signature size for print balance (Standard 72px / Large 88px)"
+                        >
+                            ✍️ Sig: {signatureScale === 'large' ? 'Large (88px)' : 'Standard (72px)'}
+                        </button>
+
+                        {/* Signer Switcher (if current user has their own signature) */}
+                        {currentUser?.signature && (
+                            <button
+                                type="button"
+                                onClick={() => setSignerChoice(c => c === 'company' ? 'auto' : 'company')}
+                                style={{
+                                    padding: '4px 10px',
+                                    borderRadius: 7,
+                                    fontWeight: 600,
+                                    fontSize: 11,
+                                    cursor: 'pointer',
+                                    border: '1px solid #cbd5e1',
+                                    background: signerChoice !== 'company' ? '#dcfce7' : '#fff',
+                                    color: signerChoice !== 'company' ? '#15803d' : '#4b5563',
+                                }}
+                                title="Click to toggle between your personal manager signature and company default signature"
+                            >
+                                👤 {signerChoice !== 'company' ? `Signed by: ${currentUser.firstName || 'My Sig'}` : 'Signed by: Company Seal'}
+                            </button>
+                        )}
                     </div>
 
                     {isQuickEdit && (
@@ -281,7 +394,19 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
             {/* ══════════════════════════════════════════════════
                 PRINTABLE AREA (100% Matches GLX physical print)
             ══════════════════════════════════════════════════ */}
-            <div ref={ref} className="print-container" style={{ background: '#fff', padding: '16px 24px', minHeight: '270mm' }}>
+            <div 
+                ref={ref} 
+                className="print-container" 
+                style={{ 
+                    background: '#fff', 
+                    padding: '12px 18px', 
+                    width: '100%',
+                    maxWidth: 'calc(210mm - 0.5in)',
+                    minHeight: 'calc(297mm - 0.5in)',
+                    boxSizing: 'border-box',
+                    margin: '0 auto' 
+                }}
+            >
 
                 {/* ── COMPANY HEADER ── */}
                 {showLetterheadHeader && (
@@ -330,6 +455,16 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, fontSize: 12.5 }}>
                     {/* Left: Customer Block */}
                     <div style={{ maxWidth: '52%', lineHeight: 1.6 }}>
+                        <div style={{
+                            fontSize: 15,
+                            fontWeight: 700,
+                            letterSpacing: 0.6,
+                            color: '#111827',
+                            marginBottom: 8,
+                            textTransform: 'uppercase',
+                        }}>
+                            {leftHeaderTitle}
+                        </div>
                         <div style={{ fontWeight: 600, marginBottom: 1, color: '#374151' }}>{t.billTo || 'Customer'}</div>
                         {isQuickEdit ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 2 }}>
@@ -378,8 +513,42 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
 
                     {/* Right: Meta Details */}
                     <div style={{ textAlign: 'left', minWidth: 220 }}>
+                        {/* Revision Indicator & Print Time Stamp at the right-hand corner */}
+                        <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'flex-end', 
+                            alignItems: 'center', 
+                            gap: 6, 
+                            marginBottom: 4,
+                            paddingBottom: 2
+                        }}>
+                            <span 
+                                title={`Document Revision: ${revisionCode}`}
+                                style={{
+                                    fontFamily: "'Consolas', 'Segoe UI Mono', monospace",
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    color: editNum > 0 ? '#b91c1c' : '#475569',
+                                    background: editNum > 0 ? '#fef2f2' : '#f8fafc',
+                                    border: `1px solid ${editNum > 0 ? '#fecaca' : '#e2e8f0'}`,
+                                    padding: '1px 6px',
+                                    borderRadius: 4,
+                                    letterSpacing: 0.5
+                                }}
+                            >
+                                {revisionCode}
+                            </span>
+                            <span style={{ 
+                                fontFamily: "'Consolas', 'Segoe UI Mono', monospace", 
+                                fontSize: 10.5, 
+                                color: '#64748b' 
+                            }}>
+                                {printTimestamp}
+                            </span>
+                        </div>
+
                         {[
-                            [docLabel + ' No.', docNumber],
+                            [docNumberLabel, docNumber],
                             [t.sales || 'Sales', isQuickEdit ? (
                                 <input
                                     type="text"
@@ -573,7 +742,7 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
                                 </div>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '175px 15px 1fr', gap: '2px 4px', alignItems: 'start', marginTop: 3 }}>
-                                <span style={{ fontWeight: 600, color: '#374151' }}>{t.validity || 'Validity'} &nbsp;({docLabel})</span>
+                                <span style={{ fontWeight: 600, color: '#374151' }}>{t.validity || 'Validity'} &nbsp;({isInvoice || isProforma ? 'Invoice' : isEstimate ? 'Estimate' : 'Quotation'})</span>
                                 <span>:</span>
                                 <div>
                                     {isQuickEdit ? (
@@ -645,34 +814,62 @@ const DocumentPrintView = forwardRef(({ document: doc, companyInfo, useSinhalaLa
                         </div>
 
                         {/* Seal + Signature image area */}
-                        <div style={{ position: 'relative', minHeight: 60, paddingTop: 18 }}>
+                        <div style={{ position: 'relative', minHeight: 76, paddingTop: 10 }}>
                             {companyInfo?.companySeal && (
                                 <img
                                     src={companyInfo.companySeal}
-                                    alt="Official Seal"
-                                    style={{ position: 'absolute', top: -5, left: 88, width: 72, height: 72, objectFit: 'contain', opacity: 0.85, pointerEvents: 'none' }}
+                                    alt="Official Company Seal"
+                                    style={{ 
+                                        position: 'absolute', 
+                                        top: -14, 
+                                        left: 100, 
+                                        width: 86, 
+                                        height: 86, 
+                                        objectFit: 'contain', 
+                                        opacity: 0.82, 
+                                        pointerEvents: 'none', 
+                                        zIndex: 1 
+                                    }}
                                 />
                             )}
-                            {companyInfo?.bossSignature && (
+                            {activeSignature ? (
                                 <img
-                                    src={companyInfo.bossSignature}
+                                    src={activeSignature}
                                     alt="Authorized Signature"
-                                    style={{ height: 44, maxWidth: 170, objectFit: 'contain', marginBottom: 2, position: 'relative', zIndex: 1 }}
+                                    style={{ 
+                                        height: signatureScale === 'large' ? 88 : 72, 
+                                        maxWidth: 240, 
+                                        objectFit: 'contain', 
+                                        marginBottom: 4, 
+                                        position: 'relative', 
+                                        zIndex: 2, 
+                                        display: 'block' 
+                                    }}
                                 />
+                            ) : (
+                                <div style={{ height: 48 }} />
                             )}
                             {/* Dotted signature line matching physical print */}
                             <div style={{ fontSize: 14, letterSpacing: 1, color: '#666', lineHeight: 0.8 }}>
                                 ............................................................
                             </div>
                         </div>
-                        <div style={{ fontSize: 11, color: '#333', marginTop: 3 }}>
-                            {t.authorizedSignature || 'Authorized Person'}
-                            {companyInfo?.bossTitle ? ` (${companyInfo.bossTitle})` : ''}
+                        <div style={{ fontSize: 11.5, color: '#333', marginTop: 4, fontWeight: 500 }}>
+                            {signerName ? (
+                                <span>
+                                    <strong>{signerName}</strong> &nbsp;—&nbsp; {signerTitle || (lang === 'si' ? 'බලයලත් නිලධාරී' : 'Authorized Officer')}
+                                </span>
+                            ) : (
+                                <span>
+                                    {t.authorizedSignature || (lang === 'si' ? 'බලයලත් නිලධාරී' : 'Authorized Person')}
+                                    {signerTitle ? ` (${signerTitle})` : ''}
+                                </span>
+                            )}
                         </div>
 
                         {/* Print timestamp */}
                         <div style={{ fontSize: 10, color: '#e74c3c', fontFamily: 'monospace', marginTop: 16 }}>
-                            Printed at &nbsp;&nbsp; {printTimestamp}
+                            Printed at &nbsp;&nbsp; {printTimestamp} &nbsp;&nbsp; <strong style={{ color: '#b91c1c' }}>[{revisionCode}]</strong>
                         </div>
                     </div>
 

@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -164,6 +164,7 @@ function App() {
         <Route path="/stock/transfer" element={<ProtectedRoute requiredPermission="inventory.transfer"><StockTransferPage /></ProtectedRoute>} />
         <Route path="/stock/adjustment" element={<ProtectedRoute requiredPermission="inventory.adjust"><StockAdjustmentPage /></ProtectedRoute>} />
         <Route path="/stock/movements" element={<ProtectedRoute requiredPermission="inventory.view"><StockMovementsPage /></ProtectedRoute>} />
+        <Route path="/stock-movements" element={<Navigate to="/stock/movements" replace />} />
         <Route path="/suppliers" element={<ProtectedRoute requiredPermission="suppliers.view"><SuppliersPage /></ProtectedRoute>} />
         <Route path="/purchase-orders" element={<ProtectedRoute requiredPermission="purchasing.view"><PurchaseOrdersPage /></ProtectedRoute>} />
         <Route path="/purchase-orders/new" element={<ProtectedRoute requiredPermission="purchasing.view"><PurchaseOrderFormPage /></ProtectedRoute>} />

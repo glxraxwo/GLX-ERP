@@ -72,6 +72,15 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
+        signature: {
+            type: String,
+            default: '',
+        },
+        jobTitle: {
+            type: String,
+            trim: true,
+            default: '',
+        },
     },
     {
         timestamps: true, // adds createdAt and updatedAt automatically

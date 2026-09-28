@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getNextSequence } from './Counter.js';
 
 const quotationSchema = new mongoose.Schema({
     documentType: { type: String, enum: ['quotation', 'estimate'], default: 'quotation' },
@@ -48,6 +49,7 @@ const quotationSchema = new mongoose.Schema({
     remarks: { type: String, default: '' },
 
     version: { type: Number, default: 1 },
+    editCount: { type: Number, default: 0 },
     items: [{
         product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', set: v => v === '' || !v ? undefined : v },
         productName: { type: String },
@@ -91,13 +93,10 @@ quotationSchema.pre('validate', async function () {
     }
 
     if (!this.quotationCode) {
-        const date = new Date();
-        const year = date.getFullYear();
-        const docPrefix = this.documentType === 'estimate' ? 'EST' : 'QUT';
-        const searchRegex = new RegExp(`^(${docPrefix}|QUO)-${year}`);
-        const count = await this.constructor.countDocuments({ quotationCode: { $regex: searchRegex } });
-        const seq = String(count + 1).padStart(4, '0');
-        this.quotationCode = `${docPrefix}-${year}-${seq}`;
+        const isEstimate = this.documentType === 'estimate';
+        const seq = await getNextSequence(isEstimate ? 'estimate' : 'quotation');
+        const prefix = isEstimate ? 'JA/EST' : 'JA/QT';
+        this.quotationCode = `${prefix}/${seq}`;
         this.quoteNumber = this.quotationCode;
     }
     // Auto-calculate grand total & balance

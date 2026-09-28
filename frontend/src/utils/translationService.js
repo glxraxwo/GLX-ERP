@@ -1,5 +1,13 @@
 // Dictionary of common truck body manufacturing terms for Sinhala <-> English <-> Tamil
-const GLX_DICTIONARY = [
+export const GLX_DICTIONARY = [
+    { en: "Plywood", si: "ලෑලි", ta: "பிளைவுட்" },
+    { en: "Plywood Sheet", si: "ප්ලයිවුඩ් ලෑලි / තහඩු", ta: "பிளைவுட் தாள்" },
+    { en: "Marine Plywood", si: "මැරීන් ලෑලි", ta: "மரைன் பிளைவுட்" },
+    { en: "Floor Plywood", si: "තට්ටුවේ ලෑලි", ta: "தரை பிளைவுட்" },
+    { en: "Floor Board", si: "තට්ටුවේ ලෑලි", ta: "தரை பலகை" },
+    { en: "Timber", si: "දැව", ta: "மரம்" },
+    { en: "Wood", si: "ලී", ta: "மரம்" },
+    { en: "Board", si: "පුවරුව / ලෑල්ල", ta: "பலகை" },
     { en: "Lorry Body", si: "ලොරි බොඩි", ta: "லாரி பாடி" },
     { en: "Non Rivet Aluminium Body", si: "නොන් රිවට් ඇලුමිනියම් බොඩි", ta: "ரிவெட் இல்லாத அலுமினிய உடம்பு" },
     { en: "Japan Model Original Corner Set Bar", si: "ජපන් මොඩල් ඔරිජිනල් කෝනර් සෙට් බාර්", ta: "ஜப்பான் மாடல் கார்னர் செட் பார்" },
@@ -14,7 +22,6 @@ const GLX_DICTIONARY = [
     { en: "Roof Body Sealant 3M USA", si: "රූෆ් බොඩි සීලන්ට් 3M USA", ta: "கூரை சீலண்ட் 3M USA" },
     { en: "Outside Body 1.2mm Aluminium Sheet", si: "පිටත බොඩි 1.2mm ඇලුමිනියම් තහඩුව", ta: "வெளிப்புற உடல் 1.2மிமீ அலுமினிய தாள்" },
     { en: "Inside Body Plywood Sheet", si: "ඇතුළත බොඩි ප්ලයිවුඩ් තහඩුව", ta: "உட்புற உடல் பிளைவுட் தாள்" },
-    { en: "Floor Board", si: "තට්ටුවේ ලෑලි", ta: "தரை பலகை" },
     { en: "Body Structure", si: "බොඩි ව්‍යුහය", ta: "உடல் அமைப்பு" },
     { en: "Under Framework", si: "යටි රාමුව", ta: "கீழ் கட்டமைப்பு" },
     { en: "Rear Door Frame", si: "පිටුපස දොර රාමුව", ta: "பின்புற கதவு சட்டகம்" },
@@ -24,8 +31,107 @@ const GLX_DICTIONARY = [
     { en: "Under Bar", si: "යටි බාර්", ta: "கீழ் பார்" },
     { en: "Discount", si: "වට්ටම්", ta: "தள்ளுபடி" },
     { en: "Special Discount", si: "විශේෂ වට්ටම්", ta: "சிறப்பு தள்ளுபடி" },
-    { en: "Warranty", si: "වගකීම", ta: "உத்தரவாதம்" }
+    { en: "Warranty", si: "වගකීම", ta: "உத்தரவாதம்" },
+    { en: "Aluminium Sheet", si: "ඇලුමිනියම් තහඩුව", ta: "அலுமினிய தாள்" },
+    { en: "Checker Plate", si: "චෙකර් තහඩු", ta: "செக்கர் தட்டு" },
+    { en: "Steel Plate", si: "වානේ තහඩු", ta: "எஃகு தட்டு" },
+    { en: "Galvanized Sheet", si: "ගැල්වනයිස් තහඩු", ta: "கால்வனேற்றப்பட்ட தாள்" },
+    { en: "Stainless Steel", si: "මල නොකන වානේ (SS)", ta: "துருப்பிடிக்காத எஃகு" },
+    { en: "Mild Steel", si: "මයිල්ඩ් ස්ටීල් (MS)", ta: "லேசான எஃகு" },
+    { en: "Angle Iron", si: "කෝණ යකඩ (ඇන්ගල්)", ta: "கோண இரும்பு" },
+    { en: "Flat Iron", si: "ෆ්ලැට් යකඩ", ta: "தட்டையான இரும்பு" },
+    { en: "Box Bar", si: "බොක්ස් බාර්", ta: "பாக்ஸ் பார்" },
+    { en: "Round Bar", si: "රවුම් බාර්", ta: "வட்ட பார்" },
+    { en: "Door Lock", si: "දොර ලොක් / අගුල", ta: "கதவு பூட்டு" },
+    { en: "Door Hinges", si: "දොර සරනේරු / අසව්", ta: "கதவு கீல்கள்" },
+    { en: "Mudguard Set", si: "මඩ්ගාඩ් සෙට්", ta: "மட்கார்ட் செட்" }
 ];
+
+// Single word / phrase mapping dictionary for materials and hardware
+export const PRODUCT_WORD_MAP = {
+    "plywood": "ලෑලි",
+    "timber": "දැව",
+    "wood": "ලී",
+    "board": "ලෑල්ල / පුවරුව",
+    "steel": "වානේ",
+    "iron": "යකඩ",
+    "aluminium": "ඇලුමිනියම්",
+    "aluminum": "ඇලුමිනියම්",
+    "sheet": "තහඩුව",
+    "plate": "තහඩුව",
+    "pipe": "පයිප්ප",
+    "tube": "ටියුබ්",
+    "channel": "චැනල්",
+    "angle": "ඇන්ගල්",
+    "bar": "බාර්",
+    "box": "පෙට්ටිය",
+    "door": "දොර",
+    "window": "ජනේලය",
+    "frame": "රාමුව",
+    "lock": "ලොක් / අගුල",
+    "hinge": "සරනේරු / අසව්",
+    "hinges": "සරනේරු / අසව්",
+    "bolt": "බෝල්ට්",
+    "bolts": "බෝල්ට්",
+    "nut": "නට්",
+    "nuts": "නට්",
+    "screw": "ඉස්කුරුප්පු",
+    "screws": "ඉස්කුරුප්පු",
+    "washer": "වොෂර්",
+    "rivet": "රිවට්",
+    "rivets": "රිවට්",
+    "paint": "තීන්ත",
+    "primer": "ප්‍රයිමර්",
+    "thinner": "තිනර්",
+    "sealant": "සීලන්ට්",
+    "gum": "ගම්",
+    "rubber": "රබර්",
+    "glass": "වීදුරු",
+    "mirror": "කණ්ණාඩිය",
+    "light": "ලයිට්",
+    "wire": "වයර්",
+    "cable": "කේබල්",
+    "switch": "ස්විච්",
+    "relay": "රිලේ",
+    "battery": "බැටරි",
+    "mudguard": "මඩ්ගාඩ්",
+    "bumper": "බම්පර්",
+    "footboard": "පා පුවරුව",
+    "floor": "තට්ටුව / බිම",
+    "roof": "වහලය",
+    "corner": "කෝනර්",
+    "bracket": "බ්‍රැකට්",
+    "beading": "බීඩිං",
+    "gutter": "ගටරය",
+    "ladder": "ඉණිමඟ",
+    "stopper": "ස්ටොපර්",
+    "handle": "හැඬලය",
+    "roller": "රෝලර්",
+    "shutter": "ෂටර්",
+    "canopy": "කැනපි",
+    "tarpaulin": "ටාපෝලින් / ටෙන්ට් රෙදි",
+    "canvas": "කැන්වස්",
+    "fiber": "ෆයිබර්",
+    "sticker": "ස්ටිකර්",
+    "grease": "ග්‍රීස්",
+    "oil": "තෙල්",
+    "coolant": "කූලන්ට්",
+    "filter": "ෆිල්ටර්",
+    "belt": "බෙල්ට්",
+    "hose": "හෝස්",
+    "clamp": "ක්ලෑම්ප්",
+    "spring": "දුන්න / ස්ප්‍රිං",
+    "bearing": "බෙයාරිං",
+    "brake": "බ්‍රේක්",
+    "clutch": "ක්ලච්",
+    "tank": "ටැංකිය",
+    "cap": "පියන",
+    "cover": "ආවරණය"
+};
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 /**
  * Detect language of text (Sinhala, Tamil, or English)
@@ -58,11 +164,19 @@ export const translateText = async (text, targetLang = 'en') => {
         return false;
     });
 
-    if (dictMatch) {
+    if (dictMatch && dictMatch[targetLang]) {
         return dictMatch[targetLang];
     }
 
-    // 2. Fallback to MyMemory translation API
+    // 2. Check single word map if English to Sinhala
+    if (sourceLang === 'en' && targetLang === 'si') {
+        const lower = cleanText.toLowerCase();
+        if (PRODUCT_WORD_MAP[lower]) {
+            return PRODUCT_WORD_MAP[lower];
+        }
+    }
+
+    // 3. Fallback to MyMemory translation API
     try {
         const langpair = `${sourceLang}|${targetLang}`;
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanText)}&langpair=${langpair}`;
@@ -79,4 +193,65 @@ export const translateText = async (text, targetLang = 'en') => {
     }
 
     return cleanText; // fallback to original text if API fails
+};
+
+/**
+ * Automatically generates a Sinhala name from an English product name.
+ * e.g.:
+ *  - "Plywood" -> "ලෑලි"
+ *  - "Floor Board Plywood" -> "තට්ටුවේ ලෑලි"
+ *  - "Aluminium Sheet" -> "ඇලුමිනියම් තහඩුව"
+ */
+export const generateSinhalaProductName = async (englishName) => {
+    if (!englishName || !englishName.trim()) return '';
+    const clean = englishName.trim();
+
+    // 1. Exact match in dictionary
+    const exact = GLX_DICTIONARY.find(item => item.en.toLowerCase() === clean.toLowerCase());
+    if (exact && exact.si) return exact.si;
+
+    // 2. Exact match in product word map (e.g. "Plywood" -> "ලෑලි")
+    const lower = clean.toLowerCase();
+    if (PRODUCT_WORD_MAP[lower]) {
+        return PRODUCT_WORD_MAP[lower];
+    }
+
+    // 3. Match known phrases and replace within the string
+    let translatedPhrase = clean;
+    let matchedAny = false;
+
+    // Longest phrases first
+    const sortedDict = [...GLX_DICTIONARY].sort((a, b) => b.en.length - a.en.length);
+    for (const item of sortedDict) {
+        const regex = new RegExp(`\\b${escapeRegExp(item.en)}\\b`, 'gi');
+        if (regex.test(translatedPhrase)) {
+            translatedPhrase = translatedPhrase.replace(regex, item.si);
+            matchedAny = true;
+        }
+    }
+
+    // Match individual keywords
+    for (const [enWord, siWord] of Object.entries(PRODUCT_WORD_MAP)) {
+        const wordRegex = new RegExp(`\\b${escapeRegExp(enWord)}\\b`, 'gi');
+        if (wordRegex.test(translatedPhrase)) {
+            translatedPhrase = translatedPhrase.replace(wordRegex, siWord);
+            matchedAny = true;
+        }
+    }
+
+    if (matchedAny) {
+        return translatedPhrase;
+    }
+
+    // 4. API fallback
+    try {
+        const apiRes = await translateText(clean, 'si');
+        if (apiRes && apiRes !== clean) {
+            return apiRes;
+        }
+    } catch (err) {
+        console.warn('Auto name generation fallback failed:', err);
+    }
+
+    return clean;
 };
