@@ -31,6 +31,8 @@ const projectSchema = new mongoose.Schema({
         productName: { type: String },
         qty: { type: Number, required: true, default: 1 },
         buyingPrice: { type: Number, required: true, default: 0 },
+        returnedQty: { type: Number, default: 0 },
+        warehouseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse' },
         issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
         issuedDate: { type: Date, default: Date.now }
     }],

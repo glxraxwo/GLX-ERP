@@ -23,6 +23,7 @@ const settingsSchema = z.object({
     lowStockThreshold: z.coerce.number().min(0),
     managerSmsPhone: z.string().optional(),
     bossSignature: z.string().optional(),
+    companySeal: z.string().optional(),
     bossTitle: z.string().optional(),
     invoiceCustomTemplateUrl: z.string().optional(),
     quotationCustomTemplateUrl: z.string().optional(),
@@ -122,6 +123,21 @@ export default function SettingsPage() {
             const reader = new FileReader();
             reader.onloadend = () => {
                 setValue('bossSignature', reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSealFileUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Company seal image file size must be less than 2MB');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setValue('companySeal', reader.result);
             };
             reader.readAsDataURL(file);
         }
@@ -365,6 +381,46 @@ export default function SettingsPage() {
                                                             className="mt-1.5 text-xs text-rose-600 hover:underline font-medium"
                                                         >
                                                             Remove Signature
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* ── Official Company Seal / Stamp ── */}
+                                        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 sm:p-5 mt-4">
+                                            <label className="text-xs font-bold text-gray-700 uppercase tracking-wide flex items-center gap-1.5 mb-3">
+                                                <BadgeCheck size={16} className="text-emerald-600" /> Official Company Seal / Rubber Stamp (for Quotations & Invoices)
+                                            </label>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Upload Company Seal / Stamp</label>
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={handleSealFileUpload}
+                                                            className="mt-1 block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
+                                                        />
+                                                        <p className="text-[11px] text-gray-400 mt-1">Official circular rubber stamp or company seal image with transparent background (Max 2MB).</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Company Seal Preview</label>
+                                                    <div className="h-28 w-full border border-dashed border-gray-300 rounded-xl bg-white flex items-center justify-center p-2 relative">
+                                                        {watch('companySeal') ? (
+                                                            <img src={watch('companySeal')} alt="Company Seal Preview" className="max-h-24 max-w-full object-contain" />
+                                                        ) : (
+                                                            <span className="text-xs text-gray-400 font-medium">No seal uploaded yet</span>
+                                                        )}
+                                                    </div>
+                                                    {watch('companySeal') && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setValue('companySeal', '')}
+                                                            className="mt-1.5 text-xs text-rose-600 hover:underline font-medium"
+                                                        >
+                                                            Remove Seal
                                                         </button>
                                                     )}
                                                 </div>

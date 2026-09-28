@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, ClipboardList, Briefcase, MapPin, DollarSign, BarChart2, Activity, User } from 'lucide-react';
+import { Plus, Search, Eye, ClipboardList, Briefcase, MapPin, DollarSign, BarChart2, Activity, User, LayoutGrid, List } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import PageHeader from '../components/ui/PageHeader';
@@ -14,6 +14,7 @@ import Textarea from '../components/ui/Textarea';
 import CustomerAutocompleteSelect from '../components/ui/CustomerAutocompleteSelect';
 import DateRangeFilter from '../components/ui/DateRangeFilter';
 import { useEmployees } from '../features/hr/useHr';
+import YardBayGrid from '../components/yard/YardBayGrid';
 import api from '../api/axios';
 
 const statusVariants = {
@@ -26,6 +27,7 @@ export default function ProjectsPage() {
     const navigate = useNavigate();
     const [projects, setProjects] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [viewMode, setViewMode] = useState('bays'); // 'bays' | 'table'
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('');
     const [startDate, setStartDate] = useState('');
@@ -229,37 +231,73 @@ export default function ProjectsPage() {
                 </Card>
             </div>
 
-            {/* Filters */}
+            {/* View Mode Toggle & Filters */}
             <Card>
-                <div className="p-4 border-b border-gray-200 flex flex-wrap gap-3">
-                    <div className="relative flex-1 min-w-[200px]">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input type="text" placeholder="Search projects by name, code, yard..."
-                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)} />
+                <div className="p-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
+                    {/* View Switcher Tabs */}
+                    <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1 shadow-xs">
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('bays')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                viewMode === 'bays'
+                                    ? 'bg-white text-primary-700 shadow-sm border border-gray-200'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            <LayoutGrid size={15} />
+                            Visual Yard Bays (කොටු සටහන)
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('table')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                viewMode === 'table'
+                                    ? 'bg-white text-primary-700 shadow-sm border border-gray-200'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            <List size={15} />
+                            Table List View
+                        </button>
                     </div>
-                    <div className="w-full sm:w-48">
-                        <Select placeholder="All Statuses"
-                            options={[
-                                { value: 'active', label: 'Active' },
-                                { value: 'delivered', label: 'Delivered' },
-                                { value: 'cancelled', label: 'Cancelled' },
-                            ]}
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)} />
+
+                    <div className="flex flex-wrap items-center gap-3 flex-1 justify-end">
+                        <div className="relative min-w-[200px]">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input type="text" placeholder="Search projects by name, code, yard..."
+                                className="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)} />
+                        </div>
+                        <div className="w-36">
+                            <Select placeholder="All Statuses"
+                                options={[
+                                    { value: 'active', label: 'Active' },
+                                    { value: 'delivered', label: 'Delivered' },
+                                    { value: 'cancelled', label: 'Cancelled' },
+                                ]}
+                                value={status}
+                                onChange={(e) => setStatus(e.target.value)} />
+                        </div>
+                        <DateRangeFilter
+                            startDate={startDate}
+                            endDate={endDate}
+                            onStartDateChange={setStartDate}
+                            onEndDateChange={setEndDate}
+                            onClear={() => { setStartDate(''); setEndDate(''); }}
+                        />
                     </div>
-                    <DateRangeFilter
-                        startDate={startDate}
-                        endDate={endDate}
-                        onStartDateChange={setStartDate}
-                        onEndDateChange={setEndDate}
-                        onClear={() => { setStartDate(''); setEndDate(''); }}
-                    />
                 </div>
 
-                <Table columns={columns} data={projects} loading={isLoading}
-                    emptyState={<ClipboardList size={40} className="mx-auto text-gray-300" />} />
+                <div className="p-4">
+                    {viewMode === 'bays' ? (
+                        <YardBayGrid projects={projects} />
+                    ) : (
+                        <Table columns={columns} data={projects} loading={isLoading}
+                            emptyState={<ClipboardList size={40} className="mx-auto text-gray-300" />} />
+                    )}
+                </div>
             </Card>
 
             {/* New Project Modal */}

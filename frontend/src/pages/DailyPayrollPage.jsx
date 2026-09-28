@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import {
     Calendar, Clock, DollarSign, CheckCircle2, AlertCircle,
-    Building2, ChevronLeft, ChevronRight, Check, Search, Download, Filter, Sparkles
+    Building2, ChevronLeft, ChevronRight, Check, Search, Download, Filter, Sparkles, Users
 } from 'lucide-react';
 
 import PageHeader from '../components/ui/PageHeader';
@@ -14,6 +15,7 @@ import Badge from '../components/ui/Badge';
 import { usePermission } from '../hooks/usePermission';
 
 export default function DailyPayrollPage() {
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { hasPermission, isAdmin } = usePermission();
     const canManagePayroll = isAdmin || hasPermission('hr.payroll.manage');
@@ -220,23 +222,33 @@ export default function DailyPayrollPage() {
                 title="Daily Wages & Attendance Payout"
                 description="Process daily and hourly wage payments, link labor costs to active projects, and log cash/bank vouchers."
                 actions={
-                    <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border shadow-xs">
-                        <Button variant="outline" size="sm" onClick={() => changeDate(-1)}><ChevronLeft size={16} /></Button>
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="text-xs font-bold text-gray-800 bg-transparent outline-none px-2 font-mono cursor-pointer"
-                        />
-                        <Button variant="outline" size="sm" onClick={() => changeDate(1)}><ChevronRight size={16} /></Button>
+                    <div className="flex items-center gap-2 flex-wrap">
                         <Button
-                            variant="secondary"
+                            variant="outline"
                             size="sm"
-                            onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                            className="text-xs font-bold"
+                            onClick={() => navigate('/employees')}
+                            className="flex items-center gap-1.5 font-bold text-gray-700 bg-white border-gray-300 hover:bg-gray-50 shadow-xs"
                         >
-                            Today
+                            <Users size={15} className="text-primary-600" /> Employee Master (සේවක ලැයිස්තුව)
                         </Button>
+                        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border shadow-xs">
+                            <Button variant="outline" size="sm" onClick={() => changeDate(-1)}><ChevronLeft size={16} /></Button>
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="text-xs font-bold text-gray-800 bg-transparent outline-none px-2 font-mono cursor-pointer"
+                            />
+                            <Button variant="outline" size="sm" onClick={() => changeDate(1)}><ChevronRight size={16} /></Button>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                                className="text-xs font-bold"
+                            >
+                                Today
+                            </Button>
+                        </div>
                     </div>
                 }
             />
@@ -430,6 +442,7 @@ export default function DailyPayrollPage() {
                                         <th className="p-3">Attendance ({selectedDate})</th>
                                         <th className="p-3">Units Worked</th>
                                         <th className="p-3 font-mono">Today's Wage</th>
+                                        <th className="p-3 text-right">Advance %</th>
                                         <th className="p-3">Status</th>
                                         <th className="p-3 text-right">Action</th>
                                     </tr>
@@ -481,6 +494,20 @@ export default function DailyPayrollPage() {
                                                 </td>
                                                 <td className="p-3 font-mono font-bold text-slate-900">
                                                     {fmt(w.baseWage)}
+                                                </td>
+                                                <td className="p-3 text-right">
+                                                    {w.pendingAdvance > 0 ? (
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="font-mono text-[11px] text-rose-600 font-bold">-{fmt(w.pendingAdvance)}</span>
+                                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-black border ${
+                                                                w.advancePercentage > 50 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                            }`}>
+                                                                {w.advancePercentage}%
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-gray-400 text-xs font-mono">0.0%</span>
+                                                    )}
                                                 </td>
                                                 <td className="p-3">
                                                     {w.alreadyPaid ? (
@@ -782,6 +809,7 @@ export default function DailyPayrollPage() {
                                             <th className="p-3 text-right">Hourly Rate</th>
                                             <th className="p-3 text-right">Gross Wage</th>
                                             <th className="p-3 text-right">Advance Deducted</th>
+                                            <th className="p-3 text-center">Advance %</th>
                                             <th className="p-3 text-right">Net Payable</th>
                                         </tr>
                                     </thead>
@@ -796,6 +824,15 @@ export default function DailyPayrollPage() {
                                                 <td className="p-3 text-right font-mono font-semibold text-gray-900">{fmt(p.grossWage)}</td>
                                                 <td className="p-3 text-right font-mono font-bold text-rose-600">
                                                     {p.totalAdvanceDeduction > 0 ? `-${fmt(p.totalAdvanceDeduction)}` : 'Rs. 0.00'}
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                                                        (p.advancePercentage || 0) > 50 ? 'bg-rose-100 text-rose-700 border-rose-300' :
+                                                        (p.advancePercentage || 0) > 0 ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                                                        'bg-gray-100 text-gray-500 border-gray-200'
+                                                    }`}>
+                                                        {p.advancePercentage || 0}%
+                                                    </span>
                                                 </td>
                                                 <td className="p-3 text-right font-mono font-black text-emerald-700 bg-emerald-50/50">
                                                     {fmt(p.netPayable)}

@@ -38,6 +38,9 @@ export default function InvoiceFormPage() {
     const [billerName, setBillerName] = useState('');
     const [numberPlateImage, setNumberPlateImage] = useState('');
     const [lorryBodyImage, setLorryBodyImage] = useState('');
+    const [showAdvance, setShowAdvance] = useState(false);
+    const [advancePercentage, setAdvancePercentage] = useState(0);
+    const [advanceAmount, setAdvanceAmount] = useState(0);
 
     const { data: customersData } = useQuery({
         queryKey: ['customers', 'active'],
@@ -178,6 +181,9 @@ export default function InvoiceFormPage() {
                     };
                 }),
                 shippingCost: +shippingCost || 0,
+                advancePercentage: showAdvance ? (+advancePercentage || 0) : 0,
+                advanceAmount: showAdvance ? (+advanceAmount || 0) : 0,
+                showAdvanceOnInvoice: showAdvance,
                 notes: notes || undefined,
                 paymentInstructions: paymentInstructions || undefined,
                 status: 'approved',
@@ -493,6 +499,67 @@ export default function InvoiceFormPage() {
                             </div>
                             <div className="flex justify-between pt-3 border-t font-bold">
                                 <span>Total</span><span className="text-primary-600">{fmt(totals.grand)}</span>
+                            </div>
+
+                            {/* Optional Advance Payment */}
+                            <div className="pt-3 border-t space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={showAdvance} 
+                                        onChange={(e) => {
+                                            setShowAdvance(e.target.checked);
+                                            if (!e.target.checked) {
+                                                setAdvancePercentage(0);
+                                                setAdvanceAmount(0);
+                                            }
+                                        }} 
+                                        className="rounded text-primary-600"
+                                    />
+                                    <span>Add Advance Payment (Optional)</span>
+                                </label>
+
+                                {showAdvance && (
+                                    <div className="bg-emerald-50/70 p-2.5 rounded-lg border border-emerald-200 space-y-2 text-xs">
+                                        <div className="flex justify-between items-center">
+                                            <span>Advance %:</span>
+                                            <input 
+                                                type="number" 
+                                                min="0" 
+                                                max="100" 
+                                                step="any"
+                                                value={advancePercentage || ''} 
+                                                onChange={(e) => {
+                                                    const pct = Number(e.target.value);
+                                                    setAdvancePercentage(pct);
+                                                    setAdvanceAmount(+((totals.grand * pct) / 100).toFixed(2));
+                                                }}
+                                                className="w-16 px-2 py-0.5 border rounded text-right font-mono font-bold bg-white" 
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span>Advance LKR:</span>
+                                            <input 
+                                                type="number" 
+                                                min="0" 
+                                                step="0.01"
+                                                value={advanceAmount || ''} 
+                                                onChange={(e) => {
+                                                    const amt = Number(e.target.value);
+                                                    setAdvanceAmount(amt);
+                                                    setAdvancePercentage(totals.grand > 0 ? +((amt / totals.grand) * 100).toFixed(1) : 0);
+                                                }}
+                                                className="w-24 px-2 py-0.5 border rounded text-right font-mono font-bold bg-white" 
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <div className="flex justify-between items-center font-bold text-emerald-800 pt-1 border-t border-emerald-200">
+                                            <span>Balance Due:</span>
+                                            <span className="font-mono">{fmt(Math.max(0, totals.grand - (advanceAmount || 0)))}</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <Button variant="primary" fullWidth className="mt-6" onClick={submit} loading={createMutation.isPending}

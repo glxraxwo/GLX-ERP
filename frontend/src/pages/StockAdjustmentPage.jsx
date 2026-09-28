@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, ArrowLeft, Save, Settings2 } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Save, Settings2, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
@@ -27,9 +27,13 @@ const adjustmentReasons = [
 
 export default function StockAdjustmentPage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const actionType = searchParams.get('type'); // 'in' | 'out' | null
+    const defaultReason = actionType === 'in' ? 'found' : (actionType === 'out' ? 'damage' : 'physical_count');
+
     const [warehouseId, setWarehouseId] = useState('');
     const [notes, setNotes] = useState('');
-    const [lines, setLines] = useState([{ productId: '', adjustmentQuantity: '', reason: 'physical_count' }]);
+    const [lines, setLines] = useState([{ productId: '', adjustmentQuantity: '', reason: defaultReason }]);
 
     const { data: warehousesData } = useWarehouses({ isActive: true });
     const mutation = useAdjustStock();
@@ -88,22 +92,38 @@ export default function StockAdjustmentPage() {
         try {
             await mutation.mutateAsync({
                 warehouseId,
-                items: items.map((i) => ({
-                    productId: i.productId,
-                    adjustmentQuantity: Number(i.adjustmentQuantity),
-                    reason: i.reason,
-                })),
-                notes: notes || undefined,
+                items: items.map((i) => {
+                    const rawVal = Number(i.adjustmentQuantity);
+                    let finalQty = rawVal;
+                    if (actionType === 'out') {
+                        finalQty = -Math.abs(rawVal);
+                    } else if (actionType === 'in') {
+                        finalQty = Math.abs(rawVal);
+                    }
+                    return {
+                        productId: i.productId,
+                        adjustmentQuantity: finalQty,
+                        reason: i.reason,
+                    };
+                }),
+                notes: notes || (actionType === 'in' ? 'Stock In (Direct Addition)' : (actionType === 'out' ? 'Stock Out (Direct Deduction)' : undefined)),
             });
             navigate('/stock');
         } catch { }
     };
 
+    const pageTitle = actionType === 'in'
+        ? 'Stock In (බඩු ඇතුල් කිරීම)'
+        : (actionType === 'out' ? 'Stock Out (බඩු පිට කිරීම)' : 'Stock Adjustment');
+    const pageDesc = actionType === 'in'
+        ? 'Add incoming stock items or positive inventory adjustment'
+        : (actionType === 'out' ? 'Deduct damaged, scrap, shrinkage, or outgoing items from stock' : 'Correct stock levels with a full audit trail');
+
     return (
         <div>
             <PageHeader
-                title="Stock Adjustment"
-                description="Correct stock levels with a full audit trail"
+                title={pageTitle}
+                description={pageDesc}
                 actions={<Button variant="outline" onClick={() => navigate('/stock')}>
                     <ArrowLeft size={16} className="mr-1.5" /> Back
                 </Button>}
@@ -118,21 +138,39 @@ export default function StockAdjustmentPage() {
                             placeholder="Select warehouse..."
                             options={warehouseOptions}
                             value={warehouseId}
-                            onChange={(e) => { setWarehouseId(e.target.value); setLines([{ productId: '', adjustmentQuantity: '', reason: 'physical_count' }]); }}
+                            onChange={(e) => { setWarehouseId(e.target.value); setLines([{ productId: '', adjustmentQuantity: '', reason: defaultReason }]); }}
                         />
                     </Card>
 
                     <Card className="p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-semibold text-gray-700">Adjustments</h3>
+                            <h3 className="text-sm font-semibold text-gray-700">
+                                {actionType === 'in' ? 'Stock In Line Items' : (actionType === 'out' ? 'Stock Out Line Items' : 'Adjustments')}
+                            </h3>
                             <Button type="button" variant="outline" size="sm" onClick={addLine} disabled={!warehouseId}>
                                 <Plus size={14} className="mr-1" /> Add Line
                             </Button>
                         </div>
 
-                        <p className="text-xs text-gray-500 mb-3">
-                            Use positive numbers to add stock, negative to remove. Example: -5 means reduce by 5 units.
-                        </p>
+                        {actionType === 'in' && (
+                            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl p-3 mb-3 flex items-center gap-2">
+                                <ArrowDownToLine size={16} className="shrink-0 text-emerald-600" />
+                                <span><strong>Stock In Mode:</strong> Entered quantities will be added directly into the selected warehouse stock.</span>
+                            </div>
+                        )}
+
+                        {actionType === 'out' && (
+                            <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-3 mb-3 flex items-center gap-2">
+                                <ArrowUpFromLine size={16} className="shrink-0 text-rose-600" />
+                                <span><strong>Stock Out Mode:</strong> Entered quantities will be deducted directly from the selected warehouse stock.</span>
+                            </div>
+                        )}
+
+                        {!actionType && (
+                            <p className="text-xs text-gray-500 mb-3">
+                                Use positive numbers to add stock, negative to remove. Example: -5 means reduce by 5 units.
+                            </p>
+                        )}
 
                         {!warehouseId ? (
                             <p className="text-sm text-gray-500 text-center py-8">Select warehouse first</p>

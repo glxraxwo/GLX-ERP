@@ -793,6 +793,17 @@ export const getDailyPayrollSummary = asyncHandler(async (req, res) => {
     const paymentMap = new Map();
     existingPayments.forEach((p) => paymentMap.set(p.employeeId.toString(), p));
 
+    const pendingAdvances = await SalaryAdvance.find({
+        employeeId: { $in: dailyWorkers.map(e => e._id) },
+        status: 'approved',
+        isDeducted: false
+    });
+    const advanceMap = new Map();
+    pendingAdvances.forEach(adv => {
+        const eid = adv.employeeId.toString();
+        advanceMap.set(eid, (advanceMap.get(eid) || 0) + (adv.amount || 0));
+    });
+
     const workerSummaries = dailyWorkers.map((emp) => {
         const att = attendanceMap.get(emp._id.toString());
         const existingPay = paymentMap.get(emp._id.toString());
@@ -823,6 +834,9 @@ export const getDailyPayrollSummary = asyncHandler(async (req, res) => {
             ? att.earnedSalary
             : Math.max(0, +(rate * units).toFixed(2));
 
+        const pendingAdvance = advanceMap.get(emp._id.toString()) || 0;
+        const advancePercentage = baseWage > 0 ? +((pendingAdvance / baseWage) * 100).toFixed(1) : 0;
+
         return {
             employeeId: emp._id,
             employeeCode: emp.employeeCode,
@@ -835,6 +849,8 @@ export const getDailyPayrollSummary = asyncHandler(async (req, res) => {
             workedHours,
             overtimeHours: otHours,
             baseWage,
+            pendingAdvance,
+            advancePercentage,
             alreadyPaid: !!existingPay,
             paymentDetails: existingPay || null
         };
@@ -1138,6 +1154,7 @@ export const getPeriodPayrollSummary = asyncHandler(async (req, res) => {
         const workedHours = +(totalWorkedMinutes / 60).toFixed(2);
         const grossWage = +totalEarnedSalary.toFixed(2);
         const netPayable = Math.max(0, +(grossWage - totalAdvanceDeduction).toFixed(2));
+        const advancePercentage = grossWage > 0 ? +((totalAdvanceDeduction / grossWage) * 100).toFixed(1) : 0;
 
         if (workedHours > 0 || grossWage > 0 || totalAdvanceDeduction > 0) {
             periodData.push({
@@ -1152,6 +1169,7 @@ export const getPeriodPayrollSummary = asyncHandler(async (req, res) => {
                 grossWage,
                 advancesCount: advances.length,
                 totalAdvanceDeduction: +totalAdvanceDeduction.toFixed(2),
+                advancePercentage,
                 netPayable,
                 advanceIds: advances.map(a => a._id)
             });

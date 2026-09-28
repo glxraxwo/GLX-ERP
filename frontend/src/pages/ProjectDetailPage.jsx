@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Calendar, CheckCircle2, User, Hammer, Package, Wallet, DollarSign, Award, Clock, Plus, BarChart2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, CheckCircle2, User, Hammer, Package, Wallet, DollarSign, Award, Clock, Plus, BarChart2, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import PageHeader from '../components/ui/PageHeader';
@@ -60,6 +60,12 @@ export default function ProjectDetailPage() {
     const [materialBuyingPrice, setMaterialBuyingPrice] = useState(0);
     const [allProducts, setAllProducts] = useState([]);
     const [isSavingMaterial, setIsSavingMaterial] = useState(false);
+
+    // Return Material Modal
+    const [returnModalItem, setReturnModalItem] = useState(null);
+    const [returnQty, setReturnQty] = useState(1);
+    const [returnReason, setReturnReason] = useState('');
+    const [isReturningMaterial, setIsReturningMaterial] = useState(false);
 
     const fetchProjectDetails = async () => {
         setIsLoading(true);
@@ -253,6 +259,28 @@ export default function ProjectDetailPage() {
         }
     };
 
+    const handleReturnMaterial = async (e) => {
+        e.preventDefault();
+        if (!returnModalItem || !returnQty || Number(returnQty) <= 0) return;
+        try {
+            setIsReturningMaterial(true);
+            await api.post(`/projects/${id}/return-materials`, {
+                materialIssuedId: returnModalItem._id,
+                qty: Number(returnQty),
+                reason: returnReason
+            });
+            toast.success('Material returned to stock successfully');
+            setReturnModalItem(null);
+            setReturnQty(1);
+            setReturnReason('');
+            fetchProjectDetails();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to return material');
+        } finally {
+            setIsReturningMaterial(false);
+        }
+    };
+
     const fmt = (n) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 2 }).format(n || 0);
     const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-LK') : '—';
 
@@ -272,14 +300,50 @@ export default function ProjectDetailPage() {
     const materialsColumns = [
         {
             key: 'productCode', label: 'Item Code',
-            render: (r) => <span className="font-mono text-xs">{r.product?.productCode || '—'}</span>
+            render: (r) => <span className="font-mono text-xs">{r.product?.productCode || r.productCode || '—'}</span>
         },
         { key: 'productName', label: 'Item Name', render: (r) => r.productName || r.product?.name || '—' },
-        { key: 'qty', label: 'Quantity', render: (r) => `${r.qty} ${r.product?.unitOfMeasure || 'pcs'}` },
-        { key: 'buyingPrice', label: 'Buying Cost (Unit)', render: (r) => fmt(r.buyingPrice) },
-        { key: 'totalCost', label: 'Total Buying Cost', render: (r) => <span className="font-medium text-slate-800">{fmt((r.buyingPrice || 0) * (r.qty || 0))}</span> },
-        { key: 'issuedBy', label: 'Issued To', render: (r) => r.issuedBy?.firstName ? `${r.issuedBy.firstName} ${r.issuedBy.lastName}` : '—' },
+        {
+            key: 'qty', label: 'Quantity', render: (r) => (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold">{r.qty} {r.product?.unitOfMeasure || 'pcs'}</span>
+                    {r.returnedQty > 0 && (
+                        <span className="text-[10px] text-amber-800 bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded-full font-bold">
+                            Returned: {r.returnedQty}
+                        </span>
+                    )}
+                </div>
+            )
+        },
+        { key: 'buyingPrice', label: 'Unit Cost', render: (r) => fmt(r.buyingPrice) },
+        {
+            key: 'totalCost', label: 'Net Cost', render: (r) => {
+                const netQty = Math.max(0, (r.qty || 0) - (r.returnedQty || 0));
+                return <span className="font-bold text-slate-900">{fmt((r.buyingPrice || 0) * netQty)}</span>;
+            }
+        },
         { key: 'issuedDate', label: 'Date Issued', render: (r) => fmtDate(r.issuedDate) },
+        {
+            key: 'actions', label: 'Action', render: (r) => {
+                const availableToReturn = Math.max(0, (r.qty || 0) - (r.returnedQty || 0));
+                if (project.status === 'delivered') return <span className="text-xs text-gray-400">Locked</span>;
+                if (availableToReturn <= 0) return <span className="text-xs text-emerald-600 font-bold">Fully Returned</span>;
+                return (
+                    <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={() => {
+                            setReturnModalItem(r);
+                            setReturnQty(availableToReturn);
+                            setReturnReason('');
+                        }}
+                        className="text-amber-700 border-amber-300 hover:bg-amber-50 font-bold text-xs"
+                    >
+                        <RotateCcw size={12} className="mr-1" /> Return to Stock
+                    </Button>
+                );
+            }
+        }
     ];
 
     const expensesColumns = [
@@ -653,6 +717,65 @@ export default function ProjectDetailPage() {
                             <div className="flex flex-wrap justify-end gap-2 pt-4 border-t">
                                 <Button variant="outline" type="button" onClick={() => setIsMaterialOpen(false)}>Cancel</Button>
                                 <Button variant="primary" type="submit" loading={isSavingMaterial}>Issue Material</Button>
+                            </div>
+                        </form>
+                    </Card>
+                </div>
+            )}
+
+            {/* Return Material Modal */}
+            {returnModalItem && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <Card className="w-full max-w-md shadow-2xl p-6 bg-white space-y-4">
+                        <div className="flex justify-between items-center border-b pb-2">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800">Return Material to Warehouse</h3>
+                                <p className="text-xs text-slate-500">Return unused yard materials back to inventory</p>
+                            </div>
+                            <button onClick={() => setReturnModalItem(null)} className="text-gray-400 hover:text-slate-600 text-lg">×</button>
+                        </div>
+                        <form onSubmit={handleReturnMaterial} className="space-y-4">
+                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-1">
+                                <div><strong>Material:</strong> {returnModalItem.productName || returnModalItem.productCode}</div>
+                                <div>
+                                    <strong>Issued:</strong> {returnModalItem.qty} {returnModalItem.product?.unitOfMeasure || 'pcs'} |{' '}
+                                    <strong>Remaining in Yard:</strong> {Math.max(0, (returnModalItem.qty || 0) - (returnModalItem.returnedQty || 0))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Return Quantity</label>
+                                <Input
+                                    type="number"
+                                    min="0.01"
+                                    max={Math.max(0, (returnModalItem.qty || 0) - (returnModalItem.returnedQty || 0))}
+                                    step="any"
+                                    value={returnQty}
+                                    onChange={(e) => setReturnQty(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Return Reason / Yard Remarks</label>
+                                <Input
+                                    type="text"
+                                    value={returnReason}
+                                    onChange={(e) => setReturnReason(e.target.value)}
+                                    placeholder="e.g. Unused excess returned to main yard warehouse"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-4 border-t">
+                                <Button variant="outline" type="button" onClick={() => setReturnModalItem(null)}>Cancel</Button>
+                                <Button
+                                    variant="primary"
+                                    type="submit"
+                                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold"
+                                    loading={isReturningMaterial}
+                                >
+                                    Confirm Return to Stock
+                                </Button>
                             </div>
                         </form>
                     </Card>

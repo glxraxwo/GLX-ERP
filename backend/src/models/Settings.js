@@ -27,6 +27,10 @@ const settingsSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    companySeal: {
+        type: String,
+        default: ''
+    },
     bossTitle: {
         type: String,
         default: 'Authorized Signature / Managing Director'

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Play, Eye, DollarSign, Download } from 'lucide-react';
+import { Plus, Play, Eye, DollarSign, Download, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 
@@ -102,9 +102,16 @@ export default function PayrollsPage() {
     return (
         <div>
             <PageHeader title="Payroll" description="Monthly payroll processing"
-                actions={<Button variant="primary" onClick={() => setIsProcessOpen(true)}>
-                    <Play size={16} className="mr-1.5" /> Process Payroll
-                </Button>} />
+                actions={
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={() => navigate('/employees')} className="flex items-center gap-1.5 font-bold">
+                            <Users size={16} className="text-primary-600" /> Employee Master
+                        </Button>
+                        <Button variant="primary" onClick={() => setIsProcessOpen(true)}>
+                            <Play size={16} className="mr-1.5" /> Process Payroll
+                        </Button>
+                    </div>
+                } />
 
             <Card>
                 <div className="p-4 border-b flex flex-wrap gap-2 sm:gap-3">

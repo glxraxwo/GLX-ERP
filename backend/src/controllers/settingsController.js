@@ -21,6 +21,11 @@ export const updateSettings = asyncHandler(async (req, res) => {
         throw new Error('Signature image payload exceeds maximum allowed size (2MB)');
     }
 
+    if (req.body.companySeal && req.body.companySeal.length > 3 * 1024 * 1024) {
+        res.status(400);
+        throw new Error('Company seal image payload exceeds maximum allowed size (2MB)');
+    }
+
     if (req.body.quotationCustomTemplateUrl && req.body.quotationCustomTemplateUrl.length > 8 * 1024 * 1024) {
         res.status(400);
         throw new Error('Quotation template image payload exceeds maximum allowed size (5MB)');

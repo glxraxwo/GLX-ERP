@@ -4,6 +4,8 @@ import Project from '../models/Project.js';
 import Employee from '../models/Employee.js';
 import Attendance from '../models/Attendance.js';
 import Expense from '../models/Expense.js';
+import Warehouse from '../models/Warehouse.js';
+import { increaseStock, decreaseStock } from '../services/stockService.js';
 import { createAuditLog } from '../utils/auditLogger.js';
 
 /**
@@ -13,10 +15,13 @@ export const recalculateProjectFinancials = async (projectId) => {
     const project = await Project.findById(projectId);
     if (!project) return;
 
-    // 1. Calculate material cost from materialsIssued
+    // 1. Calculate material cost from materialsIssued (subtracting returned quantities)
     let materialCost = 0;
     if (project.materialsIssued && project.materialsIssued.length > 0) {
-        materialCost = project.materialsIssued.reduce((sum, item) => sum + ((item.buyingPrice || 0) * (item.qty || 0)), 0);
+        materialCost = project.materialsIssued.reduce((sum, item) => {
+            const netQty = Math.max(0, (item.qty || 0) - (item.returnedQty || 0));
+            return sum + ((item.buyingPrice || 0) * netQty);
+        }, 0);
     }
     project.materialCost = +materialCost.toFixed(2);
 
@@ -264,15 +269,26 @@ export const deliverProject = asyncHandler(async (req, res) => {
         req
     });
 
+    try {
+        const Customer = mongoose.model('Customer');
+        const customer = await Customer.findById(project.customer);
+        if (customer && customer.phone) {
+            const { sendProjectDeliveredSms } = await import('../services/smsService.js');
+            sendProjectDeliveredSms(project, customer.phone).catch(e => console.warn('SMS alert error:', e.message));
+        }
+    } catch (smsErr) {
+        console.warn('Could not dispatch project delivery SMS:', smsErr.message);
+    }
+
     res.json({ success: true, message: 'Project delivered successfully', data: updated });
 });
 
 /**
  * POST /api/projects/:id/issue-material
- * Issue material to a project
+ * Issue material to a project (Deducts from warehouse stock)
  */
 export const issueMaterialToProject = asyncHandler(async (req, res) => {
-    const { productId, productCode, productName, qty, buyingPrice } = req.body;
+    const { productId, productCode, productName, qty, buyingPrice, warehouseId } = req.body;
     const project = await Project.findById(req.params.id);
 
     if (!project) {
@@ -280,9 +296,39 @@ export const issueMaterialToProject = asyncHandler(async (req, res) => {
         throw new Error('Project not found');
     }
 
-    if (!productId || !qty || qty <= 0) {
+    if (!productId || !qty || Number(qty) <= 0) {
         res.status(400);
         throw new Error('Product, quantity are required and quantity must be greater than 0');
+    }
+
+    // Resolve target warehouse
+    let targetWarehouseId = warehouseId;
+    if (!targetWarehouseId) {
+        const defaultWh = await Warehouse.findOne({ isDefault: true, isActive: true }) || await Warehouse.findOne({ isActive: true });
+        if (defaultWh) targetWarehouseId = defaultWh._id;
+    }
+
+    // Deduct from stock
+    try {
+        if (targetWarehouseId) {
+            await decreaseStock({
+                productId,
+                warehouseId: targetWarehouseId,
+                quantity: Number(qty),
+                movementType: 'yard_dispatch',
+                sourceDocument: {
+                    type: 'Project',
+                    id: project._id,
+                    number: project.projectNumber
+                },
+                reason: `Yard dispatch for project ${project.name} (${project.projectNumber})`,
+                notes: `Material: ${productName || productCode} x${qty}`,
+                userId: req.user._id,
+                allowNegative: true
+            });
+        }
+    } catch (stockErr) {
+        console.warn('Warning decreasing stock for project material issue:', stockErr.message);
     }
 
     // Add material to materialsIssued array
@@ -292,6 +338,8 @@ export const issueMaterialToProject = asyncHandler(async (req, res) => {
         productName: productName || '',
         qty: Number(qty),
         buyingPrice: Number(buyingPrice) || 0,
+        returnedQty: 0,
+        warehouseId: targetWarehouseId,
         issuedBy: req.user._id,
         issuedDate: new Date()
     });
@@ -304,11 +352,89 @@ export const issueMaterialToProject = asyncHandler(async (req, res) => {
         module: 'projects',
         documentId: project._id,
         documentCode: project.projectNumber,
-        description: `Issued material to project: ${productName || productCode} x${qty}`,
+        description: `Issued material to project & deducted from stock: ${productName || productCode} x${qty}`,
         req
     });
 
-    res.json({ success: true, message: 'Material issued successfully', data: project });
+    res.json({ success: true, message: 'Material issued and stock updated', data: project });
+});
+
+/**
+ * POST /api/projects/:id/return-materials
+ * Return unused material from project back into warehouse stock
+ */
+export const returnMaterialFromProject = asyncHandler(async (req, res) => {
+    const { materialIssuedId, qty, reason, warehouseId } = req.body;
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+        res.status(404);
+        throw new Error('Project not found');
+    }
+
+    if (!materialIssuedId || !qty || Number(qty) <= 0) {
+        res.status(400);
+        throw new Error('Material item ID and positive return quantity are required');
+    }
+
+    const item = project.materialsIssued.id(materialIssuedId);
+    if (!item) {
+        res.status(404);
+        throw new Error('Issued material record not found on this project');
+    }
+
+    const availableToReturn = (item.qty || 0) - (item.returnedQty || 0);
+    if (Number(qty) > availableToReturn) {
+        res.status(400);
+        throw new Error(`Cannot return ${qty} units. Only ${availableToReturn} units remain unreturned.`);
+    }
+
+    // Resolve warehouse (passed warehouse, or item warehouse, or default)
+    let targetWarehouseId = warehouseId || item.warehouseId;
+    if (!targetWarehouseId) {
+        const defaultWh = await Warehouse.findOne({ isDefault: true, isActive: true }) || await Warehouse.findOne({ isActive: true });
+        if (defaultWh) targetWarehouseId = defaultWh._id;
+    }
+
+    // Add back to inventory using increaseStock service
+    try {
+        if (targetWarehouseId && item.product) {
+            await increaseStock({
+                productId: item.product,
+                warehouseId: targetWarehouseId,
+                quantity: Number(qty),
+                costPerUnit: item.buyingPrice || 0,
+                movementType: 'yard_return',
+                sourceDocument: {
+                    type: 'Project',
+                    id: project._id,
+                    number: project.projectNumber
+                },
+                reason: reason || `Yard return from project ${project.name} (${project.projectNumber})`,
+                notes: `Material: ${item.productName || item.productCode} x${qty}`,
+                userId: req.user._id
+            });
+        }
+    } catch (stockErr) {
+        console.warn('Warning increasing stock on yard material return:', stockErr.message);
+    }
+
+    // Increment returnedQty on the item
+    item.returnedQty = (item.returnedQty || 0) + Number(qty);
+
+    await project.save();
+    await recalculateProjectFinancials(project._id);
+
+    createAuditLog({
+        action: 'update',
+        module: 'projects',
+        documentId: project._id,
+        documentCode: project.projectNumber,
+        description: `Returned material from project back to stock: ${item.productName || item.productCode} x${qty}`,
+        req
+    });
+
+    res.json({ success: true, message: 'Material successfully returned to stock', data: project });
 });
 
 /**

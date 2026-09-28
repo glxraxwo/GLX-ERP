@@ -382,11 +382,11 @@ export default function ProductFormModal({ isOpen, onClose, product = null, forc
                             {...register('minPrice')}
                         />
                         <Input
-                            label="Initial Quantity *"
+                            label="Opening Stock (OS / ආරම්භක තොගය) *"
                             type="number"
                             required
                             disabled={isEdit}
-                            placeholder={isEdit ? "Adjust via stock ledger" : "e.g. 50"}
+                            placeholder={isEdit ? "Adjust via stock ledger" : "e.g. 50 (OS)"}
                             error={errors.initialQuantity?.message}
                             {...register('initialQuantity')}
                         />

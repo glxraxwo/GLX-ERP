@@ -59,6 +59,7 @@ const quotationSchema = new mongoose.Schema({
     }],
     totalAmount: { type: Number, default: 0 },
     laborCost: { type: Number, default: 0 },
+    advancePercentage: { type: Number, default: 0 },
     advanceAmount: { type: Number, default: 0 },
     balanceAmount: { type: Number, default: 0 },
     tax: { type: Number, default: 0 },
@@ -104,7 +105,14 @@ quotationSchema.pre('validate', async function () {
     const totalDiscount = Math.max(Number(this.discount || 0), itemDiscounts);
     this.discount = totalDiscount;
     this.grandTotal = (this.totalAmount || 0) + (this.laborCost || 0) + (this.tax || 0) - (this.discount || 0);
-    this.balanceAmount = Math.max(0, (this.grandTotal || 0) - (this.advanceAmount || 0));
+
+    // Compute advance amount from advancePercentage if specified
+    if (this.advancePercentage > 0) {
+        this.advanceAmount = +( (this.grandTotal * this.advancePercentage) / 100 ).toFixed(2);
+        this.conditionOfPayments = `a). ${this.advancePercentage}% Advance Payment with the firm Order.\nb). Balance Payment on Completion of Work`;
+    }
+
+    this.balanceAmount = Math.max(0, +( (this.grandTotal || 0) - (this.advanceAmount || 0) ).toFixed(2));
 });
 
 export default mongoose.model('Quotation', quotationSchema);

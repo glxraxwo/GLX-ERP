@@ -6,7 +6,8 @@ import {
     updateProject,
     deliverProject,
     deleteProject,
-    issueMaterialToProject
+    issueMaterialToProject,
+    returnMaterialFromProject
 } from '../controllers/projectController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { requirePermission } from '../middleware/permissionMiddleware.js';
@@ -26,5 +27,6 @@ router.route('/:id')
 
 router.post('/:id/deliver', requirePermission('sales.create'), deliverProject);
 router.post('/:id/issue-material', requirePermission('sales.create'), issueMaterialToProject);
+router.post('/:id/return-materials', requirePermission('sales.create'), returnMaterialFromProject);
 
 export default router;

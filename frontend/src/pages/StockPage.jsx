@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Boxes, AlertTriangle, PackagePlus, ArrowRightLeft, Settings2, History, Edit, Trash2 } from 'lucide-react';
+import { Search, Boxes, AlertTriangle, PackagePlus, ArrowRightLeft, Settings2, History, Edit, Trash2, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import PageHeader from '../components/ui/PageHeader';
@@ -174,7 +174,23 @@ export default function StockPage() {
 
                 {/* Action buttons — wrap on mobile */}
                 {canAdjust && (
-                    <div className="flex gap-2 flex-wrap mt-4">
+                    <div className="flex gap-2 flex-wrap mt-4 items-center">
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => navigate('/stock/adjustment?type=in')}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs flex items-center gap-1.5 px-3 py-1.5"
+                        >
+                            <ArrowDownToLine size={16} /> Stock In (බඩු ඇතුල් කිරීම)
+                        </Button>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => navigate('/stock/adjustment?type=out')}
+                            className="bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-xs flex items-center gap-1.5 px-3 py-1.5"
+                        >
+                            <ArrowUpFromLine size={16} /> Stock Out (බඩු පිට කිරීම)
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => setIsInternalConsumptionOpen(true)} className="bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 font-semibold">
                             <Boxes size={15} className="mr-1.5 text-amber-600" /> Internal Usage (Expense)
                         </Button>
@@ -188,7 +204,7 @@ export default function StockPage() {
                             <Settings2 size={15} className="mr-1.5" /> Adjust
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => navigate('/stock/movements')}>
-                            History
+                            <History size={15} className="mr-1.5" /> History
                         </Button>
                     </div>
                 )}

@@ -576,3 +576,53 @@ startxref
         console.error('[Backup Service] Failed to create PDF backup:', err.message);
     }
 };
+
+/**
+ * Send project completion/delivery notification SMS alert to customer
+ */
+export const sendProjectDeliveredSms = async (project, clientPhone) => {
+    try {
+        if (!clientPhone) return;
+        const formattedContact = formatSmsContact(clientPhone);
+        if (!formattedContact) return;
+
+        const projectName = project.name || 'Vehicle Project';
+        const projectNum = project.projectNumber || '';
+        const message = `Dear Customer, your vehicle manufacturing/repair project (${projectName} - ${projectNum}) at GLX Industries has been completed & is ready for delivery. Thank you for your business!`;
+
+        const { SMS_USER_ID, SMS_API_KEY, SMS_SENDER_ID, SMS_GATEWAY_URL } = process.env;
+        let status = 'sent';
+
+        if (SMS_USER_ID && SMS_API_KEY && SMS_SENDER_ID && SMS_GATEWAY_URL) {
+            try {
+                const response = await fetch(SMS_GATEWAY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: SMS_USER_ID,
+                        api_key: SMS_API_KEY,
+                        sender_id: SMS_SENDER_ID,
+                        contact: formattedContact,
+                        message: message
+                    })
+                });
+                const data = await response.json();
+                if (response.status !== 200 || !data.success) status = 'failed';
+            } catch (err) {
+                status = 'failed';
+            }
+        } else {
+            console.log(`[SMS Gateway Simulated Delivery Alert] To: ${clientPhone} | Msg: ${message}`);
+        }
+
+        const SmsLog = mongoose.model('SmsLog');
+        await SmsLog.create({
+            supplierName: project.customerName || 'Project Client',
+            supplierPhone: clientPhone,
+            message,
+            status
+        });
+    } catch (err) {
+        console.error('[SMS Service] Failed to send project delivery SMS:', err.message);
+    }
+};

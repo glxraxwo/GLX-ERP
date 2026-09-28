@@ -7,7 +7,7 @@ import {
     Calendar, LayoutList, LayoutGrid
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -61,7 +61,15 @@ const QuotationsPage = () => {
     const [saving, setSaving] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
-    const [documentTypeFilter, setDocumentTypeFilter] = useState('');
+    const [searchParams] = useSearchParams();
+    const typeFromUrl = searchParams.get('type') || '';
+    const [documentTypeFilter, setDocumentTypeFilter] = useState(typeFromUrl);
+
+    useEffect(() => {
+        if (typeFromUrl) {
+            setDocumentTypeFilter(typeFromUrl);
+        }
+    }, [typeFromUrl]);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [viewMode, setViewMode] = useState('table');
@@ -1636,14 +1644,52 @@ const QuotationsPage = () => {
                                 <span>Grand Total</span>
                                 <span className="font-mono text-blue-800">LKR {formData.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="flex justify-between items-center font-semibold text-gray-700 pt-2 border-t">
-                                <span>Advance Payment</span>
-                                <input 
-                                    type="number" 
-                                    className="w-28 px-2 py-1 border rounded text-right font-mono text-xs bg-emerald-50 text-emerald-800 font-bold border-emerald-300"
-                                    value={formData.advanceAmount} 
-                                    onChange={(e) => handleFormChange('advanceAmount', Number(e.target.value))}
-                                />
+                            <div className="space-y-1.5 pt-2 border-t">
+                                <div className="flex justify-between items-center text-xs font-semibold text-gray-700">
+                                    <span className="flex items-center gap-1">Advance (%) <span className="text-[10px] text-gray-400 font-normal">Auto-calc</span></span>
+                                    <div className="flex items-center gap-1">
+                                        <input 
+                                            type="number" 
+                                            min="0"
+                                            max="100"
+                                            step="any"
+                                            placeholder="0"
+                                            className="w-16 px-2 py-1 border rounded text-right font-mono text-xs bg-emerald-50 text-emerald-800 font-bold border-emerald-300"
+                                            value={formData.advancePercentage || ''} 
+                                            onChange={(e) => {
+                                                const pct = Number(e.target.value);
+                                                const advAmt = +( (formData.grandTotal * pct) / 100 ).toFixed(2);
+                                                const cond = `a). ${pct}% Advance Payment with the firm Order.\nb). Balance Payment on Completion of Work`;
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    advancePercentage: pct,
+                                                    advanceAmount: advAmt,
+                                                    balanceAmount: Math.max(0, +( (prev.grandTotal || 0) - advAmt ).toFixed(2)),
+                                                    conditionOfPayments: cond
+                                                }));
+                                            }}
+                                        />
+                                        <span className="font-bold text-gray-500">%</span>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center font-semibold text-gray-700">
+                                    <span>Advance Amount (LKR)</span>
+                                    <input 
+                                        type="number" 
+                                        className="w-28 px-2 py-1 border rounded text-right font-mono text-xs bg-emerald-50 text-emerald-800 font-bold border-emerald-300"
+                                        value={formData.advanceAmount} 
+                                        onChange={(e) => {
+                                            const amt = Number(e.target.value);
+                                            const pct = formData.grandTotal > 0 ? +( (amt / formData.grandTotal) * 100 ).toFixed(1) : 0;
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                advanceAmount: amt,
+                                                advancePercentage: pct,
+                                                balanceAmount: Math.max(0, +( (prev.grandTotal || 0) - amt ).toFixed(2))
+                                            }));
+                                        }}
+                                    />
+                                </div>
                             </div>
                             <div className="flex justify-between items-center font-bold text-amber-900 bg-amber-50 p-2 rounded-lg border border-amber-200">
                                 <span>Balance Due</span>

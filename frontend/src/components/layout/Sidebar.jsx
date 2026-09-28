@@ -9,7 +9,7 @@ import {
     ChevronDown, ChevronRight, CheckSquare, ClipboardCheck, BadgeCheck,
     PackageCheck, CreditCard, Tag, Mail, Sparkles, Home, Search, Scale,
     Plus, ArrowLeftRight, Sliders, LineChart, PieChart, TrendingUp, UserCheck,
-    MapPin, Download, Barcode, LogOut
+    MapPin, Download, Barcode, LogOut, ArrowDownToLine, ArrowUpFromLine
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
@@ -44,6 +44,8 @@ const menuGroups = [
         icon: Boxes,
         items: [
             { label: 'Stock Overview', icon: Boxes, path: '/stock', permission: 'inventory.view' },
+            { label: 'Stock In (Receiving)', icon: ArrowDownToLine, path: '/stock/movements?direction=in', permission: 'inventory.view' },
+            { label: 'Stock Out (Dispatch)', icon: ArrowUpFromLine, path: '/stock/movements?direction=out', permission: 'inventory.view' },
             { label: 'Opening Stock', icon: Plus, path: '/stock/opening', permission: 'inventory.opening' },
             { label: 'Stock Transfer', icon: ArrowLeftRight, path: '/stock/transfer', permission: 'inventory.transfer' },
             { label: 'Stock Adjustment', icon: Sliders, path: '/stock/adjustment', permission: 'inventory.adjust' },
@@ -64,6 +66,7 @@ const menuGroups = [
         label: 'FINANCE',
         icon: DollarSign,
         items: [
+            { label: 'Customer Invoices', icon: Receipt, path: '/invoices', permission: 'invoices.view' },
             { label: 'Receipts & Vouchers', icon: Wallet, path: '/payments', permission: 'payments.view' },
             { label: 'Income & Expenses', icon: Wallet, path: '/finance/expenses', permission: 'payments.view' },
             { label: 'Petty Cash', icon: DollarSign, path: '/finance/petty-cash', permission: 'payments.view' },
@@ -72,7 +75,6 @@ const menuGroups = [
             { label: 'Bank Transactions', icon: CreditCard, path: '/finance/bank-transactions', permission: 'payments.view' },
             { label: 'Income Tax', icon: Scale, path: '/finance/income-tax', permission: 'payments.view' },
             { label: 'Export Centre', icon: Download, path: '/export-centre', permission: 'dashboard.view' },
-            { label: 'Customer Invoices', icon: FileText, path: '/invoices', permission: 'invoices.view' },
             { label: 'Capital Expenditure (CapEx)', icon: Tag, path: '/finance/fixed-assets', permission: 'payments.view' },
             { label: 'Credit Notes', icon: FileMinus, path: '/credit-notes', permission: 'credit_notes.view' },
         ],
@@ -82,8 +84,9 @@ const menuGroups = [
         icon: ShoppingCart,
         items: [
             { label: 'Customers', icon: UserCircle, path: '/customers', permission: 'customers.view' },
-            { label: 'Quotations', icon: FileText, path: '/crm/quotations', permission: 'sales.view' },
-            { label: 'Projects', icon: Briefcase, path: '/crm/projects', permission: 'sales.view' },
+            { label: 'Quotations', icon: FileSpreadsheet, path: '/crm/quotations', permission: 'sales.view' },
+            { label: 'Vehicle Estimates', icon: Calculator, path: '/crm/quotations?type=estimate', permission: 'sales.view' },
+            { label: 'Yard Projects', icon: Briefcase, path: '/crm/projects', permission: 'sales.view' },
             { label: 'Sales Orders', icon: ShoppingCart, path: '/sales-orders', permission: 'sales.view' },
             { label: 'POS', icon: Calculator, path: '/pos', permission: 'pos.access' },
             { label: 'Customer Returns', icon: RotateCcw, path: '/returns', permission: 'returns.view' },
@@ -97,7 +100,7 @@ const menuGroups = [
         label: 'HUMAN RESOURCES',
         icon: UsersIcon,
         items: [
-            { label: 'Employees', icon: UsersIcon, path: '/employees', permission: 'hr.employees.view' },
+            { label: 'Employees Master', icon: UsersIcon, path: '/employees', permission: 'hr.employees.view' },
             { label: 'Attendance', icon: CalendarIcon, path: '/attendance', permission: 'hr.attendance.view' },
             { label: 'Leave Management', icon: Plane, path: '/leaves', permission: 'hr.leaves.view' },
             { label: 'Policy Management', icon: Clock, path: '/attendance-policies', permission: 'hr.attendance.view' },
