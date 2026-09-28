@@ -743,39 +743,6 @@ export default function Sidebar({ isOpen, onClose }) {
                             </div>
                         )}
 
-                        {/* ── Approvals Section ── */}
-                        {user?.role !== 'employee' && (
-                            <div>
-                                {isOpen && (
-                                    <div className="flex items-center gap-2 px-3 mb-2">
-                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 select-none">
-                                            Approvals
-                                        </p>
-                                        <div className="flex items-center gap-1 bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5">
-                                            <BadgeCheck size={9} />
-                                            <span className="text-[9px] font-bold uppercase tracking-wide">Hub</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Accordion categories */}
-                                <div className="space-y-0.5">
-                                    {approvalCategories.map((category) => (
-                                        <ApprovalCategory
-                                            key={category.id}
-                                            category={category}
-                                            hasPermission={hasPermission}
-                                            hasAnyPermission={hasAnyPermission}
-                                            isAdmin={isAdmin}
-                                            searchQuery={searchQuery}
-                                            isNarrow={!isOpen}
-                                            onNavClick={() => { if (window.innerWidth < 1024) onClose(); }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                     </nav>
 
                     {/* ── Footer ── */}
