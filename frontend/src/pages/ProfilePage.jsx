@@ -261,7 +261,7 @@ export default function ProfilePage() {
                             </div>
                             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
                                 <p className="text-sm text-gray-700 mb-3">
-                                    Request a salary advance when you need funds before payday. You can request up to 50% of your monthly salary.
+                                    Request a salary advance when you need funds before payday. You can request up to 60% of your monthly salary.
                                 </p>
                                 <Button 
                                     variant="primary" 

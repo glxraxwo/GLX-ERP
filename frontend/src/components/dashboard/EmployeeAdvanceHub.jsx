@@ -94,7 +94,7 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
 
                 const currentEmp = employees.find(e => e._id === empId);
                 const baseSalary = currentEmp?.basicSalary || (currentEmp?.hourlyRate ? currentEmp.hourlyRate * 200 : 50000);
-                const limit = baseSalary * 0.5;
+                const limit = baseSalary * 0.60;
                 setSummary({
                     employee: {
                         _id: empId,
@@ -105,7 +105,7 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
                     },
                     baseMonthlySalary: baseSalary,
                     maxAdvanceLimit: limit,
-                    maxAdvancePercentage: 50,
+                    maxAdvancePercentage: 60,
                     totalAllAdvancesTaken: totalTaken,
                     totalApprovedAdvance: totalTaken,
                     totalRepaidAmount: totalRepaid,
@@ -140,7 +140,7 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
                     : 50000)));
     const effectiveLimit = summary?.availableAdvance !== undefined 
         ? summary.availableAdvance 
-        : +(effectiveBaseSalary * 0.5).toFixed(2);
+        : +(effectiveBaseSalary * 0.60).toFixed(2);
 
     // Handle submitting a new advance
     const handleSaveAdvance = async (e) => {
@@ -237,8 +237,8 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
 
     // Percentage color
     const pct = summary?.advancePercentage || 0;
-    const pctBadgeColor = pct >= 50 ? 'bg-rose-100 text-rose-800 border-rose-300' 
-        : pct >= 30 ? 'bg-amber-100 text-amber-800 border-amber-300' 
+    const pctBadgeColor = pct >= 60 ? 'bg-rose-100 text-rose-800 border-rose-300' 
+        : pct >= 35 ? 'bg-amber-100 text-amber-800 border-amber-300' 
         : 'bg-emerald-100 text-emerald-800 border-emerald-300';
 
     return (
@@ -383,7 +383,7 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
                                     </p>
                                     <div className="flex items-center gap-1.5 mt-1">
                                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${pctBadgeColor}`}>
-                                            {pct >= 50 ? 'Max 50% Limit Reached' : `${pct}% active`}
+                                            {pct >= 60 ? 'Max 60% Limit Reached' : `${pct}% active (Max 60%)`}
                                         </span>
                                     </div>
                                 </div>
@@ -611,12 +611,12 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
                                 <label className="block text-xs font-bold text-slate-700">
                                     Advance Percentage (%)
                                 </label>
-                                <span className="text-[11px] text-slate-500">Max recommended: 50%</span>
+                                <span className="text-[11px] font-bold text-indigo-600">Max limit: 60%</span>
                             </div>
 
                             {/* Quick percentage buttons */}
                             <div className="grid grid-cols-5 gap-1.5 mb-2">
-                                {[10, 20, 25, 30, 50].map((pctVal) => (
+                                {[10, 20, 30, 50, 60].map((pctVal) => (
                                     <button
                                         key={pctVal}
                                         type="button"
@@ -627,7 +627,7 @@ export default function EmployeeAdvanceHub({ initialSearch = '' }) {
                                                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-indigo-50 hover:text-indigo-600'
                                         }`}
                                     >
-                                        {pctVal}%
+                                        {pctVal}% {pctVal === 60 ? '(Max)' : ''}
                                     </button>
                                 ))}
                             </div>

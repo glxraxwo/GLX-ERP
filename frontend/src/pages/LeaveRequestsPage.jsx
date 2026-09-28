@@ -451,8 +451,8 @@ export default function LeaveRequestsPage() {
                                 options={[
                                     { value: '10', label: '10% Share' },
                                     { value: '25', label: '25% Share' },
-                                    { value: '50', label: '50% Share (Half Salary)' },
-                                    { value: '75', label: '75% Share' },
+                                    { value: '50', label: '50% Share' },
+                                    { value: '60', label: '60% Share (Max Limit)' },
                                 ]}
                                 value={String(advanceForm.requestedPercentage)}
                                 onChange={(e) => setAdvanceForm((f) => ({ ...f, requestedPercentage: Number(e.target.value) }))} />

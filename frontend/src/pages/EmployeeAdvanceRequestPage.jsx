@@ -11,7 +11,7 @@ import Badge from '../components/ui/Badge';
 import { useMyProfile, useCreateSalaryAdvance, useMyAdvanceLedger, useOngoingSalaryPeriod } from '../features/hr/useHr';
 import { useAuthStore } from '../store/authStore';
 
-const MAX_ADVANCE_PERCENTAGE = 50; // Maximum 50% of monthly salary as advance
+const MAX_ADVANCE_PERCENTAGE = 60; // Maximum 60% of monthly salary as advance
 
 export default function EmployeeAdvanceRequestPage() {
     const navigate = useNavigate();
@@ -35,9 +35,11 @@ export default function EmployeeAdvanceRequestPage() {
 
     // Use ongoing salary period data for calculations
     const ongoingSalary = ongoingPeriod?.advanceLimits?.ongoingSalary || employee?.basicSalary || 0;
-    const maxAdvanceAmount = ongoingPeriod?.advanceLimits?.maxAdvanceAmount || 0;
+    const maxAdvanceAmount = ongoingPeriod?.advanceLimits?.maxAdvanceAmount || (ongoingSalary * 0.60);
     const alreadyTakenAdvance = ongoingPeriod?.advanceLimits?.alreadyTakenAdvance || 0;
-    const remainingAdvanceLimit = ongoingPeriod?.advanceLimits?.remainingAdvanceAmount || 0;
+    const remainingAdvanceLimit = ongoingPeriod?.advanceLimits?.remainingAdvanceAmount !== undefined 
+        ? ongoingPeriod.advanceLimits.remainingAdvanceAmount 
+        : Math.max(0, maxAdvanceAmount - alreadyTakenAdvance);
     const salaryPeriod = ongoingPeriod?.salaryPeriod || null;
 
     // Calculate current request amount
@@ -45,7 +47,11 @@ export default function EmployeeAdvanceRequestPage() {
         ? (ongoingSalary * (parseFloat(percentage) || 0)) / 100
         : parseFloat(amount) || 0;
 
-    const isValidRequest = calculatedAmount > 0 && calculatedAmount <= remainingAdvanceLimit && reason.trim();
+    const requestedPercentOfSalary = ongoingSalary > 0 
+        ? +((calculatedAmount / ongoingSalary) * 100).toFixed(1)
+        : 0;
+
+    const isValidRequest = calculatedAmount > 0 && calculatedAmount <= remainingAdvanceLimit && requestedPercentOfSalary <= MAX_ADVANCE_PERCENTAGE && reason.trim();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -258,9 +264,33 @@ export default function EmployeeAdvanceRequestPage() {
                             {/* Percentage Input */}
                             {advanceType === 'percentage' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Advance Percentage (max {MAX_ADVANCE_PERCENTAGE}%)
-                                    </label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Advance Percentage (Max {MAX_ADVANCE_PERCENTAGE}%)
+                                        </label>
+                                        <span className="text-xs font-bold text-indigo-600">
+                                            Max Limit: {MAX_ADVANCE_PERCENTAGE}%
+                                        </span>
+                                    </div>
+
+                                    {/* Quick Percentage Presets */}
+                                    <div className="grid grid-cols-5 gap-2 mb-3">
+                                        {[10, 20, 30, 50, 60].map((pctVal) => (
+                                            <button
+                                                key={pctVal}
+                                                type="button"
+                                                onClick={() => setPercentage(pctVal.toString())}
+                                                className={`py-1.5 text-xs font-bold rounded-lg border transition ${
+                                                    Number(percentage) === pctVal
+                                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm ring-2 ring-blue-300'
+                                                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-blue-700'
+                                                }`}
+                                            >
+                                                {pctVal}% {pctVal === 60 ? '(Max)' : ''}
+                                            </button>
+                                        ))}
+                                    </div>
+
                                     <Input
                                         type="number"
                                         min="0"
@@ -271,9 +301,17 @@ export default function EmployeeAdvanceRequestPage() {
                                         placeholder={`Enter percentage (0-${MAX_ADVANCE_PERCENTAGE})`}
                                         required
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Calculated amount: <span className="font-semibold">{formatCurrency(calculatedAmount)}</span>
-                                    </p>
+                                    {percentage && Number(percentage) > 0 && (
+                                        <div className="mt-2.5 p-3 bg-indigo-50/90 border border-indigo-200 rounded-xl text-xs text-indigo-950 space-y-1">
+                                            <div className="flex justify-between items-center font-bold">
+                                                <span>Live Calculated Advance ({percentage}%):</span>
+                                                <span className="text-sm font-mono text-indigo-700">{formatCurrency(calculatedAmount)}</span>
+                                            </div>
+                                            <p className="text-[11px] text-indigo-600">
+                                                Calculated as {percentage}% of Monthly Salary {formatCurrency(ongoingSalary)} (Max allowed: 60% = {formatCurrency(ongoingSalary * 0.60)})
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -293,20 +331,41 @@ export default function EmployeeAdvanceRequestPage() {
                                         placeholder={`Enter amount (max ${formatCurrency(remainingAdvanceLimit)})`}
                                         required
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        This is <span className="font-semibold">{((calculatedAmount / ongoingSalary) * 100).toFixed(1)}%</span> of your ongoing salary
-                                    </p>
+                                    {amount && Number(amount) > 0 && ongoingSalary > 0 && (
+                                        <div className="mt-2.5 p-3 bg-indigo-50/90 border border-indigo-200 rounded-xl text-xs text-indigo-950 space-y-1">
+                                            <div className="flex justify-between items-center font-bold">
+                                                <span>Percentage of Salary:</span>
+                                                <span className={`text-sm font-mono font-bold ${requestedPercentOfSalary > MAX_ADVANCE_PERCENTAGE ? 'text-red-600' : 'text-indigo-700'}`}>
+                                                    {requestedPercentOfSalary}% of {formatCurrency(ongoingSalary)}
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-slate-200 rounded-full h-2 mt-1.5 overflow-hidden">
+                                                <div 
+                                                    className={`h-2 rounded-full transition-all ${requestedPercentOfSalary > MAX_ADVANCE_PERCENTAGE ? 'bg-red-500' : requestedPercentOfSalary > 50 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                                    style={{ width: `${Math.min(100, (requestedPercentOfSalary / MAX_ADVANCE_PERCENTAGE) * 100)}%` }}
+                                                />
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 pt-0.5">
+                                                {requestedPercentOfSalary > MAX_ADVANCE_PERCENTAGE 
+                                                    ? `Exceeds max limit of 60% (${formatCurrency(ongoingSalary * 0.60)})`
+                                                    : `Limit: 60% of monthly salary (${formatCurrency(ongoingSalary * 0.60)})`
+                                                }
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {/* Validation Warning */}
-                            {calculatedAmount > remainingAdvanceLimit && (
+                            {(calculatedAmount > remainingAdvanceLimit || requestedPercentOfSalary > MAX_ADVANCE_PERCENTAGE) && (
                                 <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                                     <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
                                     <div className="text-sm">
                                         <p className="font-semibold text-red-900">Amount Exceeds Limit</p>
                                         <p className="text-red-800">
-                                            Your requested amount exceeds the available limit of {formatCurrency(remainingAdvanceLimit)}.
+                                            {requestedPercentOfSalary > MAX_ADVANCE_PERCENTAGE
+                                                ? `The requested amount equals ${requestedPercentOfSalary}%, which exceeds the maximum allowed 60% limit (${formatCurrency(ongoingSalary * 0.60)}).`
+                                                : `Your requested amount exceeds the available limit of ${formatCurrency(remainingAdvanceLimit)}.`}
                                         </p>
                                     </div>
                                 </div>

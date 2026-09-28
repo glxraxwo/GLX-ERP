@@ -1458,8 +1458,8 @@ export const getEmployeeAdvanceSummary = asyncHandler(async (req, res) => {
     const totalAllAdvancesTaken = history.filter(a => a.status === 'approved').reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
     const pendingAdvanceAmount = history.filter(a => a.status === 'pending').reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
 
-    // Limit is 50% of monthly base salary
-    const maxAdvanceLimit = +(baseMonthlySalary * 0.50).toFixed(2);
+    // Limit is 60% of monthly base salary
+    const maxAdvanceLimit = +(baseMonthlySalary * 0.60).toFixed(2);
     const advancePercentage = baseMonthlySalary > 0 ? +((totalRemainingBalance / baseMonthlySalary) * 100).toFixed(1) : 0;
     const availableAdvance = Math.max(0, +(maxAdvanceLimit - totalRemainingBalance).toFixed(2));
 
@@ -1477,7 +1477,7 @@ export const getEmployeeAdvanceSummary = asyncHandler(async (req, res) => {
             },
             baseMonthlySalary: +baseMonthlySalary.toFixed(2),
             maxAdvanceLimit,
-            maxAdvancePercentage: 50,
+            maxAdvancePercentage: 60,
             totalApprovedAdvance: +totalApprovedAdvance.toFixed(2),
             totalAllAdvancesTaken: +totalAllAdvancesTaken.toFixed(2),
             totalRepaidAmount: +totalRepaidAmount.toFixed(2),
@@ -1765,8 +1765,8 @@ export const getOngoingSalaryPeriodInfo = asyncHandler(async (req, res) => {
         }
     }
 
-    // Maximum advance percentage (default 50%)
-    const maxAdvancePercentage = 50;
+    // Maximum advance percentage (default 60%)
+    const maxAdvancePercentage = 60;
     const maxAdvanceAmount = (ongoingSalary * maxAdvancePercentage) / 100;
 
     // Get already taken advances for this period
