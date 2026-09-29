@@ -239,7 +239,7 @@ export default function SmsLogsPage() {
 
                     <Input
                         label="Recipient Mobile Number"
-                        placeholder="e.g. 0772268608 or +94772268608"
+                        placeholder="e.g. 0716666888 or +94716666888"
                         required
                         value={manualContact}
                         onChange={(e) => setManualContact(e.target.value)}

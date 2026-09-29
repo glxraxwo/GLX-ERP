@@ -155,7 +155,7 @@ export const sendGrnCreationSms = async (grn) => {
         const formattedDate = `${day}/${month}/${year}`;
 
         // Get company contact number from settings
-        let contactNo = '0772268608';
+        let contactNo = '071 6666 888';
         try {
             const Settings = mongoose.model('Settings');
             const settings = await Settings.findOne();
