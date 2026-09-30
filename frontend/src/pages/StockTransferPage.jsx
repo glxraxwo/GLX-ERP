@@ -8,6 +8,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
+import SearchableSelect from '../components/ui/SearchableSelect';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 
@@ -285,7 +286,7 @@ export default function StockTransferPage() {
                                                 <span className="text-xs text-gray-500 mt-2 w-6">{idx + 1}</span>
                                                 <div className="flex-1 grid grid-cols-12 gap-2">
                                                     <div className="col-span-7">
-                                                        <Select
+                                                        <SearchableSelect
                                                             placeholder="Select product..."
                                                             options={availableProducts}
                                                             value={line.productId}

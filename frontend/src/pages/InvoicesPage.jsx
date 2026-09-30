@@ -303,7 +303,7 @@ export default function InvoicesPage() {
                             From Sales Order
                         </Button>
                         <Button variant="primary" onClick={() => navigate('/invoices/new')}>
-                            <Plus size={16} className="mr-1.5" /> Manual Invoice
+                            <Plus size={16} className="mr-1.5" /> Add Invoice
                         </Button>
                     </div>
                 )}

@@ -8,6 +8,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
+import SearchableSelect from '../components/ui/SearchableSelect';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 
@@ -81,7 +82,7 @@ export default function RepairFormPage() {
             <div className="max-w-2xl">
                 <Card className="p-6">
                     <div className="space-y-4">
-                        <Select
+                        <SearchableSelect
                             label="Product"
                             required
                             placeholder="Select product..."

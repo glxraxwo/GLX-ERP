@@ -1,13 +1,28 @@
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User as UserIcon, Menu, Sparkles } from 'lucide-react';
+import { LogOut, User as UserIcon, Menu, Sparkles, LayoutDashboard, Palette, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore, THEME_MODES } from '../../store/themeStore';
 import { authApi } from '../../features/auth/authApi';
 import NotificationDropdown from '../ui/NotificationDropdown';
 
 export default function Header({ onToggleSidebar }) {
     const navigate = useNavigate();
     const { user, logout } = useAuthStore();
+    const { themeMode, setThemeMode } = useThemeStore();
+    const [showThemeMenu, setShowThemeMenu] = useState(false);
+    const themeMenuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (themeMenuRef.current && !themeMenuRef.current.contains(e.target)) {
+                setShowThemeMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -31,20 +46,40 @@ export default function Header({ onToggleSidebar }) {
         staff: 'Staff',
     }[user?.role] || 'User';
 
+    const headerBg = {
+        [THEME_MODES.SOFT]: 'bg-[#F8FAFC] border-b border-slate-200',
+        [THEME_MODES.PURE]: 'bg-white border-b border-gray-200',
+        [THEME_MODES.DARK]: 'bg-white border-b border-gray-200',
+    }[themeMode] || 'bg-[#F8FAFC] border-b border-slate-200';
+
     return (
-        <header className="no-print h-14 sm:h-16 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-6 flex-shrink-0">
+        <header className={`no-print h-14 sm:h-16 ${headerBg} flex items-center justify-between px-3 sm:px-6 flex-shrink-0 transition-colors duration-200`}>
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 {/* Hamburger toggle */}
                 <button
                     onClick={onToggleSidebar}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition min-w-[40px] min-h-[40px] flex items-center justify-center flex-shrink-0"
+                    className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition min-w-[40px] min-h-[40px] flex items-center justify-center flex-shrink-0 cursor-pointer"
                     aria-label="Toggle sidebar"
                 >
                     <Menu size={20} />
                 </button>
+
+                {/* Dashboard Quick Button */}
+                <button
+                    onClick={() => navigate('/dashboard')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 hover:text-blue-600 bg-gray-50 hover:bg-blue-50/80 border border-gray-200 hover:border-blue-300 rounded-lg transition shadow-xs cursor-pointer"
+                    title="Go to Dashboard"
+                >
+                    <LayoutDashboard size={16} className="text-blue-600" />
+                    <span>Dashboard</span>
+                </button>
                 
-                {/* Welcome pill — hidden on very small xs screens */}
-                <div className="hidden xs:flex items-center gap-2 px-2.5 py-1.5 bg-gradient-to-r from-primary-50 to-blue-50/20 rounded-full border border-primary-100/50 shadow-sm hover:shadow transition duration-200">
+                {/* Welcome pill — hidden on small screens */}
+                <div 
+                    onClick={() => navigate('/profile')}
+                    className="hidden md:flex items-center gap-2 px-2.5 py-1.5 bg-gradient-to-r from-primary-50 to-blue-50/20 rounded-full border border-primary-100/50 shadow-sm hover:shadow transition duration-200 cursor-pointer"
+                    title="View Profile"
+                >
                     <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 flex-shrink-0">
                         <Sparkles size={9} className="animate-pulse" />
                     </div>
@@ -56,6 +91,68 @@ export default function Header({ onToggleSidebar }) {
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+                {/* Theme / Background Tone Selector */}
+                <div className="relative" ref={themeMenuRef}>
+                    <button
+                        onClick={() => setShowThemeMenu((prev) => !prev)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg border transition shadow-2xs cursor-pointer ${
+                            themeMode === THEME_MODES.SOFT
+                                ? 'bg-slate-200/80 hover:bg-slate-300/80 border-slate-300 text-slate-800'
+                                : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700'
+                        }`}
+                        title="Change Background Tone"
+                    >
+                        <Palette size={14} className="text-slate-600" />
+                        <span className="hidden sm:inline">
+                            {themeMode === THEME_MODES.SOFT ? '☁️ Soft' : (themeMode === THEME_MODES.PURE ? '⚪ White' : '🌑 Dark')}
+                        </span>
+                    </button>
+
+                    {showThemeMenu && (
+                        <div className="absolute right-0 mt-1.5 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in-50 zoom-in-95 duration-100">
+                            <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                Background Tone
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => { setThemeMode(THEME_MODES.SOFT); setShowThemeMenu(false); toast.success('Soft Slate tone activated (Eye-comfort)'); }}
+                                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs rounded-lg transition ${
+                                    themeMode === THEME_MODES.SOFT
+                                        ? 'bg-blue-50 text-blue-700 font-bold'
+                                        : 'text-slate-700 hover:bg-slate-100'
+                                }`}
+                            >
+                                <span className="flex items-center gap-2">☁️ Soft Slate (Eye-comfort)</span>
+                                {themeMode === THEME_MODES.SOFT && <Check size={14} className="text-blue-600" />}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setThemeMode(THEME_MODES.PURE); setShowThemeMenu(false); toast.success('Pure White tone activated'); }}
+                                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs rounded-lg transition ${
+                                    themeMode === THEME_MODES.PURE
+                                        ? 'bg-blue-50 text-blue-700 font-bold'
+                                        : 'text-slate-700 hover:bg-slate-100'
+                                }`}
+                            >
+                                <span className="flex items-center gap-2">⚪ Crisp White</span>
+                                {themeMode === THEME_MODES.PURE && <Check size={14} className="text-blue-600" />}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setThemeMode(THEME_MODES.DARK); setShowThemeMenu(false); toast.success('Classic Dark tone activated'); }}
+                                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs rounded-lg transition ${
+                                    themeMode === THEME_MODES.DARK
+                                        ? 'bg-blue-50 text-blue-700 font-bold'
+                                        : 'text-slate-700 hover:bg-slate-100'
+                                }`}
+                            >
+                                <span className="flex items-center gap-2">🌑 Classic Navy Dark</span>
+                                {themeMode === THEME_MODES.DARK && <Check size={14} className="text-blue-600" />}
+                            </button>
+                        </div>
+                    )}
+                </div>
+
                 <NotificationDropdown />
 
                 {/* Avatar + role — hidden on mobile */}

@@ -151,15 +151,16 @@ function App() {
       >
         <Route path="/" element={<DashboardPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/products" element={<ProtectedRoute requiredPermission="products.view"><ProductsPage /></ProtectedRoute>} />
-        <Route path="/barcode-generator" element={<ProtectedRoute requiredPermission="products.view"><BarcodeGeneratorPage /></ProtectedRoute>} />
-        <Route path="/categories" element={<ProtectedRoute requiredPermission="products.view"><CategoriesPage /></ProtectedRoute>} />
-        <Route path="/brands" element={<ProtectedRoute requiredPermission="products.view"><BrandsPage /></ProtectedRoute>} />
+        <Route path="/products" element={<ProtectedRoute requiredAnyPermission={['products.view', 'inventory.view', 'sales.view', 'dashboard.view']}><ProductsPage /></ProtectedRoute>} />
+        <Route path="/barcode-generator" element={<ProtectedRoute requiredAnyPermission={['products.view', 'inventory.view', 'sales.view', 'dashboard.view']}><BarcodeGeneratorPage /></ProtectedRoute>} />
+        <Route path="/categories" element={<ProtectedRoute requiredAnyPermission={['products.view', 'inventory.view', 'sales.view', 'dashboard.view']}><CategoriesPage /></ProtectedRoute>} />
+        <Route path="/brands" element={<ProtectedRoute requiredAnyPermission={['products.view', 'inventory.view', 'sales.view', 'dashboard.view']}><BrandsPage /></ProtectedRoute>} />
         <Route path="/customers" element={<ProtectedRoute requiredPermission="customers.view"><CustomersPage /></ProtectedRoute>} />
         <Route path="/sales-orders" element={<ProtectedRoute requiredPermission="sales.view"><SalesOrdersPage /></ProtectedRoute>} />
         <Route path="/sales-orders/new" element={<ProtectedRoute requiredPermission="sales.create"><SalesOrderFormPage /></ProtectedRoute>} />
         <Route path="/sales-orders/:id" element={<ProtectedRoute requiredPermission="sales.view"><SalesOrderDetailPage /></ProtectedRoute>} />
         <Route path="/stock" element={<ProtectedRoute requiredPermission="inventory.view"><StockPage /></ProtectedRoute>} />
+        <Route path="/stock/low-stock" element={<ProtectedRoute requiredAnyPermission={['inventory.view', 'reports.inventory']}><LowStockReportPage /></ProtectedRoute>} />
         <Route path="/stock/opening" element={<ProtectedRoute requiredPermission="inventory.opening"><OpeningStockPage /></ProtectedRoute>} />
         <Route path="/stock/transfer" element={<ProtectedRoute requiredPermission="inventory.transfer"><StockTransferPage /></ProtectedRoute>} />
         <Route path="/stock/adjustment" element={<ProtectedRoute requiredPermission="inventory.adjust"><StockAdjustmentPage /></ProtectedRoute>} />

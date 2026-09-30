@@ -108,12 +108,12 @@ export default function RawMaterialsPage() {
         { 
             key: 'onHand', 
             label: 'On Hand', 
-            render: (r) => <span className="font-bold text-gray-800">{r.quantities?.onHand} {r.unitOfMeasure}</span> 
+            render: (r) => <span className="font-bold text-gray-800">{Math.round(Number(r.quantities?.onHand) || 0).toLocaleString()} {r.unitOfMeasure}</span> 
         },
         { 
             key: 'available', 
             label: 'Available', 
-            render: (r) => <span className="font-medium text-gray-700">{r.quantities?.available} {r.unitOfMeasure}</span> 
+            render: (r) => <span className="font-medium text-gray-700">{Math.round(Number(r.quantities?.available) || 0).toLocaleString()} {r.unitOfMeasure}</span> 
         },
         { 
             key: 'costPerUnit', 

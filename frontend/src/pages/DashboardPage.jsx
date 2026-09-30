@@ -372,35 +372,6 @@ export default function DashboardPage() {
                         </div>
                     </button>
                 </div>
-
-                {/* Secondary Auxiliary Shortcuts (Petty Cash, Advances, Settings) */}
-                <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none text-xs">
-                    <button onClick={() => navigate('/finance/petty-cash')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 transition whitespace-nowrap shadow-xs">
-                        <Wallet size={14} className="text-emerald-600" />
-                        <span className="font-semibold">Petty Cash Ledger</span>
-                    </button>
-                    <button 
-                        onClick={() => {
-                            setActiveTab('advances');
-                            setTimeout(() => {
-                                const el = document.getElementById('employee-master-section');
-                                if (el) el.scrollIntoView({ behavior: 'smooth' });
-                            }, 100);
-                        }} 
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50/80 border border-purple-200 hover:bg-purple-100 text-purple-900 transition whitespace-nowrap shadow-xs"
-                    >
-                        <Users size={14} className="text-purple-600" />
-                        <span className="font-bold">Employee Master (සේවක Master &amp; Advances)</span>
-                    </button>
-                    <button onClick={() => navigate('/employees')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 transition whitespace-nowrap shadow-xs">
-                        <Users size={14} className="text-gray-500" />
-                        <span className="font-semibold">All Employees List</span>
-                    </button>
-                    <button onClick={() => navigate('/settings')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 transition whitespace-nowrap shadow-xs">
-                        <Settings size={14} className="text-violet-600" />
-                        <span className="font-semibold">System Settings &amp; Seals</span>
-                    </button>
-                </div>
             </div>
 
             {realtimeAlerts.length > 0 && (
@@ -452,60 +423,14 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* ── DEPARTMENT COMMAND DASHBOARD (Responsive Tabs) ── */}
+            {/* ── DEPARTMENT COMMAND DASHBOARD ── */}
             <div className="space-y-6">
-                {/* Tabs Bar */}
-                <div className="flex overflow-x-auto flex-nowrap border-b border-gray-200 bg-white p-1.5 rounded-xl shadow-sm gap-1 scrollbar-none">
-                    {[
-                        { id: 'general',    label: 'General Management (MD)', icon: ShieldCheck },
-                        { id: 'operations', label: 'Operations & Plant',     icon: Factory },
-                        { id: 'finance',    label: 'Finance & Accounts',     icon: Wallet },
-                        { id: 'sales',      label: 'CRM & Export Sales',     icon: TrendingUp },
-                        { id: 'hr',         label: 'Human Resources',        icon: Users },
-                        { id: 'advances',   label: 'Employee Master & Advances (සේවක Master)', icon: Users }
-                    ].map(tab => {
-                        const Icon = tab.icon;
-                        const active = activeTab === tab.id;
-                        return (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0 ${
-                                    active
-                                        ? 'bg-primary-600 text-white shadow-sm'
-                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                }`}
-                            >
-                                <Icon size={16} />
-                                {tab.label}
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* ── OVERVIEW COMMAND TOOLBAR (Search bar + Date Range Filter + Quick Presets) ── */}
+                {/* ── OVERVIEW COMMAND TOOLBAR (Date Range Filter + Quick Presets) ── */}
                 <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-3">
-                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-                        {/* Search Bar for current overview tab */}
-                        <div className="relative flex-1 min-w-[240px]">
-                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder={`Search in ${tabLabels[activeTab] || 'Overview'} (orders, products, batches, accounts)...`}
-                                value={overviewSearch}
-                                onChange={(e) => setOverviewSearch(e.target.value)}
-                                className="w-full pl-10 pr-9 py-2 bg-gray-50/70 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition shadow-2xs"
-                            />
-                            {overviewSearch && (
-                                <button
-                                    onClick={() => setOverviewSearch('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
-                                    title="Clear search"
-                                >
-                                    <X size={15} />
-                                </button>
-                            )}
-                        </div>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider flex items-center gap-1.5">
+                            <Calendar size={15} className="text-blue-600" /> Filter Period / කාල සීමාව
+                        </span>
 
                         {/* Date Range Filter with quick presets */}
                         <div className="flex flex-wrap items-center gap-2">
@@ -551,22 +476,14 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* Active search or date filter status indicator */}
-                    {(overviewSearch || overviewStartDate || overviewEndDate) && (
+                    {/* Active date filter status indicator */}
+                    {(overviewStartDate || overviewEndDate) && (
                         <div className="flex flex-wrap items-center justify-between text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl font-medium gap-2">
                             <div className="flex items-center gap-2 flex-wrap">
-                                {overviewSearch && (
-                                    <span>Filtered by query: <strong className="text-indigo-900">"{overviewSearch}"</strong></span>
-                                )}
-                                {(overviewStartDate || overviewEndDate) && (
-                                    <span>Date range: <strong className="text-indigo-900">{overviewStartDate || 'Earliest'} to {overviewEndDate || 'Latest'}</strong></span>
-                                )}
+                                <span>Date range: <strong className="text-indigo-900">{overviewStartDate || 'Earliest'} to {overviewEndDate || 'Latest'}</strong></span>
                             </div>
                             <button
-                                onClick={() => {
-                                    setOverviewSearch('');
-                                    handlePreset('all');
-                                }}
+                                onClick={() => handlePreset('all')}
                                 className="text-indigo-600 hover:text-indigo-800 text-[11px] font-bold hover:underline"
                             >
                                 Reset Filters

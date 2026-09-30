@@ -152,14 +152,47 @@ const updateCustomerBalance = async (customerId) => {
  * Create manual invoice
  */
 export const createInvoice = asyncHandler(async (req, res) => {
-    const { customerId, items, dueDate, ...rest } = req.body;
+    const { customerId, items, dueDate, customerName, customerPhone, ...rest } = req.body;
 
-    const customer = await Customer.findById(customerId);
-    if (!customer) { res.status(404); throw new Error('Customer not found'); }
+    let customer = null;
+    if (customerId) {
+        customer = await Customer.findById(customerId);
+    }
+
+    // If no customer by ID, resolve by manual customerName or customerPhone
+    if (!customer && (customerName || rest.customerSnapshot?.name)) {
+        const cName = (customerName || rest.customerSnapshot?.name || '').trim();
+        const cPhone = (customerPhone || rest.customerSnapshot?.contactName || '').trim();
+
+        if (cName) {
+            customer = await Customer.findOne({
+                $or: [
+                    { displayName: new RegExp(`^${cName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+                    { companyName: new RegExp(`^${cName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+                    ...(cPhone ? [{ 'primaryContact.phone': cPhone }] : []),
+                ],
+                deletedAt: null,
+            });
+
+            if (!customer) {
+                customer = await Customer.create({
+                    displayName: cName,
+                    customerType: 'individual',
+                    businessType: 'retailer',
+                    primaryContact: cPhone ? { name: cName, phone: cPhone, isPrimary: true } : undefined,
+                    createdBy: req.user._id,
+                });
+            }
+        }
+    }
+
+    if (!customer && !customerName && !rest.customerSnapshot?.name) {
+        res.status(400); throw new Error('Customer is required');
+    }
 
     // Auto-calc due date if not provided
     let finalDueDate = dueDate;
-    if (!finalDueDate && customer.paymentTerms?.type === 'credit') {
+    if (!finalDueDate && customer?.paymentTerms?.type === 'credit') {
         const d = new Date(rest.invoiceDate || Date.now());
         d.setDate(d.getDate() + (customer.paymentTerms.creditDays || 0));
         finalDueDate = d;
@@ -170,23 +203,23 @@ export const createInvoice = asyncHandler(async (req, res) => {
     }
 
     const invoice = new Invoice({
-        customerId: customer._id,
+        customerId: customer?._id,
         customerSnapshot: {
-            name: customer.displayName,
-            code: customer.customerCode,
-            taxRegistrationNumber: customer.taxRegistrationNumber,
-            contactName: customer.primaryContact?.name,
+            name: customer?.displayName || customerName || rest.customerSnapshot?.name || 'Customer',
+            code: customer?.customerCode || '',
+            taxRegistrationNumber: customer?.taxRegistrationNumber || '',
+            contactName: customer?.primaryContact?.phone || customerPhone || customer?.primaryContact?.name || '',
         },
-        billingAddress: customer.billingAddress,
-        shippingAddress: customer.shippingAddresses?.find((a) => a.isDefault) || customer.billingAddress,
-        salesRepId: customer.assignedSalesRep,
-        introducer: rest.introducer || customer.introducer,
-        introducerName: rest.introducerName || customer.introducerName || '',
+        billingAddress: customer?.billingAddress,
+        shippingAddress: customer?.shippingAddresses?.find((a) => a.isDefault) || customer?.billingAddress,
+        salesRepId: customer?.assignedSalesRep,
+        introducer: rest.introducer || customer?.introducer,
+        introducerName: rest.introducerName || customer?.introducerName || '',
         biller: rest.biller || req.user._id,
         billerName: rest.billerName || `${req.user?.firstName || ''} ${req.user?.lastName || ''}`.trim(),
         paymentTerms: {
-            type: customer.paymentTerms?.type || 'cod',
-            creditDays: customer.paymentTerms?.creditDays || 0,
+            type: customer?.paymentTerms?.type || 'cod',
+            creditDays: customer?.paymentTerms?.creditDays || 0,
         },
         dueDate: finalDueDate,
         items,
@@ -196,7 +229,9 @@ export const createInvoice = asyncHandler(async (req, res) => {
 
     await invoice.save();
     await deductStockForInvoice(invoice, req.user._id);
-    await updateCustomerBalance(customer._id);
+    if (customer?._id) {
+        await updateCustomerBalance(customer._id);
+    }
 
     const populated = await Invoice.findById(invoice._id)
         .populate('customerId', 'displayName customerCode')

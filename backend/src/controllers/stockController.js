@@ -50,22 +50,42 @@ export const getStockItems = asyncHandler(async (req, res) => {
 
     const skip = (Number(page) - 1) * Number(limit);
 
-    let items = await StockItem.find(filter)
-        .populate('productId', 'name sinhalaName productCode sku stockLevels type productType')
-        .populate('warehouseId', 'name warehouseCode')
-        .sort({ productName: 1 })
-        .skip(skip)
-        .limit(Number(limit));
-
-    // Filter low-stock in-memory (depends on product's reorderLevel)
     if (lowStock === 'true') {
-        items = items.filter((s) => {
+        const allItems = await StockItem.find(filter)
+            .populate('productId', 'name sinhalaName productCode sku stockLevels type productType')
+            .populate('warehouseId', 'name warehouseCode')
+            .sort({ productName: 1 });
+
+        const lowStockItems = allItems.filter((s) => {
+            const onHand = s.quantities?.onHand ?? 0;
             const reorder = s.productId?.stockLevels?.reorderLevel || 0;
-            return s.quantities.onHand <= reorder && reorder > 0;
+            const min = s.productId?.stockLevels?.minimumLevel || 0;
+            const threshold = reorder > 0 ? reorder : (min > 0 ? min : 5);
+            return onHand <= 0 || onHand <= threshold;
+        });
+
+        const total = lowStockItems.length;
+        const paginated = lowStockItems.slice(skip, skip + Number(limit));
+
+        return res.json({
+            success: true,
+            count: paginated.length,
+            total,
+            page: Number(page),
+            totalPages: Math.ceil(total / Number(limit)),
+            data: paginated,
         });
     }
 
-    const total = await StockItem.countDocuments(filter);
+    const [items, total] = await Promise.all([
+        StockItem.find(filter)
+            .populate('productId', 'name sinhalaName productCode sku stockLevels type productType')
+            .populate('warehouseId', 'name warehouseCode')
+            .sort({ productName: 1 })
+            .skip(skip)
+            .limit(Number(limit)),
+        StockItem.countDocuments(filter),
+    ]);
 
     res.json({
         success: true,

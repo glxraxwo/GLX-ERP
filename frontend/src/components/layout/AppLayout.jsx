@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore, THEME_MODES } from '../../store/themeStore';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useSocket } from '../../hooks/useSocket';
 
 export default function AppLayout() {
     const { user } = useAuthStore();
+    const { themeMode } = useThemeStore();
     const location = useLocation();
     // Desktop: open by default (>=1024px) or read from localStorage, mobile: closed
     const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -49,8 +51,14 @@ export default function AppLayout() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const layoutBgClass = {
+        [THEME_MODES.SOFT]: 'bg-[#EAEFF4]',
+        [THEME_MODES.PURE]: 'bg-gray-50',
+        [THEME_MODES.DARK]: 'bg-slate-100',
+    }[themeMode] || 'bg-[#EAEFF4]';
+
     return (
-        <div className="h-screen flex bg-gray-50 overflow-hidden">
+        <div className={`h-screen flex ${layoutBgClass} overflow-hidden transition-colors duration-200`}>
             <Sidebar
                 userRole={user?.role}
                 isOpen={sidebarOpen}

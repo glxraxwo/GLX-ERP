@@ -2,13 +2,14 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, ArrowLeft, Save, Image as ImageIcon, X } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Save, X, Edit2, CheckCircle2, Search } from 'lucide-react';
 
 import PageHeader from '../components/ui/PageHeader';
 import { translateText, detectLanguage } from '../utils/translationService';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
+import SearchableSelect from '../components/ui/SearchableSelect';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 
@@ -17,20 +18,41 @@ import { productsApi } from '../features/products/productsApi';
 import { useCreateInvoice } from '../features/invoices/useInvoices';
 import api from '../api/axios';
 
+const defaultItemState = {
+    productId: '',
+    productName: '',
+    productTranslation: '',
+    productCode: '',
+    description: '',
+    quantity: 1,
+    unitPrice: 0,
+    discount: 0,
+    taxRate: 18,
+    taxable: true,
+    unitOfMeasure: 'pcs',
+};
+
 export default function InvoiceFormPage() {
     const navigate = useNavigate();
     const createMutation = useCreateInvoice();
 
     const [customerId, setCustomerId] = useState('');
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
+
     const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
     const [dueDate, setDueDate] = useState('');
     const [invoiceType, setInvoiceType] = useState('standard');
     const [notes, setNotes] = useState('');
     const [paymentInstructions, setPaymentInstructions] = useState('');
     const [shippingCost, setShippingCost] = useState(0);
-    const [items, setItems] = useState([
-        { productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, discount: 0, taxRate: 18, taxable: true, unitOfMeasure: 'pcs' }
-    ]);
+
+    // Added items list + current item entry state
+    const [items, setItems] = useState([]);
+    const [currentItem, setCurrentItem] = useState(defaultItemState);
+    const [editingIndex, setEditingIndex] = useState(null);
 
     const [introducer, setIntroducer] = useState('');
     const [introducerName, setIntroducerName] = useState('');
@@ -44,7 +66,7 @@ export default function InvoiceFormPage() {
 
     const { data: customersData } = useQuery({
         queryKey: ['customers', 'active'],
-        queryFn: () => customersApi.list({ status: 'active', limit: 500 }),
+        queryFn: () => customersApi.list({ status: 'active', limit: 1000 }),
     });
     const { data: productsData } = useQuery({
         queryKey: ['products', 'active'],
@@ -65,6 +87,33 @@ export default function InvoiceFormPage() {
         }
     });
 
+    const customerSuggestions = useMemo(() => {
+        const all = customersData?.data || [];
+        if (!customerSearch.trim()) return all.slice(0, 8);
+        const q = customerSearch.toLowerCase().trim();
+        return all.filter((c) => {
+            const name = (c.displayName || c.companyName || '').toLowerCase();
+            const phone = (c.primaryContact?.phone || c.billingAddress?.phone || '').toLowerCase();
+            const code = (c.customerCode || '').toLowerCase();
+            return name.includes(q) || phone.includes(q) || code.includes(q);
+        }).slice(0, 10);
+    }, [customerSearch, customersData]);
+
+    const handleSelectCustomer = (cust) => {
+        setSelectedCustomer(cust);
+        setCustomerId(cust._id);
+        setCustomerSearch(cust.displayName || cust.companyName || '');
+        setCustomerPhone(cust.primaryContact?.phone || cust.billingAddress?.phone || '');
+        if (cust.introducer) {
+            setIntroducer(cust.introducer);
+            setIntroducerName(cust.introducerName || '');
+        } else {
+            setIntroducer('');
+            setIntroducerName('');
+        }
+        setIsCustomerDropdownOpen(false);
+    };
+
     const customerOptions = (customersData?.data || []).map((c) => ({
         value: c._id, label: `${c.displayName} (${c.customerCode})`,
     }));
@@ -73,55 +122,112 @@ export default function InvoiceFormPage() {
         .map((p) => ({
             value: p._id,
             label: p.sinhalaName 
-                ? `${p.name} (${p.sinhalaName}) — ${p.productCode}`
-                : `${p.name} — ${p.productCode}`,
+                ? `${p.name} (${p.sinhalaName})`
+                : p.name,
+            productCode: p.productCode,
+            sinhalaName: p.sinhalaName,
+            subtext: `Code: ${p.productCode} • Price: LKR ${p.basePrice || 0}`,
         }));
 
-    const addItem = () => setItems([
-        ...items, 
-        { productName: '', productTranslation: '', description: '', quantity: 1, unitPrice: 0, discount: 0, taxRate: 18, taxable: true, unitOfMeasure: 'pcs' }
-    ]);
-    const removeItem = (idx) => setItems(items.filter((_, i) => i !== idx));
-    const updateItem = (idx, field, value) => {
-        const newItems = [...items];
-        newItems[idx] = { ...newItems[idx], [field]: value };
-        if (field === 'productId' && value) {
-            const p = productsData?.data?.find((x) => x._id === value);
-            if (p) {
-                newItems[idx].productName = p.name;
-                if (p.sinhalaName) {
-                    newItems[idx].productTranslation = p.sinhalaName;
+    const updateCurrentItem = (field, value) => {
+        setCurrentItem((prev) => {
+            const next = { ...prev, [field]: value };
+            if (field === 'productId') {
+                if (value) {
+                    const p = productsData?.data?.find((x) => x._id === value);
+                    if (p) {
+                        next.productName = p.name || '';
+                        next.productTranslation = p.sinhalaName || '';
+                        next.productCode = p.productCode || '';
+                        next.description = p.description || '';
+                        next.unitPrice = p.basePrice || p.costs?.lastPurchaseCost || p.costs?.averageCost || 0;
+                        next.taxRate = p.tax?.taxRate ?? 18;
+                        next.taxable = p.tax?.taxable ?? true;
+                        next.unitOfMeasure = p.unitOfMeasure || 'pcs';
+                    }
+                } else {
+                    next.productId = '';
                 }
-                newItems[idx].productCode = p.productCode;
-                newItems[idx].description = p.description || '';
-                newItems[idx].unitPrice = p.basePrice || p.costs?.lastPurchaseCost || p.costs?.averageCost || 0;
-                newItems[idx].taxRate = p.tax?.taxRate || 0;
-                newItems[idx].taxable = p.tax?.taxable ?? true;
-                newItems[idx].unitOfMeasure = p.unitOfMeasure || 'pcs';
             }
-        }
-        setItems(newItems);
+            return next;
+        });
     };
 
-    const handleTranslateItem = async (index) => {
-        const item = items[index];
-        const text = item.productName || '';
-        if (!text.trim()) return;
+    const handleTranslateCurrentItem = async () => {
+        const text = currentItem.productName || '';
+        if (!text.trim()) {
+            toast.error('Please enter an item name to translate');
+            return;
+        }
         try {
             const detected = detectLanguage(text);
             if (detected === 'si' || detected === 'ta') {
                 const translated = await translateText(text, 'en');
-                updateItem(index, 'productName', translated);
-                updateItem(index, 'productTranslation', text);
+                setCurrentItem((prev) => ({
+                    ...prev,
+                    productName: translated,
+                    productTranslation: text,
+                }));
                 toast.success('Translated to English!');
             } else {
                 const translated = await translateText(text, 'si');
-                updateItem(index, 'productTranslation', translated);
+                setCurrentItem((prev) => ({
+                    ...prev,
+                    productTranslation: translated,
+                }));
                 toast.success('Translated to Sinhala!');
             }
         } catch (err) {
             toast.error('Translation failed: ' + err.message);
         }
+    };
+
+    const handleAddOrUpdateItem = () => {
+        if (!currentItem.productName || !currentItem.productName.trim()) {
+            toast.error('Item Name is required');
+            return;
+        }
+        const q = +currentItem.quantity;
+        if (!q || q <= 0) {
+            toast.error('Quantity must be greater than 0');
+            return;
+        }
+
+        if (editingIndex !== null) {
+            setItems((prev) => {
+                const updated = [...prev];
+                updated[editingIndex] = { ...currentItem };
+                return updated;
+            });
+            toast.success(`Item #${editingIndex + 1} updated!`);
+            setEditingIndex(null);
+        } else {
+            setItems((prev) => [...prev, { ...currentItem }]);
+            toast.success(`Item #${items.length + 1} added!`);
+        }
+
+        setCurrentItem(defaultItemState);
+    };
+
+    const handleEditItem = (idx) => {
+        setEditingIndex(idx);
+        setCurrentItem({ ...items[idx] });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingIndex(null);
+        setCurrentItem(defaultItemState);
+    };
+
+    const handleRemoveItem = (idx) => {
+        setItems((prev) => prev.filter((_, i) => i !== idx));
+        if (editingIndex === idx) {
+            setEditingIndex(null);
+            setCurrentItem(defaultItemState);
+        } else if (editingIndex !== null && editingIndex > idx) {
+            setEditingIndex(editingIndex - 1);
+        }
+        toast.success(`Item #${idx + 1} removed`);
     };
 
     const totals = useMemo(() => {
@@ -150,15 +256,32 @@ export default function InvoiceFormPage() {
     const fmt = (n) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 2 }).format(n || 0);
 
     const submit = async () => {
-        if (!customerId) { toast.error('Select customer'); return; }
-        if (items.length === 0 || items.some((i) => !i.productName || !i.quantity)) {
+        const finalCustomerName = (customerSearch || selectedCustomer?.displayName || '').trim();
+        if (!customerId && !finalCustomerName) {
+            toast.error('Please enter customer name or select a customer');
+            return;
+        }
+
+        let finalItems = [...items];
+        if (finalItems.length === 0 && currentItem.productName && +currentItem.quantity > 0) {
+            finalItems = [{ ...currentItem }];
+        }
+
+        if (finalItems.length === 0) {
+            toast.error('Please add at least one item using "+ Add Item"');
+            return;
+        }
+
+        if (finalItems.some((i) => !i.productName || !i.quantity)) {
             toast.error('All items need a name and quantity');
             return;
         }
 
         try {
             const result = await createMutation.mutateAsync({
-                customerId,
+                customerId: customerId || undefined,
+                customerName: finalCustomerName,
+                customerPhone: customerPhone || undefined,
                 invoiceType,
                 invoiceDate,
                 dueDate: dueDate || undefined,
@@ -168,7 +291,7 @@ export default function InvoiceFormPage() {
                 billerName: billerName || undefined,
                 numberPlateImage: numberPlateImage || undefined,
                 lorryBodyImage: lorryBodyImage || undefined,
-                items: items.map((i) => {
+                items: finalItems.map((i) => {
                     const q = +i.quantity || 1;
                     const d = +i.discount || 0;
                     return {
@@ -198,10 +321,19 @@ export default function InvoiceFormPage() {
         } catch { }
     };
 
+    const curQ = +currentItem.quantity || 0;
+    const curP = +currentItem.unitPrice || 0;
+    const curD = +currentItem.discount || 0;
+    const curGross = curQ * curP;
+    const curDisc = Math.min(curGross, curD * curQ);
+    const curTaxable = Math.max(0, curGross - curDisc);
+    const curTax = currentItem.taxable ? curTaxable * (+currentItem.taxRate || 0) / 100 : 0;
+    const curLineTot = curTaxable + curTax;
+
     return (
         <div>
-            <PageHeader title="Manual Invoice"
-                description="Create an invoice without a sales order (services, miscellaneous)"
+            <PageHeader title="Add Invoice"
+                description="Create an invoice directly (services, custom sales, or walk-in customers)"
                 actions={<Button variant="outline" onClick={() => navigate('/invoices')}>
                     <ArrowLeft size={16} className="mr-1.5" /> Back
                 </Button>} />
@@ -209,20 +341,127 @@ export default function InvoiceFormPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <div className="col-span-2 space-y-6">
                     <Card className="p-6">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-4">Customer & Dates</h3>
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <h3 className="text-sm font-bold text-gray-800">Customer & Dates</h3>
+                            {selectedCustomer ? (
+                                <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                    <CheckCircle2 size={12} /> System Customer: {selectedCustomer.customerCode}
+                                </span>
+                            ) : customerSearch.trim() ? (
+                                <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                                    Manual Customer
+                                </span>
+                            ) : null}
+                        </div>
+
                         <div className="space-y-4">
-                            <Select label="Customer" required placeholder="Select customer..."
-                                options={customerOptions} value={customerId} onChange={(e) => {
-                                    setCustomerId(e.target.value);
-                                    const cust = (customersData?.data || []).find((c) => c._id === e.target.value);
-                                    if (cust && cust.introducer) {
-                                        setIntroducer(cust.introducer);
-                                        setIntroducerName(cust.introducerName || '');
-                                    } else {
-                                        setIntroducer('');
-                                        setIntroducerName('');
-                                    }
-                                }} />
+                            {/* Smart Customer Search / Suggestion / Manual Entry */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="relative">
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                        Customer Name <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={customerSearch}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setCustomerSearch(val);
+                                                if (customerId) setCustomerId('');
+                                                if (selectedCustomer) setSelectedCustomer(null);
+                                                setIsCustomerDropdownOpen(true);
+                                            }}
+                                            onFocus={() => setIsCustomerDropdownOpen(true)}
+                                            placeholder="Type name or phone number..."
+                                            className="w-full pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none font-medium"
+                                        />
+                                        {customerSearch && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setCustomerSearch('');
+                                                    setCustomerPhone('');
+                                                    setCustomerId('');
+                                                    setSelectedCustomer(null);
+                                                    setIntroducer('');
+                                                    setIntroducerName('');
+                                                }}
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Auto-suggest dropdown */}
+                                    {isCustomerDropdownOpen && (
+                                        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto divide-y divide-gray-100">
+                                            {customerSuggestions.length > 0 && (
+                                                <>
+                                                    <div className="px-3 py-1.5 bg-gray-50 text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center justify-between">
+                                                        <span>System Customers</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setIsCustomerDropdownOpen(false)}
+                                                            className="text-gray-400 hover:text-gray-600 text-xs"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                    {customerSuggestions.map((c) => (
+                                                        <div
+                                                            key={c._id}
+                                                            onClick={() => handleSelectCustomer(c)}
+                                                            className="px-3 py-2 hover:bg-primary-50 cursor-pointer transition flex items-center justify-between"
+                                                        >
+                                                            <div className="min-w-0 pr-2">
+                                                                <p className="text-xs font-bold text-gray-900 truncate">
+                                                                    {c.displayName || c.companyName}
+                                                                </p>
+                                                                <p className="text-[11px] text-gray-500 font-mono">
+                                                                    {c.customerCode} {c.primaryContact?.phone ? `• ${c.primaryContact.phone}` : (c.billingAddress?.phone ? `• ${c.billingAddress.phone}` : '')}
+                                                                </p>
+                                                            </div>
+                                                            <span className="text-[10px] text-primary-600 bg-primary-50 px-2 py-0.5 rounded border border-primary-100 font-semibold shrink-0">
+                                                                Select
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </>
+                                            )}
+
+                                            {customerSearch.trim() && (
+                                                <div
+                                                    onClick={() => setIsCustomerDropdownOpen(false)}
+                                                    className="p-2.5 bg-amber-50/70 hover:bg-amber-100/70 cursor-pointer text-xs font-semibold text-amber-900 flex items-center justify-between"
+                                                >
+                                                    <div>
+                                                        <span>Use <strong>&quot;{customerSearch}&quot;</strong> as manual customer</span>
+                                                        <p className="text-[10px] text-amber-700 font-normal">Saves as walk-in customer without creating in master list</p>
+                                                    </div>
+                                                    <span className="text-[10px] bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded font-bold">Manual</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                        Customer Phone Number
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. 0771234567"
+                                        value={customerPhone}
+                                        onChange={(e) => setCustomerPhone(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none font-medium"
+                                    />
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <Input label="Invoice Date" type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
                                 <Input label="Due Date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
@@ -234,247 +473,324 @@ export default function InvoiceFormPage() {
                                     ]}
                                     value={invoiceType} onChange={(e) => setInvoiceType(e.target.value)} />
                             </div>
-
-                            {/* Introducer and Biller dropdowns */}
-                            <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Introducer (Employee)</label>
-                                    <select
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                        value={introducer || ''}
-                                        onChange={(e) => {
-                                            const empId = e.target.value;
-                                            const emp = (employeesData || []).find(x => x._id === empId);
-                                            setIntroducer(empId);
-                                            setIntroducerName(emp ? `${emp.firstName} ${emp.lastName}` : '');
-                                        }}
-                                    >
-                                        <option value="">-- Select Introducer --</option>
-                                        {(employeesData || []).map(emp => (
-                                            <option key={emp._id} value={emp._id}>{emp.firstName} {emp.lastName} ({emp.employeeCode})</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Biller (User)</label>
-                                    <select
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                        value={biller || ''}
-                                        onChange={(e) => {
-                                            const userId = e.target.value;
-                                            const usr = (usersData || []).find(x => x._id === userId);
-                                            setBiller(userId);
-                                            setBillerName(usr ? `${usr.firstName} ${usr.lastName}` : '');
-                                        }}
-                                    >
-                                        <option value="">-- Select Biller --</option>
-                                        {(usersData || []).map(u => (
-                                            <option key={u._id} value={u._id}>{u.firstName} {u.lastName}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
                         </div>
                     </Card>
 
-                    {/* Image uploads for Number Plate & Lorry Body */}
-                    <Card className="p-6">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-1.5">
-                            <ImageIcon size={16} /> Photo Attachments (Displayed on Print & PDF)
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            {/* Number Plate Photo */}
-                            <div className="bg-slate-50 p-3 rounded-lg border border-gray-200 space-y-2">
-                                <label className="block text-xs font-bold text-gray-700 uppercase">Number Plate Photo</label>
-                                <input 
-                                    type="file" 
-                                    accept="image/*"
-                                    className="text-xs text-gray-500 w-full file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                                    onChange={(e) => {
-                                        const file = e.target.files[0];
-                                        if (file) {
-                                            const r = new FileReader();
-                                            r.onloadend = () => setNumberPlateImage(r.result);
-                                            r.readAsDataURL(file);
-                                        }
-                                    }}
-                                />
-                                {numberPlateImage && (
-                                    <div className="relative border rounded p-1 bg-white">
-                                        <img src={numberPlateImage} alt="Plate Preview" className="h-24 object-contain mx-auto" />
-                                        <button type="button" onClick={() => setNumberPlateImage('')} className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5"><X size={12} /></button>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Lorry Body Photo */}
-                            <div className="bg-slate-50 p-3 rounded-lg border border-gray-200 space-y-2">
-                                <label className="block text-xs font-bold text-gray-700 uppercase">Lorry Body Photo</label>
-                                <input 
-                                    type="file" 
-                                    accept="image/*"
-                                    className="text-xs text-gray-500 w-full file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                                    onChange={(e) => {
-                                        const file = e.target.files[0];
-                                        if (file) {
-                                            const r = new FileReader();
-                                            r.onloadend = () => setLorryBodyImage(r.result);
-                                            r.readAsDataURL(file);
-                                        }
-                                    }}
-                                />
-                                {lorryBodyImage && (
-                                    <div className="relative border rounded p-1 bg-white">
-                                        <img src={lorryBodyImage} alt="Body Preview" className="h-24 object-contain mx-auto" />
-                                        <button type="button" onClick={() => setLorryBodyImage('')} className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5"><X size={12} /></button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between mb-4">
+                    {/* Item Entry Form */}
+                    <Card className="p-6 border-primary-100 shadow-sm">
+                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
                             <div>
-                                <h3 className="text-sm font-semibold text-gray-700">Line Items</h3>
-                                <p className="text-xs text-gray-400">Add products/services, product-by-product discounts, and custom specifications</p>
+                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                    <span className="w-6 h-6 rounded-full bg-primary-600 text-white font-bold text-xs flex items-center justify-center">
+                                        {editingIndex !== null ? editingIndex + 1 : items.length + 1}
+                                    </span>
+                                    {editingIndex !== null ? `Edit Item #${editingIndex + 1}` : `Add Item #${items.length + 1}`}
+                                </h3>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    Fill in the item details below and click &quot;{editingIndex !== null ? 'Update Item' : '+ Add Item'}&quot; to add it to the invoice.
+                                </p>
                             </div>
-                            <Button type="button" variant="outline" size="sm" onClick={addItem}>
-                                <Plus size={14} className="mr-1" /> Add Item
-                            </Button>
+                            {editingIndex !== null && (
+                                <button
+                                    type="button"
+                                    onClick={handleCancelEdit}
+                                    className="text-xs text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-md transition"
+                                >
+                                    Cancel Edit
+                                </button>
+                            )}
                         </div>
+
                         <div className="space-y-4">
-                            {items.map((item, idx) => {
-                                const q = +item.quantity || 0;
-                                const p = +item.unitPrice || 0;
-                                const d = +item.discount || 0;
-                                const lGross = q * p;
-                                const lDisc = Math.min(lGross, d * q);
-                                const lTaxable = Math.max(0, lGross - lDisc);
-                                const lTax = item.taxable ? lTaxable * (+item.taxRate || 0) / 100 : 0;
-                                const lTot = lTaxable + lTax;
+                            {/* Catalog Product Selection */}
+                            <div>
+                                <SearchableSelect
+                                    label="Catalog Product (Optional - Auto Fill)"
+                                    placeholder="Search product by name, Sinhala name, or code..."
+                                    options={productOptions}
+                                    value={currentItem.productId || ''}
+                                    onChange={(e) => updateCurrentItem('productId', e.target.value)}
+                                />
+                            </div>
 
-                                return (
-                                    <div key={idx} className="border border-gray-200 bg-gray-50/60 rounded-xl p-4 space-y-3 relative hover:border-gray-300 transition">
-                                        <div className="flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-6 h-6 rounded-full bg-primary-100 text-primary-800 font-bold text-xs flex items-center justify-center">
-                                                    {idx + 1}
-                                                </span>
-                                                <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Item #{idx + 1}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleTranslateItem(idx)}
-                                                    className="text-[11px] text-blue-600 hover:text-blue-800 font-bold bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded transition"
-                                                >
-                                                    Translate (SI/EN)
-                                                </button>
-                                                {items.length > 1 && (
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => removeItem(idx)} 
-                                                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition"
-                                                        title="Remove Item"
-                                                    >
-                                                        <Trash2 size={15} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
+                            {/* Item Name and Translation */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <Input
+                                        label="Item Name / Title *"
+                                        required
+                                        placeholder="e.g. Repair Works / Cargo Lorry Body DOOR Reconstruction"
+                                        value={currentItem.productName}
+                                        onChange={(e) => updateCurrentItem('productName', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="block text-xs font-semibold text-gray-700">
+                                            Translation (Sinhala / Tamil)
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={handleTranslateCurrentItem}
+                                            className="text-[11px] text-blue-600 hover:text-blue-800 font-bold bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded transition"
+                                        >
+                                            Translate (SI/EN)
+                                        </button>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="සිංහල / தமிழ் නම"
+                                        value={currentItem.productTranslation || ''}
+                                        onChange={(e) => updateCurrentItem('productTranslation', e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                    />
+                                </div>
+                            </div>
 
-                                        <div>
-                                            <Select 
-                                                label="Catalog Product (Optional)"
-                                                placeholder="Select catalog product or enter custom below..." 
-                                                options={productOptions}
-                                                value={item.productId || ''} 
-                                                onChange={(e) => updateItem(idx, 'productId', e.target.value)} 
-                                            />
-                                        </div>
+                            {/* Detailed Specifications */}
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                    Detailed Specifications / Work Description (Multiline)
+                                </label>
+                                <textarea
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs leading-relaxed bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 font-sans"
+                                    placeholder="Detailed specifications (e.g. *** Roof 3 x 3 Aluminium Patch *** or bullet points: 01. Waterproof Shutter Board...)"
+                                    value={currentItem.description || ''}
+                                    onChange={(e) => updateCurrentItem('description', e.target.value)}
+                                />
+                            </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <Input 
-                                                label="Item Name / Title *" 
-                                                required
-                                                placeholder="e.g. Repair Works / Cargo Lorry Body DOOR Reconstruction"
-                                                value={item.productName} 
-                                                onChange={(e) => updateItem(idx, 'productName', e.target.value)} 
-                                            />
-                                            <Input 
-                                                label="Translation (Sinhala / Tamil)" 
-                                                placeholder="සිංහල / தமிழ் නම"
-                                                value={item.productTranslation || ''} 
-                                                onChange={(e) => updateItem(idx, 'productTranslation', e.target.value)} 
-                                            />
-                                        </div>
+                            {/* Qty, Unit Price, Discount, Tax, Line Total */}
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1 items-end">
+                                <Input
+                                    label="Qty *"
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    value={currentItem.quantity}
+                                    onChange={(e) => updateCurrentItem('quantity', e.target.value)}
+                                />
+                                <Input
+                                    label="Unit Price (LKR)"
+                                    type="number"
+                                    step="0.01"
+                                    value={currentItem.unitPrice}
+                                    onChange={(e) => updateCurrentItem('unitPrice', e.target.value)}
+                                />
+                                <div>
+                                    <label className="block text-xs font-bold text-red-600 mb-1 uppercase tracking-wide">
+                                        Discount / Unit (LKR)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        placeholder="0.00"
+                                        className="w-full px-3 py-2 border border-red-200 rounded-lg text-sm bg-white font-mono text-red-600 focus:outline-none focus:ring-1 focus:ring-red-400 placeholder-red-300"
+                                        value={currentItem.discount || ''}
+                                        onChange={(e) => updateCurrentItem('discount', e.target.value)}
+                                    />
+                                </div>
+                                <Input
+                                    label="Tax %"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={currentItem.taxRate}
+                                    onChange={(e) => updateCurrentItem('taxRate', e.target.value)}
+                                />
+                                <div className="col-span-2 sm:col-span-1">
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">Line Total</label>
+                                    <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                                        <p className="text-sm font-bold text-gray-900">{fmt(curLineTot)}</p>
+                                        {curDisc > 0 && (
+                                            <p className="text-[10px] text-red-500 font-mono">-Disc: {fmt(curDisc)}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
 
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                                Detailed Specifications / Work Description (Multiline)
-                                            </label>
-                                            <textarea
-                                                rows={2}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs leading-relaxed bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 font-sans"
-                                                placeholder="Detailed specifications (e.g. *** Roof 3 x 3 Aluminium Patch *** or bullet points: 01. Waterproof Shutter Board...)"
-                                                value={item.description || ''}
-                                                onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                                            />
-                                        </div>
+                            {/* Add / Update Item Button */}
+                            <div className="flex items-center justify-end gap-3 pt-2">
+                                {editingIndex !== null ? (
+                                    <>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={handleCancelEdit}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="primary"
+                                            onClick={handleAddOrUpdateItem}
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
+                                        >
+                                            <CheckCircle2 size={16} className="mr-1.5" />
+                                            Update Item #{editingIndex + 1}
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button
+                                        type="button"
+                                        variant="primary"
+                                        onClick={handleAddOrUpdateItem}
+                                        className="bg-primary-600 hover:bg-primary-700 text-white font-semibold shadow-sm px-6"
+                                    >
+                                        <Plus size={16} className="mr-1.5" />
+                                        + Add Item #{items.length + 1}
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </Card>
 
-                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
-                                            <Input 
-                                                label="Qty" 
-                                                type="number" 
-                                                step="0.01" 
-                                                min="0.01"
-                                                value={item.quantity} 
-                                                onChange={(e) => updateItem(idx, 'quantity', e.target.value)} 
-                                            />
-                                            <Input 
-                                                label="Unit Price (LKR)" 
-                                                type="number" 
-                                                step="0.01" 
-                                                value={item.unitPrice} 
-                                                onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)} 
-                                            />
-                                            <div>
-                                                <label className="block text-xs font-bold text-red-600 mb-1 uppercase tracking-wide">
-                                                    Discount / Unit (LKR)
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    placeholder="0.00"
-                                                    className="w-full px-3 py-2 border border-red-200 rounded-lg text-sm bg-white font-mono text-red-600 focus:outline-none focus:ring-1 focus:ring-red-400 placeholder-red-300"
-                                                    value={item.discount || ''}
-                                                    onChange={(e) => updateItem(idx, 'discount', e.target.value)}
-                                                />
-                                            </div>
-                                            <Input 
-                                                label="Tax %" 
-                                                type="number" 
-                                                step="0.01" 
-                                                min="0"
-                                                value={item.taxRate} 
-                                                onChange={(e) => updateItem(idx, 'taxRate', e.target.value)} 
-                                            />
-                                            <div className="col-span-2 sm:col-span-1">
-                                                <label className="block text-xs font-semibold text-gray-700 mb-1">Line Total</label>
-                                                <div className="px-3 py-2 bg-white border border-gray-200 rounded-lg">
-                                                    <p className="text-sm font-bold text-gray-900">{fmt(lTot)}</p>
-                                                    {lDisc > 0 && (
-                                                        <p className="text-[10px] text-red-500 font-mono">-Disc: {fmt(lDisc)}</p>
-                                                    )}
+                    {/* Added Items List */}
+                    <Card className="p-6">
+                        <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                    <span>Added Items</span>
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-primary-100 text-primary-800">
+                                        {items.length}
+                                    </span>
+                                </h3>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    Review added items. Click Edit to modify or Trash to remove.
+                                </p>
+                            </div>
+                        </div>
+
+                        {items.length === 0 ? (
+                            <div className="text-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                <p className="text-sm font-medium text-gray-500">No items added yet</p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Fill in the form above and click &quot;+ Add Item #1&quot; to add your first item.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {items.map((item, idx) => {
+                                    const q = +item.quantity || 0;
+                                    const p = +item.unitPrice || 0;
+                                    const d = +item.discount || 0;
+                                    const lGross = q * p;
+                                    const lDisc = Math.min(lGross, d * q);
+                                    const lTaxable = Math.max(0, lGross - lDisc);
+                                    const lTax = item.taxable ? lTaxable * (+item.taxRate || 0) / 100 : 0;
+                                    const lTot = lTaxable + lTax;
+                                    const isBeingEdited = editingIndex === idx;
+
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className={`border rounded-xl p-4 transition ${
+                                                isBeingEdited
+                                                    ? 'border-emerald-500 bg-emerald-50/30 ring-1 ring-emerald-500'
+                                                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-xs'
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-start gap-3 flex-1 min-w-0">
+                                                    <span className={`w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                                                        isBeingEdited
+                                                            ? 'bg-emerald-600 text-white'
+                                                            : 'bg-primary-100 text-primary-800'
+                                                    }`}>
+                                                        {idx + 1}
+                                                    </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                                                                Item #{idx + 1}
+                                                            </span>
+                                                            <h4 className="text-sm font-bold text-gray-900 truncate">
+                                                                {item.productName}
+                                                            </h4>
+                                                            {item.productTranslation && (
+                                                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded font-sans">
+                                                                    {item.productTranslation}
+                                                                </span>
+                                                            )}
+                                                            {item.productCode && (
+                                                                <span className="text-[11px] font-mono text-gray-400">
+                                                                    ({item.productCode})
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {item.description && (
+                                                            <p className="text-xs text-gray-600 mt-1 whitespace-pre-line bg-gray-50 p-2 rounded border border-gray-100">
+                                                                {item.description}
+                                                            </p>
+                                                        )}
+
+                                                        <div className="flex items-center gap-3 sm:gap-4 mt-2 text-xs text-gray-500 flex-wrap">
+                                                            <span>
+                                                                Qty: <strong className="text-gray-800 font-mono">{item.quantity}</strong> {item.unitOfMeasure || 'pcs'}
+                                                            </span>
+                                                            <span>•</span>
+                                                            <span>
+                                                                Unit Price: <strong className="text-gray-800 font-mono">{fmt(item.unitPrice)}</strong>
+                                                            </span>
+                                                            {d > 0 && (
+                                                                <>
+                                                                    <span>•</span>
+                                                                    <span className="text-red-600 font-mono">
+                                                                        Disc: -{fmt(lDisc)}
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                            {+item.taxRate > 0 && (
+                                                                <>
+                                                                    <span>•</span>
+                                                                    <span>Tax: {item.taxRate}%</span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                                    <div className="text-right">
+                                                        <span className="text-xs text-gray-400 block">Total</span>
+                                                        <span className="text-base font-bold text-gray-900 font-mono">
+                                                            {fmt(lTot)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleEditItem(idx)}
+                                                            className={`p-1.5 rounded text-xs flex items-center gap-1 font-medium transition ${
+                                                                isBeingEdited
+                                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                                    : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
+                                                            }`}
+                                                            title="Edit item"
+                                                        >
+                                                            <Edit2 size={14} />
+                                                            <span className="hidden sm:inline">Edit</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveItem(idx)}
+                                                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded text-xs flex items-center gap-1 font-medium transition"
+                                                            title="Remove item"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                            <span className="hidden sm:inline">Remove</span>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </Card>
 
                     <Card className="p-6">
@@ -569,7 +885,7 @@ export default function InvoiceFormPage() {
                             </div>
                         </div>
                         <Button variant="primary" fullWidth className="mt-6" onClick={submit} loading={createMutation.isPending}
-                            disabled={!customerId || items.length === 0}>
+                            disabled={!customerId || (items.length === 0 && !currentItem.productName)}>
                             <Save size={16} className="mr-1.5" /> Create Invoice
                         </Button>
                     </Card>

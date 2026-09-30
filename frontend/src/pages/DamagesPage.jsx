@@ -5,6 +5,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
+import SearchableSelect from '../components/ui/SearchableSelect';
 import Table from '../components/ui/Table';
 import Badge from '../components/ui/Badge';
 import Input from '../components/ui/Input';
@@ -191,8 +192,8 @@ export default function DamagesPage() {
 
             <Modal isOpen={isFormOpen} onClose={() => { setIsFormOpen(false); setEditingId(null); }} title={editingId ? 'Edit Damage' : 'Record Damage'} size="md">
                 <div className="p-6 space-y-4">
-                    <Select label="Product" required placeholder="Select product..."
-                        options={(productsData?.data || []).map((p) => ({ value: p._id, label: `${p.name} (${p.productCode})` }))}
+                    <SearchableSelect label="Product" required placeholder="Select product..."
+                        options={(productsData?.data || []).map((p) => ({ value: p._id, label: p.sinhalaName ? `${p.name} (${p.sinhalaName}) — ${p.productCode}` : `${p.name} — ${p.productCode}` }))}
                         value={productId} onChange={(e) => setProductId(e.target.value)} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <Input label="Quantity" required type="number" step="0.01" min="0.01"

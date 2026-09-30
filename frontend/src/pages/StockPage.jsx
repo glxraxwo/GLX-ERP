@@ -143,7 +143,7 @@ export default function StockPage() {
         }
     };
 
-    const fmt = (n) => new Intl.NumberFormat('en-LK', { minimumFractionDigits: 2 }).format(n || 0);
+    const fmt = (n) => new Intl.NumberFormat('en-LK', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(Number(n) || 0));
     const fmtMoney = (n) => new Intl.NumberFormat('en-LK', {
         style: 'currency', currency: 'LKR', minimumFractionDigits: 2,
     }).format(n || 0);
@@ -226,21 +226,30 @@ export default function StockPage() {
                     <p className="text-xs text-gray-500 mb-1">Warehouses</p>
                     <p className="text-2xl font-bold text-gray-800">{warehouseOptions.length}</p>
                 </Card>
-                <Card className="p-4 bg-amber-50 border border-amber-200">
-                    <p className="text-xs text-amber-600 flex items-center gap-1 mb-1">
-                        <AlertTriangle size={12} /> Low / Critical
-                    </p>
-                    <button
-                        className="text-2xl font-bold text-amber-700 hover:underline"
-                        onClick={() => setFilters((f) => ({ ...f, lowStock: 'true', page: 1 }))}
-                    >
-                        {lowStockCount > 0 ? lowStockCount : 'View'}
-                    </button>
+                <Card className="p-4 bg-amber-50/80 border border-amber-200">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-semibold text-amber-700 flex items-center gap-1 mb-1">
+                                <AlertTriangle size={13} className="text-amber-600" /> Low / Critical Stock
+                            </p>
+                            <span className="text-2xl font-black text-amber-800">
+                                {lowStockCount} Items
+                            </span>
+                        </div>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate('/stock/low-stock')}
+                            className="text-xs font-bold text-amber-900 bg-white border-amber-300 hover:bg-amber-100 shadow-xs"
+                        >
+                            Alerts Page →
+                        </Button>
+                    </div>
                 </Card>
             </div>
 
             {/* ─── FILTERS + TABLE ─── */}
-            <Card>
+            <Card className="overflow-visible">
                 {/* Filter bar */}
                 <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row flex-wrap gap-3">
                     <div className="relative flex-1 min-w-0">
@@ -273,10 +282,13 @@ export default function StockPage() {
                             onChange={(e) => setFilters((f) => ({ ...f, stockType: e.target.value, page: 1 }))}
                         />
                     </div>
-                    <div className="w-full sm:w-40">
+                    <div className="w-full sm:w-44">
                         <Select
-                            placeholder="All Items"
-                            options={[{ value: 'true', label: 'Low stock only' }]}
+                            placeholder="Stock Level"
+                            options={[
+                                { value: '', label: 'All Items' },
+                                { value: 'true', label: 'Low stock only' },
+                            ]}
                             value={filters.lowStock}
                             onChange={(e) => setFilters((f) => ({ ...f, lowStock: e.target.value, page: 1 }))}
                         />
@@ -306,26 +318,27 @@ export default function StockPage() {
                 ) : (
                     <>
                         {/* Desktop table */}
-                        <div className="hidden sm:block overflow-x-auto">
-                            <table className="w-full min-w-[640px]">
-                                <thead className="bg-gray-50 border-b border-gray-100">
+                        <div className="hidden sm:block overflow-auto max-h-[calc(100vh-320px)] min-h-[380px] relative border-b border-gray-200">
+                            <table className="w-full min-w-[640px] border-collapse">
+                                <thead className="sticky top-0 z-20 bg-slate-100 shadow-xs">
                                     <tr>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Warehouse</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Batch</th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Open Stock (Avail / Res)</th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Balance Stock</th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total Stock</th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Value</th>
-                                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
-                                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                                        <th className="sticky top-0 bg-slate-100 z-20 px-5 py-3.5 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b border-gray-200 shadow-[inset_0_-1px_0_#e2e8f0]">Product</th>
+                                        <th className="sticky top-0 bg-slate-100 z-20 px-4 py-3.5 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b border-gray-200 shadow-[inset_0_-1px_0_#e2e8f0]">Warehouse</th>
+                                        <th className="sticky top-0 bg-slate-100 z-20 px-4 py-3.5 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b border-gray-200 shadow-[inset_0_-1px_0_#e2e8f0]">Batch</th>
+                                        <th className="sticky top-0 bg-slate-100 z-20 px-4 py-3.5 text-right text-xs font-bold text-gray-700 uppercase tracking-wider border-b border-gray-200 shadow-[inset_0_-1px_0_#e2e8f0]">Open Stock (Avail / Res)</th>
+                                        <th className="sticky top-0 bg-slate-100 z-20 px-4 py-3.5 text-right text-xs font-bold text-gray-700 uppercase tracking-wider border-b border-gray-200 shadow-[inset_0_-1px_0_#e2e8f0]">Balance Stock</th>
+                                        <th className="sticky top-0 bg-slate-100 z-20 px-4 py-3.5 text-right text-xs font-bold text-gray-700 uppercase tracking-wider border-b border-gray-200 shadow-[inset_0_-1px_0_#e2e8f0]">Total Stock</th>
+                                        <th className="sticky top-0 bg-slate-100 z-20 px-4 py-3.5 text-right text-xs font-bold text-gray-700 uppercase tracking-wider border-b border-gray-200 shadow-[inset_0_-1px_0_#e2e8f0]">Value</th>
+                                        <th className="sticky top-0 bg-slate-100 z-20 px-4 py-3.5 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b border-gray-200 shadow-[inset_0_-1px_0_#e2e8f0]">Status</th>
+                                        <th className="sticky top-0 bg-slate-100 z-20 px-4 py-3.5 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-b border-gray-200 shadow-[inset_0_-1px_0_#e2e8f0]">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {items.map((r) => {
+                                <tbody className="bg-white divide-y divide-blue-100/50">
+                                    {items.map((r, idx) => {
                                         const s = getStockStatus(r);
+                                        const isEven = idx % 2 === 1;
                                         return (
-                                            <tr key={r._id} className="hover:bg-gray-50 transition-colors">
+                                            <tr key={r._id} className={`${isEven ? 'bg-blue-50/40' : 'bg-white'} hover:bg-blue-100/60 transition-colors`}>
                                                 <td className="px-5 py-3">
                                                     <p className="font-medium text-sm text-gray-800">{r.productName}</p>
                                                     {(r.productId?.sinhalaName || r.sinhalaName) && (

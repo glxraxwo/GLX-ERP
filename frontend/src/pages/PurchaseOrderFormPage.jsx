@@ -8,6 +8,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
+import SearchableSelect from '../components/ui/SearchableSelect';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 
@@ -141,7 +142,7 @@ export default function PurchaseOrderFormPage() {
                         <div className="space-y-4">
                             <div className="flex gap-2 items-end">
                                 <div className="flex-1">
-                                    <Select label="Supplier" required placeholder="Select supplier..."
+                                    <SearchableSelect label="Supplier" required placeholder="Select supplier..."
                                         options={supplierOptions} value={supplierId} onChange={(e) => setSupplierId(e.target.value)} />
                                 </div>
 
@@ -203,7 +204,7 @@ export default function PurchaseOrderFormPage() {
                                                 <div className="flex-1">
                                                     <div className="flex gap-2 items-end">
                                                         <div className="flex-1">
-                                                            <Select placeholder="Select product..." options={productOptions}
+                                                            <SearchableSelect placeholder="Select product..." options={productOptions}
                                                                 value={item.productId} onChange={(e) => updateItem(idx, 'productId', e.target.value)} />
                                                         </div>
                                                         <Button

@@ -2,6 +2,7 @@ import asyncHandler from 'express-async-handler';
 import StockItem from '../../models/StockItem.js';
 import StockMovement from '../../models/StockMovement.js';
 import Product from '../../models/Product.js';
+import Settings from '../../models/Settings.js';
 
 /**
  * GET /api/reports/inventory/valuation?warehouseId=
@@ -205,42 +206,118 @@ export const getSlowFastMovers = asyncHandler(async (req, res) => {
  * GET /api/reports/inventory/low-stock
  */
 export const getLowStockReport = asyncHandler(async (req, res) => {
-    const data = await StockItem.aggregate([
+    const settings = await Settings.findOne();
+    const systemThreshold = settings?.lowStockThreshold || 0;
+
+    const data = await Product.aggregate([
+        { 
+            $match: { 
+                deletedAt: null, 
+                status: { $ne: 'discontinued' } 
+            } 
+        },
         {
-            $group: {
-                _id: '$productId',
-                totalOnHand: { $sum: '$quantities.onHand' },
-                totalReserved: { $sum: '$quantities.reserved' },
+            $lookup: {
+                from: 'stockitems',
+                localField: '_id',
+                foreignField: 'productId',
+                as: 'stockItems',
             },
         },
         {
             $lookup: {
-                from: 'products', localField: '_id', foreignField: '_id', as: 'product',
+                from: 'categories',
+                localField: 'categoryId',
+                foreignField: '_id',
+                as: 'category',
             },
         },
-        { $unwind: '$product' },
-        { $match: { 'product.deletedAt': null } },
+        { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
+        {
+            $lookup: {
+                from: 'brands',
+                localField: 'brandId',
+                foreignField: '_id',
+                as: 'brand',
+            },
+        },
+        { $unwind: { path: '$brand', preserveNullAndEmptyArrays: true } },
         {
             $project: {
                 productId: '$_id',
-                productCode: '$product.productCode',
-                productName: '$product.name',
-                productType: '$product.productType',
-                onHand: '$totalOnHand',
-                reserved: '$totalReserved',
-                available: { $subtract: ['$totalOnHand', '$totalReserved'] },
-                reorderLevel: '$product.stockLevels.reorderLevel',
-                minimumStock: '$product.stockLevels.minimumStock',
+                productCode: 1,
+                name: 1,
+                productName: '$name',
+                sinhalaName: 1,
+                sku: 1,
+                barcode: 1,
+                productType: 1,
+                unitOfMeasure: 1,
+                basePrice: { $ifNull: ['$basePrice', 0] },
+                cost: { $ifNull: ['$costs.standardCost', { $ifNull: ['$basePrice', 0] }] },
+                categoryName: '$category.name',
+                brandName: '$brand.name',
+                onHand: { $sum: '$stockItems.quantities.onHand' },
+                reserved: { $sum: '$stockItems.quantities.reserved' },
+                minimumLevel: { $ifNull: ['$stockLevels.minimumLevel', 0] },
+                reorderLevel: { $ifNull: ['$stockLevels.reorderLevel', 0] },
             },
         },
         {
             $addFields: {
-                shortage: { $subtract: ['$reorderLevel', '$available'] },
-                isCritical: { $lte: ['$available', '$minimumStock'] },
+                available: { $subtract: ['$onHand', '$reserved'] },
+                effectiveThreshold: {
+                    $cond: [
+                        { $gt: ['$reorderLevel', 0] },
+                        '$reorderLevel',
+                        {
+                            $cond: [
+                                { $gt: ['$minimumLevel', 0] },
+                                '$minimumLevel',
+                                systemThreshold
+                            ]
+                        }
+                    ]
+                }
             },
         },
-        { $match: { $expr: { $lte: ['$available', '$reorderLevel'] } } },
-        { $sort: { shortage: -1 } },
+        {
+            $addFields: {
+                shortage: {
+                    $cond: [
+                        { $gt: [{ $subtract: ['$effectiveThreshold', '$available'] }, 0] },
+                        { $subtract: ['$effectiveThreshold', '$available'] },
+                        0
+                    ]
+                },
+                isOutOfStock: { $lte: ['$available', 0] },
+                isCritical: {
+                    $or: [
+                        { $lte: ['$available', 0] },
+                        {
+                            $and: [
+                                { $gt: ['$minimumLevel', 0] },
+                                { $lte: ['$available', '$minimumLevel'] }
+                            ]
+                        }
+                    ]
+                },
+            },
+        },
+        {
+            $match: {
+                $or: [
+                    { $expr: { $lte: ['$available', 0] } },
+                    {
+                        $and: [
+                            { $expr: { $gt: ['$effectiveThreshold', 0] } },
+                            { $expr: { $lte: ['$available', '$effectiveThreshold'] } }
+                        ]
+                    }
+                ]
+            }
+        },
+        { $sort: { isOutOfStock: -1, isCritical: -1, shortage: -1, available: 1 } },
     ]);
 
     res.json({ success: true, data });

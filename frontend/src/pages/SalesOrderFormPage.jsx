@@ -11,6 +11,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
+import SearchableSelect from '../components/ui/SearchableSelect';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import Badge from '../components/ui/Badge';
@@ -267,7 +268,7 @@ export default function SalesOrderFormPage() {
                             {/* Customer with quick-create button */}
                             <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
                                 <div className="flex-1">
-                                    <Select
+                                    <SearchableSelect
                                         label="Customer" required
                                         placeholder="Select a customer..."
                                         options={customerOptions}
@@ -401,7 +402,7 @@ export default function SalesOrderFormPage() {
                                                 <div className="flex-1">
                                                     <div className="flex gap-2 items-end">
                                                         <div className="flex-1">
-                                                            <Select
+                                                            <SearchableSelect
                                                                 placeholder="Select product..."
                                                                 options={productOptions}
                                                                 value={item.productId}
